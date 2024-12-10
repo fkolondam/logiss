@@ -9,17 +9,14 @@ const translations = {
 }
 
 export function useTranslations() {
-const store = useTranslationsStore();
-console.log('Current Language:', store.currentLanguage); // Log current language
+  const store = useTranslationsStore()
   
   const t = (key) => {
     const keys = key.split('.')
-    let value = translations[store.currentLanguage];
-    console.log('Retrieving translation for key:', key, 'Value found:', value); // Log the key and value
-    console.log('Translation object:', JSON.stringify(translations[store.currentLanguage], null, 2)); // Log the entire translation object as a string
+    let value = translations[store.currentLanguage]
     
     for (const k of keys) {
-      if (value && value[k] !== undefined) {
+      if (value && value[k]) {
         value = value[k]
       } else {
         return key
