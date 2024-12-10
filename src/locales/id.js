@@ -21,7 +21,28 @@ export default {
       active: 'Aktif',
       maintenance: 'Perawatan'
     },
-    fuel: 'Bahan Bakar'
+    fuel: 'Fuel',
+    search: "Pencarian",
+    breakdown:"Rincian"
+  },
+  expenses: {
+    title: 'Pengeluaran',
+    periods: {
+      Monthly: 'Bulanan',
+      Weekly: 'Mingguan',
+      Today: 'Hari ini'
+    },
+    status: {
+      active: 'Active',
+      maintenance: 'Maintenance'
+    },
+    search:"Pencarian",
+    breakdown:"Rincian"
+  },
+  dashboard: {
+    title: 'Dasbor',
+    recentDeliveries : 'Update Pengiriman',
+    recentDeliveries : 'Update Pengiriman'
   },
   deliveries: {
     title: 'Pengiriman',

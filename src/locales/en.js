@@ -21,7 +21,27 @@ export default {
       active: 'Active',
       maintenance: 'Maintenance'
     },
-    fuel: 'Fuel'
+    fuel: 'Fuel',
+    search:"Seach",
+    breakdown:"Breakdown"
+  },
+  expenses: {
+    title: 'Expenses',
+    periods: {
+      Monthly: 'Monthly',
+      Weekly: 'Weekly',
+      Today: 'Today'
+    },
+    status: {
+      active: 'Active',
+      maintenance: 'Maintenance'
+    },
+    search:"Seach",
+    breakdown:"Breakdown"
+  },
+  dashboard: {
+    title: 'Dashboard',
+    recentDeliveries : 'Recent Deliveries'
   },
   deliveries: {
     title: 'Deliveries',
@@ -52,3 +72,4 @@ export default {
     }
   }
 }
+
