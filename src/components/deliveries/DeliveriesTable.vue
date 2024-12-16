@@ -1,7 +1,8 @@
 <template>
   <div class="card">
     <!-- Search and Filters -->
-    <div class="p-4 border-b border-gray-200/80 bg-white sticky top-0 z-30">
+    <div class="p-4 border-b border-gray-200/80 bg-white sticky top-0 z-30 transition-shadow duration-200"
+         :class="{ 'shadow-md': isScrolled }">
       <div class="flex flex-col sm:flex-row gap-4">
         <!-- Search Bar -->
         <div class="relative flex-1 group">
@@ -33,7 +34,8 @@
       <div class="relative overflow-x-auto">
         <table class="min-w-[1160px] w-full">
           <!-- Fixed Header -->
-          <thead class="sticky top-0 z-50 bg-gray-50/80 border-y border-gray-200/80">
+          <thead class="sticky top-[73px] z-50 bg-gray-50/80 border-y border-gray-200/80 transition-shadow duration-200"
+                 :class="{ 'shadow-sm': isScrolled }">
             <tr class="grid grid-cols-[200px_320px_220px_140px_180px_100px] px-6 py-3">
               <th class="text-left text-[11px] font-medium text-gray-500 uppercase tracking-wider">
                 <div class="flex items-center gap-2.5">
@@ -151,9 +153,9 @@
               {{ t('deliveries.pagination.showing') }} 
               <span class="font-medium">{{ startIndex + 1 }}</span>
               {{ t('deliveries.pagination.to') }}
-              <span class="font-medium">{{ Math.min(endIndex, deliveries.length) }}</span>
+              <span class="font-medium">{{ Math.min(endIndex, filteredDeliveries.length) }}</span>
               {{ t('deliveries.pagination.of') }}
-              <span class="font-medium">{{ deliveries.length }}</span>
+              <span class="font-medium">{{ filteredDeliveries.length }}</span>
               {{ t('deliveries.pagination.items') }}
             </div>
             <div class="flex items-center gap-2">
@@ -176,7 +178,7 @@
                 <span class="min-w-[2rem] text-center text-sm font-medium text-gray-900">{{ currentPage }}</span>
                 <button 
                   @click="currentPage++"
-                  :disabled="endIndex >= deliveries.length"
+                  :disabled="endIndex >= filteredDeliveries.length"
                   class="p-1 rounded-lg text-gray-500 hover:text-primary-600 hover:bg-primary-50 disabled:opacity-50 disabled:hover:bg-transparent disabled:hover:text-gray-500"
                 >
                   <ChevronRight class="w-5 h-5" />
@@ -217,16 +219,16 @@
         <div class="flex flex-col gap-4">
           <button 
             @click="currentPage++"
-            :disabled="endIndex >= deliveries.length"
+            :disabled="endIndex >= filteredDeliveries.length"
             class="w-full py-2.5 text-sm font-medium text-primary-600 hover:text-primary-700 bg-primary-50/50 hover:bg-primary-100/70 border border-primary-100 hover:border-primary-200 rounded-xl disabled:opacity-50 disabled:hover:bg-transparent disabled:hover:text-primary-600"
           >
             {{ t('deliveries.pagination.loadMore') }}
           </button>
           <div class="text-xs text-center text-gray-500">
             {{ t('deliveries.pagination.showing') }} 
-            <span class="font-medium">{{ Math.min(endIndex, deliveries.length) }}</span>
+            <span class="font-medium">{{ Math.min(endIndex, filteredDeliveries.length) }}</span>
             {{ t('deliveries.pagination.of') }}
-            <span class="font-medium">{{ deliveries.length }}</span>
+            <span class="font-medium">{{ filteredDeliveries.length }}</span>
             {{ t('deliveries.pagination.items') }}
           </div>
         </div>
@@ -236,7 +238,7 @@
 </template>
 
 <script setup>
-import { ref, inject, computed } from 'vue'
+import { ref, inject, computed, onMounted, onUnmounted, watch } from 'vue'
 import { 
   Search, SlidersHorizontal, Receipt, Building2, Calendar,
   CheckCircle2, Clock, Wallet, User, ArrowUpRight, MapPin, Truck,
@@ -262,9 +264,57 @@ const props = defineProps({
 // Computed properties for pagination
 const startIndex = computed(() => (currentPage.value - 1) * perPage.value)
 const endIndex = computed(() => startIndex.value + perPage.value)
+
+// Filter deliveries based on search query
+const filteredDeliveries = computed(() => {
+  if (!searchQuery.value) return props.deliveries
+
+  const query = searchQuery.value.toLowerCase()
+  return props.deliveries.filter(delivery => {
+    return (
+      delivery.invoice.toLowerCase().includes(query) ||
+      delivery.customer.toLowerCase().includes(query) ||
+      delivery.location.toLowerCase().includes(query) ||
+      delivery.driver.toLowerCase().includes(query) ||
+      delivery.vehicleNumber.toLowerCase().includes(query) ||
+      delivery.status.toLowerCase().includes(query)
+    )
+  })
+})
+
+// Apply pagination to filtered results
 const paginatedDeliveries = computed(() => 
-  props.deliveries.slice(startIndex.value, endIndex.value)
+  filteredDeliveries.value.slice(startIndex.value, endIndex.value)
 )
+
+// Track scroll position for sticky header shadow
+const isScrolled = ref(false)
+
+const handleScroll = () => {
+  const tableContainer = document.querySelector('.overflow-x-auto')
+  if (tableContainer) {
+    isScrolled.value = tableContainer.scrollTop > 0
+  }
+}
+
+onMounted(() => {
+  const tableContainer = document.querySelector('.overflow-x-auto')
+  if (tableContainer) {
+    tableContainer.addEventListener('scroll', handleScroll)
+  }
+})
+
+onUnmounted(() => {
+  const tableContainer = document.querySelector('.overflow-x-auto')
+  if (tableContainer) {
+    tableContainer.removeEventListener('scroll', handleScroll)
+  }
+})
+
+// Watch for search query changes to reset pagination
+watch(searchQuery, () => {
+  currentPage.value = 1
+})
 
 const formatNumber = (value) => {
   return value.toLocaleString('id-ID')
