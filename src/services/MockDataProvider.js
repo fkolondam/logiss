@@ -120,7 +120,13 @@ export class MockDataProvider extends BaseDataProvider {
     return {
       total: deliveries.length,
       completed: deliveries.filter(d => d.status === 'DITERIMA - SEMUA').length,
-      pending: deliveries.filter(d => d.status === 'DITERIMA - SEBAGIAN').length,
+      completed: deliveries.filter(d => d.status === 'DITERIMA - SEBAGIAN').length,
+      cancelled: deliveries.filter(d => d.status === 'BATAL - TOKO TUTUP').length,
+      cancelled: deliveries.filter(d => d.status === 'BATAL - TIDAK ADA UANG').length,
+      cancelled: deliveries.filter(d => d.status === 'BATAL - TOKO TUTUP').length,
+      pending: deliveries.filter(d => d.status === 'KIRIM ULANG').length,
+      cancelled: deliveries.filter(d => d.status === 'BATAL - SALAH ORDER').length,
+      cancelled: deliveries.filter(d => d.status === 'BATAL - TOKO TIDAK BISA DIAKSES').length,
       cancelled: deliveries.filter(d => d.status.startsWith('BATAL')).length
     }
   }

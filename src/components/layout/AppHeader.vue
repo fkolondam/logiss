@@ -1,5 +1,5 @@
 <template>
-  <header class="h-16 bg-white shadow-sm fixed top-0 right-0 left-0 md:left-64 z-10">
+  <header class="h-16 bg-white shadow-sm fixed top-0 right-0 left-0 md:left-64 z-[60]">
     <div class="h-full px-4 flex items-center justify-between">
       <!-- Left Side -->
       <div class="flex items-center">
@@ -50,36 +50,46 @@
           <div class="w-8 h-8 rounded-full bg-gray-200 flex items-center justify-center">
             <User class="w-4 h-4 text-gray-500" />
           </div>
-          <span class="text-sm font-medium text-gray-700 hidden md:block">John Doe</span>
+          <span class="text-sm font-medium text-gray-700 hidden md:block">{{ appStore.user?.name || t('menu.profile') }}</span>
         </div>
       </div>
     </div>
 
     <!-- Gradient Line -->
-    <div class="h-[0.4rem] relative">
+    <div class="h-2 relative">
       <div :class="[
         'absolute inset-0 bg-gradient-to-r',
         getGradientColor
       ]">
-        <div class="absolute inset-0 opacity-20">
+        <div class="absolute inset-0">
           <svg class="w-full h-full" xmlns="http://www.w3.org/2000/svg">
             <pattern 
-              id="diagonalLines" 
-              width="8" 
-              height="8" 
-              patternUnits="userSpaceOnUse" 
-              patternTransform="rotate(45)"
-            >
-              <line 
-                x1="0" 
-                y1="0" 
-                x2="0" 
-                y2="8" 
-                stroke="white" 
-                stroke-width="2" 
-              />
-            </pattern>
-            <rect width="100%" height="100%" fill="url(#diagonalLines)" />
+  id="dashPattern" 
+  width="40" 
+  height="40" 
+  patternUnits="userSpaceOnUse"
+  patternTransform="rotate(45)"
+>
+  <line 
+    x1="0" 
+    y1="0" 
+    x2="0" 
+    y2="40" 
+    stroke="white" 
+    stroke-width="500"
+    stroke-dasharray="8,2,4,3,6,2,2,1" 
+  />
+  <line 
+    x1="20" 
+    y1="0" 
+    x2="20" 
+    y2="40" 
+    stroke="white" 
+    stroke-width="1"
+    stroke-dasharray="3,6,2,4,1,2" 
+  />
+</pattern>
+            <rect width="100%" height="100%" fill="url(#dashPattern)" opacity="0.2" />
           </svg>
         </div>
       </div>
@@ -92,9 +102,11 @@ import { computed } from 'vue'
 import { useRoute } from 'vue-router'
 import { Menu, Bell, User } from 'lucide-vue-next'
 import { useTranslations } from '@/composables/useTranslations'
+import { useAppStore } from '@/stores/app'
 
 const route = useRoute()
-const { currentLanguage, setLanguage } = useTranslations()
+const { t, currentLanguage, setLanguage } = useTranslations()
+const appStore = useAppStore()
 
 defineEmits(['toggle-sidebar'])
 

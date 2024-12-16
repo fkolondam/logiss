@@ -26,25 +26,25 @@ const { t } = useTranslations()
 
 const stats = [
   {
-    translationKey: 'stats.todayDeliveries',
+    translationKey: 'deliveries.stats.todayDeliveries',
     value: "3",
-    subtitleKey: 'stats.completionRate',
+    subtitleKey: 'deliveries.stats.completionRate',
     icon: Package,
     iconBg: 'bg-blue-500',
     iconColor: 'text-blue-500'
   },
   {
-    translationKey: 'stats.thisWeek',
+    translationKey: 'deliveries.stats.thisWeek',
     value: "45",
-    subtitleKey: 'stats.fromLastWeek',
+    subtitleKey: 'deliveries.stats.fromLastWeek',
     icon: Truck,
     iconBg: 'bg-green-500',
     iconColor: 'text-green-500'
   },
   {
-    translationKey: 'stats.thisMonth',
+    translationKey: 'deliveries.stats.thisMonth',
     value: "189",
-    subtitleKey: 'stats.monthlyTarget',
+    subtitleKey: 'deliveries.stats.monthlyTarget',
     icon: Activity,
     iconBg: 'bg-purple-500',
     iconColor: 'text-purple-500'

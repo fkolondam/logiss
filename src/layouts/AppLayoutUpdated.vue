@@ -1,5 +1,5 @@
 <template>
-  <div class="min-h-screen bg-white">
+  <div class="min-h-screen bg-gray-50">
     <!-- Fixed Header -->
     <AppHeader @toggle-sidebar="toggleSidebar" />
     
@@ -11,11 +11,11 @@
     />
     
     <!-- Main Content -->
-    <main class="transition-all duration-300 ease-in-out"
-        :class="[
-          'pt-[4.5rem]', // Header height
-          isMobile ? 'ml-0' : 'md:ml-64', // Sidebar width
-          { 'md:mr-96': showDetailSidebar } // Detail sidebar width
+    <main class="transition-all duration-300 ease-in-out bg-white"
+        :class="[ 
+          'pt-[4.5rem]', // Header height 
+          isMobile ? 'ml-0' : 'md:ml-64', // Sidebar width 
+          { 'md:mr-96': showDetailSidebar } // Detail sidebar width 
         ]">
       <div class="p-6 pb-20 md:pb-6">
         <slot />
@@ -66,4 +66,10 @@ onMounted(() => {
 onUnmounted(() => {
   window.removeEventListener('resize', checkMobile)
 })
+</script>
+
+<script>
+export default {
+  name: 'AppLayoutUpdated'
+}
 </script>

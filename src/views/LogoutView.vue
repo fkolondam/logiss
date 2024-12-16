@@ -1,26 +1,22 @@
 <template>
-  <div class="flex items-center justify-center h-screen">
-    <h1 class="text-2xl font-bold">You have been logged out.</h1>
+  <div>
+    <h1 class="text-2xl font-bold mb-6">{{ t('menu.logout') }}</h1>
+    <p>Logging out...</p>
   </div>
 </template>
 
 <script setup>
-import { onMounted } from 'vue';
-import { useRouter } from 'vue-router';
-import { useTranslations } from '../composables/useTranslations';
+import { onMounted } from 'vue'
+import { useRouter } from 'vue-router'
+import { useTranslations } from '@/composables/useTranslations'
 
-const router = useRouter();
-const { t } = useTranslations();
+const router = useRouter()
+const { t } = useTranslations()
 
 onMounted(() => {
-  // Logic to clear user session data can be added here
-  // Redirect to the dashboard or login page
+  // Add any logout logic here (e.g., clearing session, tokens, etc.)
   setTimeout(() => {
-    router.push('/');
-  }, 2000); // Redirect after 2 seconds
-});
+    router.push('/') // Redirect to home page after logout
+  }, 1000)
+})
 </script>
-
-<style scoped>
-/* Add any necessary styles here */
-</style>

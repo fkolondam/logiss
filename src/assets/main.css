@@ -1,3 +1,364 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Roboto:wght@400;500;700&display=swap');
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+@layer base {
+  html {
+    font-family: 'Inter', system-ui, sans-serif;
+    @apply antialiased text-gray-900;
+  }
+  
+  h1, h2, h3, h4, h5, h6 {
+    font-family: 'Roboto', system-ui, sans-serif;
+    @apply font-semibold;
+  }
+
+  /* Typography */
+  .font-heading {
+    font-family: 'Roboto', system-ui, sans-serif;
+  }
+
+  .font-body {
+    font-family: 'Inter', system-ui, sans-serif;
+  }
+
+  /* Smooth Scrolling */
+  html {
+    scroll-behavior: smooth;
+  }
+
+  /* Focus Styles */
+  :focus-visible {
+    @apply outline-none ring-2 ring-primary-500/50 ring-offset-2;
+  }
+}
+
+/* Enhanced Icons */
+.icon-hover {
+  @apply transition-all duration-200 ease-out-cubic;
+}
+
+.icon-hover:hover {
+  @apply text-primary-500 transform scale-110;
+}
+
+/* Enhanced Search Bar */
+.search-input {
+  @apply w-full px-4 py-2.5 border rounded-xl pl-11 pr-4 text-sm 
+         focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 
+         transition-all duration-200 ease-out-cubic
+         hover:border-gray-400
+         bg-white/70 backdrop-blur-sm
+         shadow-subtle hover:shadow-float;
+}
+
+.search-input:focus {
+  @apply shadow-float bg-white transform scale-[1.01];
+}
+
+.search-input::placeholder {
+  @apply text-gray-400 font-medium;
+}
+
+/* Status Badges */
+.status-badge {
+  @apply inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold
+         transition-all duration-200 ease-out-cubic shadow-subtle hover:shadow-float;
+}
+
+.status-badge--success {
+  @apply bg-emerald-50 text-emerald-700 border border-emerald-200/70
+         hover:bg-emerald-100/80 hover:border-emerald-300/70;
+}
+
+.status-badge--pending {
+  @apply bg-amber-50 text-amber-700 border border-amber-200/70
+         hover:bg-amber-100/80 hover:border-amber-300/70;
+}
+
+/* Table Enhancements */
+.table-row-hover {
+  @apply hover:bg-gray-50/80 transition-all duration-200 ease-out-cubic cursor-pointer
+         relative overflow-hidden;
+}
+
+.table-row-hover::before {
+  content: '';
+  @apply absolute top-0 bottom-0 left-0 w-0.5 bg-primary-500
+         opacity-0 transition-all duration-200 ease-out-cubic;
+}
+
+.table-row-hover:hover::before {
+  @apply opacity-100;
+}
+
+.table-row-hover:hover .data-cell-icon {
+  @apply transform scale-110 rotate-3 text-primary-500;
+}
+
+.table-cell {
+  @apply px-6 py-4 transition-all duration-200;
+}
+
+/* Button Enhancements */
+.btn-primary {
+  @apply inline-flex items-center gap-2 px-4 py-2.5 
+         rounded-xl text-sm font-medium
+         transition-all duration-200 ease-out-cubic
+         shadow-subtle hover:shadow-float active:shadow-subtle
+         border border-gray-200/80
+         bg-white/80 backdrop-blur-sm
+         hover:bg-white hover:border-gray-300
+         active:transform active:scale-[0.98];
+}
+
+.btn-filter {
+  @apply btn-primary text-gray-700 
+         hover:bg-gray-50 hover:border-gray-300 
+         active:bg-gray-100;
+}
+
+/* Card Enhancements */
+.card {
+  @apply bg-white rounded-xl shadow-subtle hover:shadow-float 
+         transition-all duration-300 ease-out-cubic
+         border border-gray-200/80
+         backdrop-blur-sm;
+}
+
+/* Table Header Enhancements */
+.table-header {
+  @apply px-6 py-4 text-left text-xs font-semibold text-gray-500 
+         uppercase tracking-wider whitespace-nowrap
+         bg-gray-50/50 backdrop-blur-sm border-y border-gray-200/80
+         transition-colors duration-200 sticky top-0 z-10;
+}
+
+/* Data Cell Enhancements */
+.data-cell {
+  @apply flex items-start gap-3;
+}
+
+.data-cell-icon {
+  @apply w-5 h-5 text-gray-400 mt-0.5 
+         transition-all duration-200 ease-out-cubic;
+}
+
+.data-cell-primary {
+  @apply text-sm font-medium text-gray-900
+         transition-colors duration-200;
+}
+
+.data-cell-secondary {
+  @apply text-xs text-gray-500 flex items-center gap-1.5 mt-1
+         transition-colors duration-200;
+}
+
+/* Action Button */
+.action-button {
+  @apply inline-flex items-center gap-2 px-4 py-2 
+         rounded-lg text-sm font-medium text-primary-600 
+         hover:bg-primary-50 transition-all duration-200 ease-out-cubic
+         border border-transparent hover:border-primary-100
+         shadow-subtle hover:shadow-float
+         active:transform active:scale-[0.98];
+}
+
+/* Loading State */
+.loading-overlay {
+  @apply absolute inset-0 bg-white/90 backdrop-blur-sm z-10 
+         flex items-center justify-center
+         transition-all duration-300 ease-out-cubic;
+}
+
+.loading-content {
+  @apply flex flex-col items-center gap-3 text-primary-500
+         animate-fade-in;
+}
+
+/* Enhanced Scrollbar */
+@layer utilities {
+  .scrollbar-elegant {
+    scrollbar-width: thin;
+    scrollbar-color: theme('colors.gray.200') transparent;
+  }
+  
+  .scrollbar-elegant::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+  
+  .scrollbar-elegant::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  
+  .scrollbar-elegant::-webkit-scrollbar-thumb {
+    @apply bg-gray-200 rounded-full
+           transition-colors duration-200;
+  }
+  
+  .scrollbar-elegant::-webkit-scrollbar-thumb:hover {
+    @apply bg-gray-300;
+  }
+}
+
+/* Animation Utilities */
+@layer utilities {
+  .animate-fade-in {
+    animation: fadeIn 0.3s ease-out-cubic;
+  }
+
+  .animate-slide-in-right {
+    animation: slideInRight 0.3s ease-out-cubic;
+  }
+
+  .animate-slide-in-left {
+    animation: slideInLeft 0.3s ease-out-cubic;
+  }
+
+  .animate-slide-up {
+    animation: slideUp 0.3s ease-out-cubic;
+  }
+}
+
+/* Keyframes */
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes slideInRight {
+  from {
+    transform: translateX(1rem);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+@keyframes slideInLeft {
+  from {
+    transform: translateX(-1rem);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+@keyframes slideUp {
+  from {
+    transform: translateY(1rem);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+/* Transition Classes */
+.transition-ease {
+  @apply transition-all duration-200 ease-out-cubic;
+}
+
+.transition-ease-slow {
+  @apply transition-all duration-300 ease-out-cubic;
+}
+
+/* Interactive States */
+.hover-scale {
+  @apply hover:transform hover:scale-[1.02]
+         transition-all duration-200 ease-out-cubic;
+}
+
+.active-scale {
+  @apply active:transform active:scale-[0.98]
+         transition-all duration-200 ease-out-cubic;
+}
+
+/* Focus Ring Styles */
+.focus-ring {
+  @apply focus:outline-none focus:ring-2 focus:ring-primary-500/50 focus:ring-offset-2
+         transition-all duration-200;
+}
+
+/* Backdrop Blur */
+.backdrop-blur {
+  @apply backdrop-blur-sm bg-white/70;
+}
+
+/* Custom Easing */
+.ease-out-cubic {
+  transition-timing-function: cubic-bezier(0.33, 1, 0.68, 1);
+}
+
+/* Micro-interactions */
+.hover-rotate {
+  @apply hover:rotate-3 transition-all duration-200 ease-out-cubic;
+}
+
+.hover-lift {
+  @apply hover:-translate-y-0.5 transition-all duration-200 ease-out-cubic;
+}
+
+/* Enhanced Status Indicators */
+.status-dot {
+  @apply w-2 h-2 rounded-full inline-block;
+}
+
+.status-dot--success {
+  @apply bg-emerald-500 animate-pulse;
+}
+
+.status-dot--pending {
+  @apply bg-amber-500 animate-pulse;
+}
+
+/* Enhanced Card Interactions */
+.card-interactive {
+  @apply hover:shadow-float hover:-translate-y-0.5
+         active:shadow-subtle active:translate-y-0
+         transition-all duration-200 ease-out-cubic;
+}
+
+/* Enhanced Button States */
+.btn-state-layer {
+  @apply before:absolute before:inset-0 before:rounded-xl
+         before:bg-current before:opacity-0
+         hover:before:opacity-5
+         active:before:opacity-10
+         transition-all duration-200 ease-out-cubic;
+}
+
+/* Table Cell Hover Effects */
+.table-cell-hover {
+  @apply relative overflow-hidden;
+}
+
+.table-cell-hover::after {
+  content: '';
+  @apply absolute inset-0 bg-primary-500/5 opacity-0
+         transition-opacity duration-200 ease-out-cubic;
+}
+
+.table-cell-hover:hover::after {
+  @apply opacity-100;
+}
+
+/* Enhanced Icons with Labels */
+.icon-label {
+  @apply inline-flex items-center gap-1.5 text-sm text-gray-600
+         transition-colors duration-200 ease-out-cubic
+         hover:text-primary-600;
+}
+
+.icon-label svg {
+  @apply w-4 h-4 transition-transform duration-200 ease-out-cubic
+         group-hover:scale-110 group-hover:rotate-3;
+}

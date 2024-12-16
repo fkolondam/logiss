@@ -24,7 +24,7 @@
           :class="{ 'text-blue-600': isActive(item.path) }"
         />
         <span :class="{ 'font-medium': isActive(item.path) }">
-          {{ t(item.translationKey) }}
+          {{ item.translationKey ? t(item.translationKey) : item.label }}
         </span>
       </router-link>
     </nav>
@@ -49,7 +49,7 @@
 
 <script setup>
 import { useRoute } from 'vue-router'
-import { Home, Truck, Wallet, Gauge, User, LogOut, X } from 'lucide-vue-next'
+import { Home, Truck, Wallet, Gauge, User, LogOut, X, Bug } from 'lucide-vue-next'
 import { useTranslations } from '@/composables/useTranslations'
 
 const route = useRoute()
@@ -74,6 +74,7 @@ const menuItems = [
   { path: '/expenses', icon: Wallet, translationKey: 'menu.expenses' },
   { path: '/vehicles', icon: Gauge, translationKey: 'menu.vehicles' },
   { path: '/profile', icon: User, translationKey: 'menu.profile' },
+  { path: '/debug', icon: Bug, label: 'Debug Tools' }, // Using label instead of translationKey
   { path: '/logout', icon: LogOut, translationKey: 'menu.logout' }
 ]
 
