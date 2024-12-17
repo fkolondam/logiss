@@ -1,5 +1,5 @@
 <script>
-import { Truck, TrendingUp, Clock, AlertCircle, ChevronRight, ArrowRight } from 'lucide-vue-next'
+import { Truck, TrendingUp, Clock, AlertCircle, ArrowRight } from 'lucide-vue-next'
 import { useTranslations } from '../../composables/useTranslations'
 import { useRouter } from 'vue-router'
 
@@ -10,7 +10,6 @@ export default {
     TrendingUp,
     Clock,
     AlertCircle,
-    ChevronRight,
     ArrowRight
   },
   props: {
@@ -140,13 +139,13 @@ export default {
           <!-- Total Pengiriman -->
           <div class="bg-blue-50 rounded-lg p-3">
             <div class="flex flex-col">
-              <div class="text-2xs text-gray-600 uppercase tracking-wide mb-1">{{ t('dashboard.deliveryStats.total') }}</div>
-              <div class="text-2xl font-heading font-semibold text-blue-600 tabular-nums leading-none mb-3">
+              <div class="text-[9px] text-gray-600 uppercase tracking-wider mb-1">{{ t('dashboard.deliveryStats.total') }}</div>
+              <div class="text-4xl font-heading font-semibold text-blue-600 tabular-nums leading-none mb-5">
                 {{ getDeliveryStats().total }}
               </div>
               <button 
                 @click="navigateToDeliveries()"
-                class="flex items-center gap-1 text-2xs font-medium text-blue-700 hover:text-blue-800 transition-colors mt-auto self-start"
+                class="flex items-center gap-1 text-[9px] font-medium text-blue-700 hover:text-blue-800 transition-colors mt-auto self-start"
               >
                 <span>{{ t('common.viewAll') }}</span>
                 <ArrowRight class="w-3 h-3" />
@@ -157,17 +156,17 @@ export default {
           <!-- Tingkat Keberhasilan -->
           <div class="bg-green-50 rounded-lg p-3">
             <div class="flex flex-col">
-              <div class="text-2xs text-gray-600 uppercase tracking-wide mb-1">{{ t('dashboard.deliveryStats.succesRate') }}</div>
-              <div class="text-2xl font-heading font-semibold text-green-600 tabular-nums leading-none mb-1">
+              <div class="text-[9px] text-gray-600 uppercase tracking-wider mb-1">{{ t('dashboard.deliveryStats.succesRate') }}</div>
+              <div class="text-4xl font-heading font-semibold text-green-600 tabular-nums leading-none mb-1">
                 {{ getDeliveryStats().successRate }}%
               </div>
-              <div class="flex items-center text-green-600 text-2xs mb-2">
+              <div class="flex items-center text-green-600 text-2xs mb-4">
                 <TrendingUp class="w-3.5 h-3.5" />
                 <span>+5%</span>
               </div>
               <button 
                 @click="navigateToDeliveries({ status: 'completed' })"
-                class="flex items-center gap-1 text-2xs font-medium text-green-700 hover:text-green-800 transition-colors mt-auto self-start"
+                class="flex items-center gap-1 text-[9px] font-medium text-green-700 hover:text-green-800 transition-colors mt-auto self-start"
               >
                 <span>{{ t('common.details') }}</span>
                 <ArrowRight class="w-3 h-3" />
@@ -178,13 +177,13 @@ export default {
           <!-- Pembatalan -->
           <div class="bg-red-50 rounded-lg p-3">
             <div class="flex flex-col">
-              <div class="text-2xs text-gray-600 uppercase tracking-wide mb-1">{{ t('dashboard.deliveryStats.cancelled') }}</div>
-              <div class="text-2xl font-heading font-semibold text-red-600 tabular-nums leading-none mb-3">
+              <div class="text-[9px] text-gray-600 uppercase tracking-wider mb-1">{{ t('dashboard.deliveryStats.cancelled') }}</div>
+              <div class="text-4xl font-heading font-semibold text-red-600 tabular-nums leading-none mb-5">
                 {{ getDeliveryStats().cancelled }}
               </div>
               <button 
                 @click="navigateToDeliveries({ status: 'cancelled' })"
-                class="flex items-center gap-1 text-2xs font-medium text-red-700 hover:text-red-800 transition-colors mt-auto self-start"
+                class="flex items-center gap-1 text-[9px] font-medium text-red-700 hover:text-red-800 transition-colors mt-auto self-start"
               >
                 <span>{{ t('common.details') }}</span>
                 <ArrowRight class="w-3 h-3" />
@@ -206,10 +205,10 @@ export default {
                 <div class="flex items-center justify-between mb-1.5">
                   <div class="flex items-center gap-1.5">
                     <span class="w-1.5 h-1.5 rounded-full bg-green-600"></span>
-                    <span class="text-xs text-gray-600 truncate">{{ t('deliveries.status.diterima - semua') }}</span>
+                    <span class="text-base text-gray-600 truncate">{{ t('deliveries.status.diterima - semua') }}</span>
                   </div>
                   <div class="flex items-center gap-1.5">
-                    <span class="text-xs font-medium tabular-nums">{{ getDeliveryStats().completed }}</span>
+                    <span class="text-base font-medium tabular-nums">{{ getDeliveryStats().completed }}</span>
                     <span class="text-2xs text-gray-500 tabular-nums">{{ Math.round(getDeliveryStats().completed / getDeliveryStats().total * 100) }}%</span>
                   </div>
                 </div>
@@ -229,16 +228,16 @@ export default {
               <div class="flex-1">
                 <div class="flex items-center justify-between mb-1.5">
                   <div class="flex items-center gap-1.5">
-                    <span class="w-1.5 h-1.5 rounded-full bg-yellow-600"></span>
-                    <span class="text-xs text-gray-600 truncate">{{ t('deliveries.status.diterima - sebagian') }}</span>
+                    <span class="w-1.5 h-1.5 rounded-full bg-amber-600"></span>
+                    <span class="text-base text-gray-600 truncate">{{ t('deliveries.status.diterima - sebagian') }}</span>
                   </div>
                   <div class="flex items-center gap-1.5">
-                    <span class="text-xs font-medium tabular-nums">{{ getDeliveryStats().partial }}</span>
+                    <span class="text-base font-medium tabular-nums">{{ getDeliveryStats().partial }}</span>
                     <span class="text-2xs text-gray-500 tabular-nums">{{ Math.round(getDeliveryStats().partial / getDeliveryStats().total * 100) }}%</span>
                   </div>
                 </div>
                 <div class="flex-1 bg-gray-200 rounded-full h-1.5">
-                  <div class="bg-yellow-600 h-1.5 rounded-full transition-all duration-300" 
+                  <div class="bg-amber-600 h-1.5 rounded-full transition-all duration-300" 
                        :style="{ width: (getDeliveryStats().partial / getDeliveryStats().total * 100) + '%' }">
                   </div>
                 </div>
@@ -254,10 +253,10 @@ export default {
                 <div class="flex items-center justify-between mb-1.5">
                   <div class="flex items-center gap-1.5">
                     <span class="w-1.5 h-1.5 rounded-full bg-blue-600"></span>
-                    <span class="text-xs text-gray-600 truncate">{{ t('deliveries.status.kirim ulang') }}</span>
+                    <span class="text-base text-gray-600 truncate">{{ t('deliveries.status.kirim ulang') }}</span>
                   </div>
                   <div class="flex items-center gap-1.5">
-                    <span class="text-xs font-medium tabular-nums">{{ getDeliveryStats().pending }}</span>
+                    <span class="text-base font-medium tabular-nums">{{ getDeliveryStats().pending }}</span>
                     <span class="text-2xs text-gray-500 tabular-nums">{{ Math.round(getDeliveryStats().pending / getDeliveryStats().total * 100) }}%</span>
                   </div>
                 </div>
@@ -278,10 +277,10 @@ export default {
                 <div class="flex items-center justify-between mb-1.5">
                   <div class="flex items-center gap-1.5">
                     <span class="w-1.5 h-1.5 rounded-full bg-red-600"></span>
-                    <span class="text-xs text-gray-600 truncate">{{ t('deliveries.status.batal') }}</span>
+                    <span class="text-base text-gray-600 truncate">{{ t('deliveries.status.batal') }}</span>
                   </div>
                   <div class="flex items-center gap-1.5">
-                    <span class="text-xs font-medium tabular-nums">{{ getDeliveryStats().cancelled }}</span>
+                    <span class="text-base font-medium tabular-nums">{{ getDeliveryStats().cancelled }}</span>
                     <span class="text-2xs text-gray-500 tabular-nums">{{ Math.round(getDeliveryStats().cancelled / getDeliveryStats().total * 100) }}%</span>
                   </div>
                 </div>
