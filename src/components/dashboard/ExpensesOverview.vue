@@ -1,119 +1,107 @@
-<script>
-import { ref, computed } from 'vue'
+<script setup>
+import { computed } from 'vue'
 import { Receipt, Fuel, Wrench, Shield, MoreHorizontal, AlertCircle, Calendar, TrendingUp, TrendingDown, ArrowRight } from 'lucide-vue-next'
 import { useTranslations } from '../../composables/useTranslations'
 
-export default {
-  name: 'ExpensesOverview',
-  components: {
-    Receipt,
-    Fuel,
-    Wrench,
-    Shield,
-    MoreHorizontal,
-    AlertCircle,
-    Calendar,
-    TrendingUp,
-    TrendingDown,
-    ArrowRight
-  },
-  props: {
-    expenses: {
-      type: Object,
-      default: () => ({
-        today: 0,
-        weekly: 0,
-        monthly: 0,
-        breakdown: {
-          fuel: { amount: 0 },
-          maintenance: { amount: 0 },
-          insurance: { amount: 0 },
-          others: { amount: 0 }
-        }
-      })
-    },
-    loading: {
-      type: Boolean,
-      default: false
-    },
-    error: {
-      type: String,
-      default: null
-    }
-  },
-  setup(props) {
-    const { t } = useTranslations()
-    const selectedPeriod = ref('today')
-    
-    const formatCurrency = (value) => {
-      if (!value) return '0'
-      return value.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".")
-    }
-
-    const periods = [
-      { id: 'today', label: t('expenses.periods.Today'), value: props.expenses?.today },
-      { id: 'week', label: t('expenses.periods.ThisWeek'), value: props.expenses?.weekly },
-      { id: 'month', label: t('expenses.periods.ThisMonth'), value: props.expenses?.monthly }
-    ]
-
-    const getTrendIndicator = (current, previous) => {
-      if (!current || !previous) return { trend: 0, color: 'text-gray-500' }
-      const trend = ((current - previous) / previous) * 100
-      return {
-        trend: Math.abs(Math.round(trend)),
-        color: trend > 0 ? 'text-red-500' : 'text-green-500',
-        icon: trend > 0 ? TrendingUp : TrendingDown
-      }
-    }
-
-    const selectedPeriodData = computed(() => {
-      const periodMap = {
-        today: props.expenses?.today || 0,
-        week: props.expenses?.weekly || 0,
-        month: props.expenses?.monthly || 0
-      }
-      return periodMap[selectedPeriod.value] || 0
+const props = defineProps({
+  expenses: {
+    type: Object,
+    default: () => ({
+      total: 0,
+      count: 0,
+      byCategory: {}
     })
+  },
+  loading: {
+    type: Boolean,
+    default: false
+  },
+  error: {
+    type: String,
+    default: null
+  },
+  modelValue: {
+    type: String,
+    default: 'today'
+  }
+})
 
-    const getBreakdownData = computed(() => {
-      const breakdown = {
-        fuel: { amount: 0, percentage: 0 },
-        maintenance: { amount: 0, percentage: 0 },
-        insurance: { amount: 0, percentage: 0 },
-        others: { amount: 0, percentage: 0 }
-      }
-
-      if (!props.expenses?.breakdown || !selectedPeriodData.value) {
-        return breakdown
-      }
-
-      // Calculate total amount from breakdown
-      const totalFromBreakdown = Object.values(props.expenses.breakdown)
-        .reduce((sum, category) => sum + (category?.amount || 0), 0)
-
-      // Calculate percentages for each category
-      Object.keys(breakdown).forEach(category => {
-        const amount = props.expenses.breakdown[category]?.amount || 0
-        breakdown[category] = {
-          amount,
-          percentage: totalFromBreakdown > 0 ? Math.round((amount / totalFromBreakdown) * 100) : 0
-        }
-      })
-
-      return breakdown
-    })
+const emit = defineEmits(['update:modelValue'])
+const { t } = useTranslations()
     
-    return {
-      t,
-      formatCurrency,
-      selectedPeriod,
-      periods,
-      getTrendIndicator,
-      selectedPeriodData,
-      getBreakdownData
-    }
+
+const selectedPeriod = computed({
+  get: () => props.modelValue,
+  set: (value) => emit('update:modelValue', value)
+})
+
+const formatCurrency = (value) => {
+  if (!value) return '0'
+  return value.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".")
+}
+
+// Since we're getting total stats for the selected period directly,
+// we don't need values in the period selector
+const periods = [
+  { id: 'today', label: t('expenses.periods.Today') },
+  { id: 'week', label: t('expenses.periods.ThisWeek') },
+  { id: 'month', label: t('expenses.periods.ThisMonth') }
+]
+
+const getTrendIndicator = (current, previous) => {
+  if (!current || !previous) return { trend: 0, color: 'text-gray-500' }
+  const trend = ((current - previous) / previous) * 100
+  return {
+    trend: Math.abs(Math.round(trend)),
+    color: trend > 0 ? 'text-red-500' : 'text-green-500',
+    icon: trend > 0 ? TrendingUp : TrendingDown
   }
 }
+
+const selectedPeriodData = computed(() => {
+  return props.expenses?.total || 0
+})
+
+const getBreakdownData = computed(() => {
+  const breakdown = {
+    fuel: { amount: 0, percentage: 0 },
+    maintenance: { amount: 0, percentage: 0 },
+    insurance: { amount: 0, percentage: 0 },
+    others: { amount: 0, percentage: 0 }
+  }
+
+  if (!props.expenses?.byCategory) {
+    return breakdown
+  }
+
+  // Map expense categories to our breakdown structure
+  const categoryMap = {
+    'Fuel': 'fuel',
+    'Maintenance': 'maintenance',
+    'Vehicle License': 'insurance',
+    'Labour': 'others',
+    'Parking-Tol-Retribution': 'others'
+  }
+
+  // Calculate total amount
+  const totalFromBreakdown = Object.values(props.expenses.byCategory)
+    .reduce((sum, amount) => sum + (amount || 0), 0)
+
+  // Calculate amounts and percentages for each category
+  Object.entries(props.expenses.byCategory).forEach(([category, amount]) => {
+    const mappedCategory = categoryMap[category] || 'others'
+    breakdown[mappedCategory].amount += amount
+  })
+
+  // Calculate percentages
+  Object.keys(breakdown).forEach(category => {
+    breakdown[category].percentage = totalFromBreakdown > 0 
+      ? Math.round((breakdown[category].amount / totalFromBreakdown) * 100) 
+      : 0
+  })
+
+  return breakdown
+})
 </script>
 
 <template>
@@ -168,12 +156,13 @@ export default {
               <div class="text-3xl font-heading font-semibold text-gray-900 tabular-nums leading-none">
                 Rp {{ formatCurrency(selectedPeriodData) }}
               </div>
+              <!-- Only show trend for week and month periods -->
               <div 
                 v-if="selectedPeriod !== 'today'"
-                :class="['flex items-center gap-1 text-sm mb-1', getTrendIndicator(selectedPeriodData, expenses?.previousPeriod?.[selectedPeriod]).color]"
+                :class="['flex items-center gap-1 text-sm mb-1', getTrendIndicator(selectedPeriodData, expenses?.previousTotal).color]"
               >
-                <component :is="getTrendIndicator(selectedPeriodData, expenses?.previousPeriod?.[selectedPeriod]).icon" class="w-4 h-4" />
-                <span>{{ getTrendIndicator(selectedPeriodData, expenses?.previousPeriod?.[selectedPeriod]).trend }}%</span>
+                <component :is="getTrendIndicator(selectedPeriodData, expenses?.previousTotal).icon" class="w-4 h-4" />
+                <span>{{ getTrendIndicator(selectedPeriodData, expenses?.previousTotal).trend }}%</span>
               </div>
             </div>
           </div>

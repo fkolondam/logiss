@@ -52,7 +52,9 @@ export class MockDataProvider extends BaseDataProvider {
         if (params.dateRange) {
           const { start, end } = params.dateRange
           data = data.filter(item => {
-            const itemDate = new Date(item.date)
+            // Parse date in MM/DD/YY format
+            const [month, day, year] = item.date.split('/')
+            const itemDate = new Date(2000 + parseInt(year), parseInt(month) - 1, parseInt(day))
             return itemDate >= new Date(start) && itemDate <= new Date(end)
           })
         }
@@ -117,29 +119,53 @@ export class MockDataProvider extends BaseDataProvider {
   // Additional helper methods for specific functionality
   async getDeliveryStats(params = {}) {
     const deliveries = await this.fetch('deliveries', params)
+    
+    // Count deliveries by status
+    const statusCounts = deliveries.reduce((acc, d) => {
+      if (d.status === 'DITERIMA - SEMUA' || d.status === 'DITERIMA - SEBAGIAN') {
+        acc.completed = (acc.completed || 0) + 1
+      } else if (d.status === 'KIRIM ULANG') {
+        acc.pending = (acc.pending || 0) + 1
+      } else if (d.status.startsWith('BATAL')) {
+        acc.cancelled = (acc.cancelled || 0) + 1
+      }
+      return acc
+    }, {})
+
     return {
       total: deliveries.length,
-      completed: deliveries.filter(d => d.status === 'DITERIMA - SEMUA').length,
-      completed: deliveries.filter(d => d.status === 'DITERIMA - SEBAGIAN').length,
-      cancelled: deliveries.filter(d => d.status === 'BATAL - TOKO TUTUP').length,
-      cancelled: deliveries.filter(d => d.status === 'BATAL - TIDAK ADA UANG').length,
-      cancelled: deliveries.filter(d => d.status === 'BATAL - TOKO TUTUP').length,
-      pending: deliveries.filter(d => d.status === 'KIRIM ULANG').length,
-      cancelled: deliveries.filter(d => d.status === 'BATAL - SALAH ORDER').length,
-      cancelled: deliveries.filter(d => d.status === 'BATAL - TOKO TIDAK BISA DIAKSES').length,
-      cancelled: deliveries.filter(d => d.status.startsWith('BATAL')).length
+      completed: statusCounts.completed || 0,
+      pending: statusCounts.pending || 0,
+      cancelled: statusCounts.cancelled || 0
     }
   }
 
   async getExpenseStats(params = {}) {
     const expenses = await this.fetch('expenses', params)
+    
+    // Get previous period data for trend comparison
+    let previousTotal = 0
+    if (params.dateRange) {
+      const { start, end } = params.dateRange
+      const currentPeriodDays = Math.ceil((new Date(end) - new Date(start)) / (1000 * 60 * 60 * 24))
+      const previousStart = new Date(new Date(start).getTime() - currentPeriodDays * 24 * 60 * 60 * 1000)
+      const previousEnd = new Date(start)
+
+      const previousExpenses = await this.fetch('expenses', {
+        ...params,
+        dateRange: { start: previousStart, end: previousEnd }
+      })
+      previousTotal = previousExpenses.reduce((sum, exp) => sum + exp.amount, 0)
+    }
+
     return {
       total: expenses.reduce((sum, exp) => sum + exp.amount, 0),
       count: expenses.length,
       byCategory: expenses.reduce((acc, exp) => {
         acc[exp.category] = (acc[exp.category] || 0) + exp.amount
         return acc
-      }, {})
+      }, {}),
+      previousTotal
     }
   }
 
