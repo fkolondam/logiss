@@ -228,7 +228,7 @@ export default {
               <div class="flex-1">
                 <div class="flex items-center justify-between mb-1.5">
                   <div class="flex items-center gap-1.5">
-                    <span class="w-1.5 h-1.5 rounded-full bg-amber-600"></span>
+                    <span class="w-1.5 h-1.5 rounded-full bg-amber-200"></span>
                     <span class="text-base text-gray-600 truncate">{{ t('deliveries.status.diterima - sebagian') }}</span>
                   </div>
                   <div class="flex items-center gap-1.5">
@@ -237,7 +237,7 @@ export default {
                   </div>
                 </div>
                 <div class="flex-1 bg-gray-200 rounded-full h-1.5">
-                  <div class="bg-amber-600 h-1.5 rounded-full transition-all duration-300" 
+                  <div class="bg-amber-200 h-1.5 rounded-full transition-all duration-300" 
                        :style="{ width: (getDeliveryStats().partial / getDeliveryStats().total * 100) + '%' }">
                   </div>
                 </div>
