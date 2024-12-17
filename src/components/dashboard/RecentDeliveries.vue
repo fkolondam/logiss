@@ -1,4 +1,5 @@
 <script>
+// Script section remains unchanged
 import { Truck, TrendingUp, Clock, AlertCircle, ArrowRight } from 'lucide-vue-next'
 import { useTranslations } from '../../composables/useTranslations'
 import { useRouter } from 'vue-router'
@@ -138,56 +139,99 @@ export default {
         <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
           <!-- Total Pengiriman -->
           <div class="bg-blue-50 rounded-lg p-3">
-            <div class="flex flex-col">
-              <div class="text-[9px] text-gray-600 uppercase tracking-wider mb-1">{{ t('dashboard.deliveryStats.total') }}</div>
-              <div class="text-4xl font-heading font-semibold text-blue-600 tabular-nums leading-none mb-5">
-                {{ getDeliveryStats().total }}
+            <div class="grid grid-rows-[36px_48px_24px_32px] h-full">
+              <!-- Row 1: Label (fixed 36px height for 2 lines) -->
+              <div class="flex items-start h-[36px]">
+                <div class="text-[9px] text-gray-600 uppercase tracking-wider leading-[18px] line-clamp-2">{{ t('dashboard.deliveryStats.total') }}</div>
               </div>
-              <button 
-                @click="navigateToDeliveries()"
-                class="flex items-center gap-1 text-[9px] font-medium text-blue-700 hover:text-blue-800 transition-colors mt-auto self-start"
-              >
-                <span>{{ t('common.viewAll') }}</span>
-                <ArrowRight class="w-3 h-3" />
-              </button>
+              
+              <!-- Row 2: Value -->
+              <div class="flex items-center">
+                <div class="text-4xl font-heading font-semibold text-blue-600 tabular-nums leading-none">
+                  {{ getDeliveryStats().total }}
+                </div>
+              </div>
+              
+              <!-- Row 3: Indicator (empty for consistency) -->
+              <div class="flex items-center"></div>
+              
+              <!-- Row 4: Link -->
+              <div class="flex items-end justify-end">
+                <button 
+                  @click="navigateToDeliveries()"
+                  class="flex items-center gap-1 text-[9px] font-medium text-blue-700 hover:text-blue-800 transition-colors"
+                >
+                  <span>{{ t('common.viewAll') }}</span>
+                  <ArrowRight class="w-3 h-3" />
+                </button>
+              </div>
             </div>
           </div>
           
           <!-- Tingkat Keberhasilan -->
           <div class="bg-green-50 rounded-lg p-3">
-            <div class="flex flex-col">
-              <div class="text-[9px] text-gray-600 uppercase tracking-wider mb-1">{{ t('dashboard.deliveryStats.succesRate') }}</div>
-              <div class="text-4xl font-heading font-semibold text-green-600 tabular-nums leading-none mb-1">
-                {{ getDeliveryStats().successRate }}%
+            <div class="grid grid-rows-[36px_48px_24px_32px] h-full">
+              <!-- Row 1: Label (fixed 36px height for 2 lines) -->
+              <div class="flex items-start h-[36px]">
+                <div class="text-[9px] text-gray-600 uppercase tracking-wider leading-[18px] line-clamp-2">{{ t('dashboard.deliveryStats.succesRate') }}</div>
               </div>
-              <div class="flex items-center text-green-600 text-2xs mb-4">
-                <TrendingUp class="w-3.5 h-3.5" />
-                <span>+5%</span>
+              
+              <!-- Row 2: Value -->
+              <div class="flex items-center">
+                <div class="text-4xl font-heading font-semibold text-green-600 tabular-nums leading-none">
+                  {{ getDeliveryStats().successRate }}%
+                </div>
               </div>
-              <button 
-                @click="navigateToDeliveries({ status: 'completed' })"
-                class="flex items-center gap-1 text-[9px] font-medium text-green-700 hover:text-green-800 transition-colors mt-auto self-start"
-              >
-                <span>{{ t('common.details') }}</span>
-                <ArrowRight class="w-3 h-3" />
-              </button>
+              
+              <!-- Row 3: Indicator -->
+              <div class="flex items-center">
+                <div class="flex items-center text-green-600 text-[10px]">
+                  <TrendingUp class="w-3 h-3" />
+                  <span>+5%</span>
+                </div>
+              </div>
+              
+              <!-- Row 4: Link -->
+              <div class="flex items-end justify-end">
+                <button 
+                  @click="navigateToDeliveries({ status: 'completed' })"
+                  class="flex items-center gap-1 text-[9px] font-medium text-green-700 hover:text-green-800 transition-colors"
+                >
+                  <span>{{ t('common.details') }}</span>
+                  <ArrowRight class="w-3 h-3" />
+                </button>
+              </div>
             </div>
           </div>
           
           <!-- Pembatalan -->
           <div class="bg-red-50 rounded-lg p-3">
-            <div class="flex flex-col">
-              <div class="text-[9px] text-gray-600 uppercase tracking-wider mb-1">{{ t('dashboard.deliveryStats.cancelled') }}</div>
-              <div class="text-4xl font-heading font-semibold text-red-600 tabular-nums leading-none mb-5">
-                {{ getDeliveryStats().cancelled }}
+            <div class="grid grid-rows-[36px_48px_24px_32px] h-full">
+              <!-- Row 1: Label (fixed 36px height for 2 lines) -->
+              <div class="flex items-start h-[36px]">
+                <div class="text-[9px] text-gray-600 uppercase tracking-wider leading-[18px] line-clamp-2">{{ t('dashboard.deliveryStats.cancelled') }}</div>
               </div>
-              <button 
-                @click="navigateToDeliveries({ status: 'cancelled' })"
-                class="flex items-center gap-1 text-[9px] font-medium text-red-700 hover:text-red-800 transition-colors mt-auto self-start"
-              >
-                <span>{{ t('common.details') }}</span>
-                <ArrowRight class="w-3 h-3" />
-              </button>
+              
+              <!-- Row 2: Value -->
+              <div class="flex items-center">
+                <div class="text-4xl font-heading font-semibold text-red-600 tabular-nums leading-none">
+                  {{ getDeliveryStats().cancelled }}
+                </div>
+              </div>
+              
+              <!-- Row 3: Indicator (empty for consistency) -->
+              <div class="flex items-center"></div>
+              
+              <!-- Row 4: Link -->
+              <div class="flex items-end justify-end">
+                <button 
+                  @click="navigateToDeliveries({ status: 'cancelled' })"
+                  class="flex items-center gap-1 text-[9px] font-medium text-red-700 hover:text-red-800 transition-colors"
+                >
+                  <span>{{ t('common.details') }}</span>
+                  <ArrowRight class="w-3 h-3" />
+                </button>
+              </div>
             </div>
           </div>
         </div>
@@ -228,7 +272,7 @@ export default {
               <div class="flex-1">
                 <div class="flex items-center justify-between mb-1.5">
                   <div class="flex items-center gap-1.5">
-                    <span class="w-1.5 h-1.5 rounded-full bg-amber-200"></span>
+                    <span class="w-1.5 h-1.5 rounded-full bg-amber-600"></span>
                     <span class="text-base text-gray-600 truncate">{{ t('deliveries.status.diterima - sebagian') }}</span>
                   </div>
                   <div class="flex items-center gap-1.5">
@@ -237,7 +281,7 @@ export default {
                   </div>
                 </div>
                 <div class="flex-1 bg-gray-200 rounded-full h-1.5">
-                  <div class="bg-amber-200 h-1.5 rounded-full transition-all duration-300" 
+                  <div class="bg-amber-600 h-1.5 rounded-full transition-all duration-300" 
                        :style="{ width: (getDeliveryStats().partial / getDeliveryStats().total * 100) + '%' }">
                   </div>
                 </div>
