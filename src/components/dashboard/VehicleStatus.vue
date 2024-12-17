@@ -126,35 +126,126 @@ export default {
       <div v-else class="space-y-6">
         <!-- Stats Overview -->
         <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
+          <!-- Total Vehicles -->
           <div class="bg-purple-50 rounded-lg p-3">
-            <div class="flex flex-col">
-              <div class="text-2xs text-gray-600 uppercase tracking-wide mb-1">{{ t('vehicles.stats.total') }}</div>
-              <div class="text-2xl font-heading font-semibold text-purple-600 tabular-nums leading-none">
-                {{ vehicleStats.total }}
+            <div class="grid grid-rows-[36px_48px_24px_32px] h-full">
+              <!-- Row 1: Label (fixed 36px height for 2 lines) -->
+              <div class="flex items-start h-[36px]">
+                <div class="text-[9px] text-gray-600 uppercase tracking-wider leading-[18px] line-clamp-2">{{ t('vehicles.stats.total') }}</div>
+              </div>
+              
+              <!-- Row 2: Value -->
+              <div class="flex items-center">
+                <div class="text-4xl font-heading font-semibold text-purple-600 tabular-nums leading-none">
+                  {{ vehicleStats.total }}
+                </div>
+              </div>
+              
+              <!-- Row 3: Indicator (empty for consistency) -->
+              <div class="flex items-center"></div>
+              
+              <!-- Row 4: Link -->
+              <div class="flex items-end justify-end">
+                <button 
+                  @click="navigateToVehicle()"
+                  class="flex items-center gap-1 text-[9px] font-medium text-purple-700 hover:text-purple-800 transition-colors"
+                >
+                  <span>{{ t('common.viewAll') }}</span>
+                  <ArrowRight class="w-3 h-3" />
+                </button>
               </div>
             </div>
           </div>
+
+          <!-- Active Vehicles -->
           <div class="bg-green-50 rounded-lg p-3">
-            <div class="flex flex-col">
-              <div class="text-2xs text-gray-600 uppercase tracking-wide mb-1">{{ t('vehicles.stats.active') }}</div>
-              <div class="text-2xl font-heading font-semibold text-green-600 tabular-nums leading-none">
-                {{ vehicleStats.active }}
+            <div class="grid grid-rows-[36px_48px_24px_32px] h-full">
+              <!-- Row 1: Label (fixed 36px height for 2 lines) -->
+              <div class="flex items-start h-[36px]">
+                <div class="text-[9px] text-gray-600 uppercase tracking-wider leading-[18px] line-clamp-2">{{ t('vehicles.stats.active') }}</div>
+              </div>
+              
+              <!-- Row 2: Value -->
+              <div class="flex items-center">
+                <div class="text-4xl font-heading font-semibold text-green-600 tabular-nums leading-none">
+                  {{ vehicleStats.active }}
+                </div>
+              </div>
+              
+              <!-- Row 3: Indicator (empty for consistency) -->
+              <div class="flex items-center"></div>
+              
+              <!-- Row 4: Link -->
+              <div class="flex items-end justify-end">
+                <button 
+                  @click="navigateToVehicle()"
+                  class="flex items-center gap-1 text-[9px] font-medium text-green-700 hover:text-green-800 transition-colors"
+                >
+                  <span>{{ t('common.details') }}</span>
+                  <ArrowRight class="w-3 h-3" />
+                </button>
               </div>
             </div>
           </div>
+
+          <!-- Maintenance -->
           <div class="bg-orange-50 rounded-lg p-3">
-            <div class="flex flex-col">
-              <div class="text-2xs text-gray-600 uppercase tracking-wide mb-1">{{ t('vehicles.stats.maintenance') }}</div>
-              <div class="text-2xl font-heading font-semibold text-orange-600 tabular-nums leading-none">
-                {{ vehicleStats.maintenance }}
+            <div class="grid grid-rows-[36px_48px_24px_32px] h-full">
+              <!-- Row 1: Label (fixed 36px height for 2 lines) -->
+              <div class="flex items-start h-[36px]">
+                <div class="text-[9px] text-gray-600 uppercase tracking-wider leading-[18px] line-clamp-2">{{ t('vehicles.stats.maintenance') }}</div>
+              </div>
+              
+              <!-- Row 2: Value -->
+              <div class="flex items-center">
+                <div class="text-4xl font-heading font-semibold text-orange-600 tabular-nums leading-none">
+                  {{ vehicleStats.maintenance }}
+                </div>
+              </div>
+              
+              <!-- Row 3: Indicator (empty for consistency) -->
+              <div class="flex items-center"></div>
+              
+              <!-- Row 4: Link -->
+              <div class="flex items-end justify-end">
+                <button 
+                  @click="navigateToVehicle()"
+                  class="flex items-center gap-1 text-[9px] font-medium text-orange-700 hover:text-orange-800 transition-colors"
+                >
+                  <span>{{ t('common.details') }}</span>
+                  <ArrowRight class="w-3 h-3" />
+                </button>
               </div>
             </div>
           </div>
+
+          <!-- Low Fuel -->
           <div class="bg-red-50 rounded-lg p-3">
-            <div class="flex flex-col">
-              <div class="text-2xs text-gray-600 uppercase tracking-wide mb-1">{{ t('vehicles.stats.lowFuel') }}</div>
-              <div class="text-2xl font-heading font-semibold text-red-600 tabular-nums leading-none">
-                {{ vehicleStats.lowFuel }}
+            <div class="grid grid-rows-[36px_48px_24px_32px] h-full">
+              <!-- Row 1: Label (fixed 36px height for 2 lines) -->
+              <div class="flex items-start h-[36px]">
+                <div class="text-[9px] text-gray-600 uppercase tracking-wider leading-[18px] line-clamp-2">{{ t('vehicles.stats.lowFuel') }}</div>
+              </div>
+              
+              <!-- Row 2: Value -->
+              <div class="flex items-center">
+                <div class="text-4xl font-heading font-semibold text-red-600 tabular-nums leading-none">
+                  {{ vehicleStats.lowFuel }}
+                </div>
+              </div>
+              
+              <!-- Row 3: Indicator (empty for consistency) -->
+              <div class="flex items-center"></div>
+              
+              <!-- Row 4: Link -->
+              <div class="flex items-end justify-end">
+                <button 
+                  @click="navigateToVehicle()"
+                  class="flex items-center gap-1 text-[9px] font-medium text-red-700 hover:text-red-800 transition-colors"
+                >
+                  <span>{{ t('common.details') }}</span>
+                  <ArrowRight class="w-3 h-3" />
+                </button>
               </div>
             </div>
           </div>
