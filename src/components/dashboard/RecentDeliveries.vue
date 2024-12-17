@@ -1,20 +1,35 @@
 <script>
-import { Truck, TrendingUp, Clock } from 'lucide-vue-next'
+import { Truck, TrendingUp, Clock, AlertCircle, ChevronRight, ArrowRight } from 'lucide-vue-next'
 import { useTranslations } from '../../composables/useTranslations'
+import { useRouter } from 'vue-router'
 
 export default {
   name: 'RecentDeliveries',
   components: {
     Truck,
     TrendingUp,
-    Clock
+    Clock,
+    AlertCircle,
+    ChevronRight,
+    ArrowRight
   },
   props: {
-    deliveries: Array,
-    loading: Boolean
+    deliveries: {
+      type: Array,
+      default: () => []
+    },
+    loading: {
+      type: Boolean,
+      default: false
+    },
+    error: {
+      type: String,
+      default: null
+    }
   },
   setup(props) {
     const { t } = useTranslations()
+    const router = useRouter()
 
     const getDeliveryStats = () => {
       if (!props.deliveries?.length) return { 
@@ -70,9 +85,17 @@ export default {
       return stats
     }
 
+    const navigateToDeliveries = (params = {}) => {
+      router.push({
+        name: 'deliveries',
+        query: params
+      })
+    }
+
     return {
       t,
-      getDeliveryStats
+      getDeliveryStats,
+      navigateToDeliveries
     }
   }
 }
@@ -92,41 +115,80 @@ export default {
         </div>
       </div>
     </div>
+
     <div class="p-4">
+      <!-- Loading State -->
       <div v-if="loading" class="flex justify-center py-4">
         <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
       </div>
-      <div v-else-if="!deliveries?.length" class="text-gray-500 text-center py-4">
+
+      <!-- Error State -->
+      <div v-else-if="error" class="flex items-center gap-2 text-red-600 py-4">
+        <AlertCircle class="w-5 h-5" />
+        <span>{{ error }}</span>
+      </div>
+
+      <!-- Empty State -->
+      <div v-else-if="!deliveries.length" class="text-gray-500 text-center py-4">
         {{ t('dashboard.noDeliveries') }}
       </div>
+
+      <!-- Content -->
       <div v-else class="space-y-6">
         <!-- Key Metrics -->
-        <div class="grid grid-cols-3 gap-3">
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
           <!-- Total Pengiriman -->
-          <div class="bg-blue-50 hover:bg-blue-100 transition-colors rounded-lg p-3">
-            <div class="text-gray-600 text-2xs uppercase tracking-wide">{{ t('dashboard.deliveryStats.total') }}</div>
-            <div class="text-3xl font-heading font-semibold text-blue-600 mt-1">
-              {{ getDeliveryStats().total }}
+          <div class="bg-blue-50 rounded-lg p-3">
+            <div class="flex flex-col">
+              <div class="text-2xs text-gray-600 uppercase tracking-wide mb-1">{{ t('dashboard.deliveryStats.total') }}</div>
+              <div class="text-2xl font-heading font-semibold text-blue-600 tabular-nums leading-none mb-3">
+                {{ getDeliveryStats().total }}
+              </div>
+              <button 
+                @click="navigateToDeliveries()"
+                class="flex items-center gap-1 text-2xs font-medium text-blue-700 hover:text-blue-800 transition-colors mt-auto self-start"
+              >
+                <span>{{ t('common.viewAll') }}</span>
+                <ArrowRight class="w-3 h-3" />
+              </button>
             </div>
           </div>
           
           <!-- Tingkat Keberhasilan -->
-          <div class="bg-green-50 hover:bg-green-100 transition-colors rounded-lg p-3">
-            <div class="text-gray-600 text-2xs uppercase tracking-wide">{{ t('dashboard.deliveryStats.succesRate') }}</div>
-            <div class="grid grid-rows-2 mt-1">
-              <span class="text-2xl font-heading font-semibold text-green-600">{{ getDeliveryStats().successRate }}%</span>
-              <div class="flex items-center text-green-600 text-2xs">
-                <TrendingUp class="w-4 h-4" />
+          <div class="bg-green-50 rounded-lg p-3">
+            <div class="flex flex-col">
+              <div class="text-2xs text-gray-600 uppercase tracking-wide mb-1">{{ t('dashboard.deliveryStats.succesRate') }}</div>
+              <div class="text-2xl font-heading font-semibold text-green-600 tabular-nums leading-none mb-1">
+                {{ getDeliveryStats().successRate }}%
+              </div>
+              <div class="flex items-center text-green-600 text-2xs mb-2">
+                <TrendingUp class="w-3.5 h-3.5" />
                 <span>+5%</span>
               </div>
+              <button 
+                @click="navigateToDeliveries({ status: 'completed' })"
+                class="flex items-center gap-1 text-2xs font-medium text-green-700 hover:text-green-800 transition-colors mt-auto self-start"
+              >
+                <span>{{ t('common.details') }}</span>
+                <ArrowRight class="w-3 h-3" />
+              </button>
             </div>
           </div>
           
           <!-- Pembatalan -->
-          <div class="bg-red-50 hover:bg-red-100 transition-colors rounded-lg p-3">
-            <div class="text-gray-600 text-2xs uppercase tracking-wide">{{ t('dashboard.deliveryStats.cancelled') }}</div>
-            <div class="text-3xl font-heading font-semibold text-red-600 mt-1 text-center">
-              {{ getDeliveryStats().cancelled }}
+          <div class="bg-red-50 rounded-lg p-3">
+            <div class="flex flex-col">
+              <div class="text-2xs text-gray-600 uppercase tracking-wide mb-1">{{ t('dashboard.deliveryStats.cancelled') }}</div>
+              <div class="text-2xl font-heading font-semibold text-red-600 tabular-nums leading-none mb-3">
+                {{ getDeliveryStats().cancelled }}
+              </div>
+              <button 
+                @click="navigateToDeliveries({ status: 'cancelled' })"
+                class="flex items-center gap-1 text-2xs font-medium text-red-700 hover:text-red-800 transition-colors mt-auto self-start"
+              >
+                <span>{{ t('common.details') }}</span>
+                <ArrowRight class="w-3 h-3" />
+              </button>
             </div>
           </div>
         </div>
@@ -134,60 +196,100 @@ export default {
         <!-- Status Breakdown -->
         <div class="space-y-2">
           <div class="text-sm font-heading font-semibold text-gray-900">{{ t('dashboard.deliveryStats.deliveryStatus') }}</div>
-          <div class="space-y-1.5">
+          <div class="space-y-3">
             <!-- Completed -->
-            <div class="flex items-center gap-2">
-              <div class="flex-1 bg-gray-200 rounded-full h-2">
-                <div class="bg-green-600 h-2 rounded-full" 
-                     :style="{ width: (getDeliveryStats().completed / getDeliveryStats().total * 100) + '%' }">
+            <div 
+              class="flex items-center gap-2 p-2 hover:bg-gray-50 rounded-lg cursor-pointer transition-colors"
+              @click="navigateToDeliveries({ status: 'completed' })"
+            >
+              <div class="flex-1">
+                <div class="flex items-center justify-between mb-1.5">
+                  <div class="flex items-center gap-1.5">
+                    <span class="w-1.5 h-1.5 rounded-full bg-green-600"></span>
+                    <span class="text-xs text-gray-600 truncate">{{ t('deliveries.status.diterima - semua') }}</span>
+                  </div>
+                  <div class="flex items-center gap-1.5">
+                    <span class="text-xs font-medium tabular-nums">{{ getDeliveryStats().completed }}</span>
+                    <span class="text-2xs text-gray-500 tabular-nums">{{ Math.round(getDeliveryStats().completed / getDeliveryStats().total * 100) }}%</span>
+                  </div>
                 </div>
-              </div>
-              <div class="flex items-center gap-2">
-                <span class="w-2.5 h-2.5 rounded-full bg-green-600"></span>
-                <span class="text-sm text-gray-600">{{ t('deliveries.status.diterima - semua') }} ({{ getDeliveryStats().completed }})</span>
-                <span class="text-xs text-gray-500">{{ Math.round(getDeliveryStats().completed / getDeliveryStats().total * 100) }}%</span>
+                <div class="flex-1 bg-gray-200 rounded-full h-1.5">
+                  <div class="bg-green-600 h-1.5 rounded-full transition-all duration-300" 
+                       :style="{ width: (getDeliveryStats().completed / getDeliveryStats().total * 100) + '%' }">
+                  </div>
+                </div>
               </div>
             </div>
 
             <!-- Partial -->
-            <div class="flex items-center gap-2">
-              <div class="flex-1 bg-gray-200 rounded-full h-2">
-                <div class="bg-yellow-600 h-2 rounded-full" 
-                     :style="{ width: (getDeliveryStats().partial / getDeliveryStats().total * 100) + '%' }">
+            <div 
+              class="flex items-center gap-2 p-2 hover:bg-gray-50 rounded-lg cursor-pointer transition-colors"
+              @click="navigateToDeliveries({ status: 'partial' })"
+            >
+              <div class="flex-1">
+                <div class="flex items-center justify-between mb-1.5">
+                  <div class="flex items-center gap-1.5">
+                    <span class="w-1.5 h-1.5 rounded-full bg-yellow-600"></span>
+                    <span class="text-xs text-gray-600 truncate">{{ t('deliveries.status.diterima - sebagian') }}</span>
+                  </div>
+                  <div class="flex items-center gap-1.5">
+                    <span class="text-xs font-medium tabular-nums">{{ getDeliveryStats().partial }}</span>
+                    <span class="text-2xs text-gray-500 tabular-nums">{{ Math.round(getDeliveryStats().partial / getDeliveryStats().total * 100) }}%</span>
+                  </div>
                 </div>
-              </div>
-              <div class="flex items-center gap-2">
-                <span class="w-2.5 h-2.5 rounded-full bg-yellow-600"></span>
-                <span class="text-sm text-gray-600">{{ t('deliveries.status.diterima - sebagian') }} ({{ getDeliveryStats().partial }})</span>
-                <span class="text-xs text-gray-500">{{ Math.round(getDeliveryStats().partial / getDeliveryStats().total * 100) }}%</span>
+                <div class="flex-1 bg-gray-200 rounded-full h-1.5">
+                  <div class="bg-yellow-600 h-1.5 rounded-full transition-all duration-300" 
+                       :style="{ width: (getDeliveryStats().partial / getDeliveryStats().total * 100) + '%' }">
+                  </div>
+                </div>
               </div>
             </div>
 
             <!-- Pending (Kirim Ulang) -->
-            <div class="flex items-center gap-2">
-              <div class="flex-1 bg-gray-200 rounded-full h-2">
-                <div class="bg-blue-600 h-2 rounded-full" 
-                     :style="{ width: (getDeliveryStats().pending / getDeliveryStats().total * 100) + '%' }">
+            <div 
+              class="flex items-center gap-2 p-2 hover:bg-gray-50 rounded-lg cursor-pointer transition-colors"
+              @click="navigateToDeliveries({ status: 'pending' })"
+            >
+              <div class="flex-1">
+                <div class="flex items-center justify-between mb-1.5">
+                  <div class="flex items-center gap-1.5">
+                    <span class="w-1.5 h-1.5 rounded-full bg-blue-600"></span>
+                    <span class="text-xs text-gray-600 truncate">{{ t('deliveries.status.kirim ulang') }}</span>
+                  </div>
+                  <div class="flex items-center gap-1.5">
+                    <span class="text-xs font-medium tabular-nums">{{ getDeliveryStats().pending }}</span>
+                    <span class="text-2xs text-gray-500 tabular-nums">{{ Math.round(getDeliveryStats().pending / getDeliveryStats().total * 100) }}%</span>
+                  </div>
                 </div>
-              </div>
-              <div class="flex items-center gap-2">
-                <span class="w-2.5 h-2.5 rounded-full bg-blue-600"></span>
-                <span class="text-sm text-gray-600">{{ t('deliveries.status.kirim ulang') }} ({{ getDeliveryStats().pending }})</span>
-                <span class="text-xs text-gray-500">{{ Math.round(getDeliveryStats().pending / getDeliveryStats().total * 100) }}%</span>
+                <div class="flex-1 bg-gray-200 rounded-full h-1.5">
+                  <div class="bg-blue-600 h-1.5 rounded-full transition-all duration-300" 
+                       :style="{ width: (getDeliveryStats().pending / getDeliveryStats().total * 100) + '%' }">
+                  </div>
+                </div>
               </div>
             </div>
 
             <!-- Cancelled -->
-            <div class="flex items-center gap-2">
-              <div class="flex-1 bg-gray-200 rounded-full h-2">
-                <div class="bg-red-600 h-2 rounded-full" 
-                     :style="{ width: (getDeliveryStats().cancelled / getDeliveryStats().total * 100) + '%' }">
+            <div 
+              class="flex items-center gap-2 p-2 hover:bg-gray-50 rounded-lg cursor-pointer transition-colors"
+              @click="navigateToDeliveries({ status: 'cancelled' })"
+            >
+              <div class="flex-1">
+                <div class="flex items-center justify-between mb-1.5">
+                  <div class="flex items-center gap-1.5">
+                    <span class="w-1.5 h-1.5 rounded-full bg-red-600"></span>
+                    <span class="text-xs text-gray-600 truncate">{{ t('deliveries.status.batal') }}</span>
+                  </div>
+                  <div class="flex items-center gap-1.5">
+                    <span class="text-xs font-medium tabular-nums">{{ getDeliveryStats().cancelled }}</span>
+                    <span class="text-2xs text-gray-500 tabular-nums">{{ Math.round(getDeliveryStats().cancelled / getDeliveryStats().total * 100) }}%</span>
+                  </div>
                 </div>
-              </div>
-              <div class="flex items-center gap-2">
-                <span class="w-2.5 h-2.5 rounded-full bg-red-600"></span>
-                <span class="text-sm text-gray-600">{{ t('deliveries.status.batal') }} ({{ getDeliveryStats().cancelled }})</span>
-                <span class="text-xs text-gray-500">{{ Math.round(getDeliveryStats().cancelled / getDeliveryStats().total * 100) }}%</span>
+                <div class="flex-1 bg-gray-200 rounded-full h-1.5">
+                  <div class="bg-red-600 h-1.5 rounded-full transition-all duration-300" 
+                       :style="{ width: (getDeliveryStats().cancelled / getDeliveryStats().total * 100) + '%' }">
+                  </div>
+                </div>
               </div>
             </div>
           </div>
