@@ -139,7 +139,7 @@ export default {
         <span>{{ error }}</span>
       </div>
 
-      <div v-else class="space-y-6">
+      <div v-else class="space-y-2">
         <!-- Period Selector -->
         <div class="flex items-center gap-2 p-2 bg-gray-50 rounded-lg">
           <Calendar class="w-4 h-4 text-gray-500" />
@@ -163,7 +163,7 @@ export default {
         <!-- Selected Period Overview -->
         <div class="bg-green-50 rounded-lg p-4">
           <div class="flex flex-col">
-            <div class="text-2xs text-gray-600 uppercase tracking-wide mb-1">{{ t('expenses.total') }}</div>
+            <div class="text-sm text-gray-500 uppercase tracking-wide mb-6">{{ t('expenses.total') }}</div>
             <div class="flex items-end gap-2">
               <div class="text-3xl font-heading font-semibold text-gray-900 tabular-nums leading-none">
                 Rp {{ formatCurrency(selectedPeriodData) }}
@@ -180,22 +180,22 @@ export default {
         </div>
 
         <!-- Expenses Breakdown -->
-        <div class="space-y-3">
-          <div class="flex items-center justify-between">
+        <div class="space-y-1">
+          <div class="flex items-center justify-between mt-5">
             <div class="text-sm font-heading font-semibold text-gray-900">{{ t('expenses.breakdown') }}</div>
             <div class="text-xs text-gray-500">{{ t('expenses.total') }}: Rp {{ formatCurrency(selectedPeriodData) }}</div>
           </div>
           
           <!-- Fuel -->
-          <div class="flex items-center gap-3 p-2 hover:bg-gray-50 rounded-lg transition-colors">
+          <div class="flex items-center gap-3 p-1 hover:bg-gray-50 rounded-lg transition-colors">
             <div class="p-2 rounded-lg bg-green-100">
-              <Fuel class="w-5 h-5 text-green-600" />
+              <Fuel class="w-4 h-4 text-green-600" />
             </div>
             <div class="flex-1">
               <div class="flex flex-col mb-2">
-                <span class="text-sm font-medium text-gray-900">{{ t('expenses.categories.fuel') }}</span>
+                <span class="text-xs font-medium text-gray-900">{{ t('expenses.categories.fuel') }}</span>
                 <div class="flex items-center justify-between">
-                  <span class="text-lg font-semibold text-gray-900 tabular-nums">Rp {{ formatCurrency(getBreakdownData.fuel.amount) }}</span>
+                  <span class="text-normal font-semibold text-gray-900 tabular-nums">Rp {{ formatCurrency(getBreakdownData.fuel.amount) }}</span>
                   <span class="text-xs text-gray-500 tabular-nums">{{ getBreakdownData.fuel.percentage }}%</span>
                 </div>
               </div>
@@ -209,15 +209,15 @@ export default {
           </div>
 
           <!-- Maintenance -->
-          <div class="flex items-center gap-3 p-2 hover:bg-gray-50 rounded-lg transition-colors">
+          <div class="flex items-center gap-3 p-1 hover:bg-gray-50 rounded-lg transition-colors">
             <div class="p-2 rounded-lg bg-blue-100">
-              <Wrench class="w-5 h-5 text-blue-600" />
+              <Wrench class="w-4 h-4 text-blue-600" />
             </div>
             <div class="flex-1">
               <div class="flex flex-col mb-2">
-                <span class="text-sm font-medium text-gray-900">{{ t('expenses.categories.maintenance') }}</span>
+                <span class="text-xs font-medium text-gray-900">{{ t('expenses.categories.maintenance') }}</span>
                 <div class="flex items-center justify-between">
-                  <span class="text-lg font-semibold text-gray-900 tabular-nums">Rp {{ formatCurrency(getBreakdownData.maintenance.amount) }}</span>
+                  <span class="text-normal font-semibold text-gray-900 tabular-nums">Rp {{ formatCurrency(getBreakdownData.maintenance.amount) }}</span>
                   <span class="text-xs text-gray-500 tabular-nums">{{ getBreakdownData.maintenance.percentage }}%</span>
                 </div>
               </div>
@@ -231,15 +231,15 @@ export default {
           </div>
 
           <!-- Insurance -->
-          <div class="flex items-center gap-3 p-2 hover:bg-gray-50 rounded-lg transition-colors">
+          <div class="flex items-center gap-3 p-1 hover:bg-gray-50 rounded-lg transition-colors">
             <div class="p-2 rounded-lg bg-purple-100">
-              <Shield class="w-5 h-5 text-purple-600" />
+              <Shield class="w-4 h-4 text-purple-600" />
             </div>
             <div class="flex-1">
               <div class="flex flex-col mb-2">
-                <span class="text-sm font-medium text-gray-900">{{ t('expenses.categories.insurance') }}</span>
+                <span class="text-xs font-medium text-gray-900">{{ t('expenses.categories.insurance') }}</span>
                 <div class="flex items-center justify-between">
-                  <span class="text-lg font-semibold text-gray-900 tabular-nums">Rp {{ formatCurrency(getBreakdownData.insurance.amount) }}</span>
+                  <span class="text-normal font-semibold text-gray-900 tabular-nums">Rp {{ formatCurrency(getBreakdownData.insurance.amount) }}</span>
                   <span class="text-xs text-gray-500 tabular-nums">{{ getBreakdownData.insurance.percentage }}%</span>
                 </div>
               </div>
@@ -253,15 +253,15 @@ export default {
           </div>
 
           <!-- Others -->
-          <div class="flex items-center gap-3 p-2 hover:bg-gray-50 rounded-lg transition-colors">
+          <div class="flex items-center gap-3 p-1 hover:bg-gray-50 rounded-lg transition-colors">
             <div class="p-2 rounded-lg bg-gray-100">
-              <MoreHorizontal class="w-5 h-5 text-gray-600" />
+              <MoreHorizontal class="w-4 h-4 text-gray-600" />
             </div>
             <div class="flex-1">
               <div class="flex flex-col mb-2">
-                <span class="text-sm font-medium text-gray-900">{{ t('expenses.categories.others') }}</span>
+                <span class="text-xs font-medium text-gray-900">{{ t('expenses.categories.others') }}</span>
                 <div class="flex items-center justify-between">
-                  <span class="text-lg font-semibold text-gray-900 tabular-nums">Rp {{ formatCurrency(getBreakdownData.others.amount) }}</span>
+                  <span class="text-normal font-semibold text-gray-900 tabular-nums">Rp {{ formatCurrency(getBreakdownData.others.amount) }}</span>
                   <span class="text-xs text-gray-500 tabular-nums">{{ getBreakdownData.others.percentage }}%</span>
                 </div>
               </div>
