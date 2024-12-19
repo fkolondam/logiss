@@ -15,7 +15,9 @@ export default {
     share: 'Share',
     viewAll: 'View All',
     details: 'Details',
-    refresh: 'Refresh'
+    refresh: 'Refresh',
+    of: 'from',
+    viewAllVehicles: 'View all Vehicles'
   },
   menu: {
     home: 'Home',
@@ -30,6 +32,7 @@ export default {
     title: 'Dashboard',
     recentDeliveries: 'Recent Deliveries',
     noDeliveries: 'No deliveries found.',
+    refresh: 'Refresh Data',
     deliveryStats: {
       total: 'Total Deliveries',
       succesRate: 'Success Rate',

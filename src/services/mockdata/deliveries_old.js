@@ -165,7 +165,7 @@ export const deliveriesMockData =
     "driver": "ROHMAT",
     "helper": "DEDE",
     "vehicleNumber": "B99871SCM",
-    "date": "11/07/24",
+    "date": "12/17/24",
     "time": "10:07 AM",
     "customer": "LIEM",
     "location": "JL PANYINGKIRAN",
