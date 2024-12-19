@@ -131,12 +131,14 @@ export default {
     title: 'Vehicles',
     noVehicles: 'No vehicles found.',
     lowFuel: 'Low Fuel',
+    driver: 'Driver',
+    location: 'Location',
+    fuel: 'Fuel Level',
     types: {
       deliveryTruck: 'Delivery Truck',
       van: 'Van',
       pickup: 'Pickup'
     },
-    fuel: 'Fuel',
     status: {
       active: 'Active',
       maintenance: 'Maintenance',
@@ -144,9 +146,17 @@ export default {
     },
     stats: {
       total: 'Total Vehicles',
-      active: 'Active',
+      totalVehicles: 'Total Fleet',
+      active: 'Active Vehicles',
+      activeVehicles: 'In Operation',
       maintenance: 'In Maintenance',
-      lowFuel: 'Low Fuel'
+      maintenanceVehicles: 'Under Service',
+      lowFuel: 'Low Fuel',
+      lowFuelVehicles: 'Need Refuel'
+    },
+    list: {
+      title: 'Vehicle List',
+      showing: 'Showing'
     }
   },
   debug: {

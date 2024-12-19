@@ -145,12 +145,14 @@ export default {
     title: 'Kendaraan',
     noVehicles: 'Tidak ada kendaraan.',
     lowFuel: 'Bahan Bakar Rendah',
+    driver: 'Pengemudi',
+    location: 'Lokasi',
+    fuel: 'Level Bahan Bakar',
     types: {
       deliveryTruck: 'Truk Pengiriman',
       van: 'Van',
       pickup: 'Pickup'
     },
-    fuel: 'Bahan Bakar',
     status: {
       active: 'Aktif',
       maintenance: 'Pemeliharaan',
@@ -158,9 +160,13 @@ export default {
     },
     stats: {
       total: 'Total Kendaraan',
-      active: 'Aktif',
-      maintenance: 'Pemeliharaan',
-      lowFuel: 'Bahan Bakar Rendah'
+      totalVehicles: 'Total Armada',
+      active: 'Kendaraan Aktif',
+      activeVehicles: 'Sedang Beroperasi',
+      maintenance: 'Dalam Pemeliharaan',
+      maintenanceVehicles: 'Sedang Servis',
+      lowFuel: 'Bahan Bakar Rendah',
+      lowFuelVehicles: 'Perlu Isi Ulang'
     },
     list: {
       title: 'Daftar Kendaraan',
