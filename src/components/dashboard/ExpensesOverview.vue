@@ -3,6 +3,8 @@ import { computed } from 'vue'
 import { Receipt, Fuel, Wrench, Shield, MoreHorizontal, AlertCircle, Calendar, TrendingUp, TrendingDown, ArrowRight } from 'lucide-vue-next'
 import { useTranslations } from '../../composables/useTranslations'
 
+const { t, currentLanguage } = useTranslations()
+
 const props = defineProps({
   expenses: {
     type: Object,
@@ -27,7 +29,6 @@ const props = defineProps({
 })
 
 const emit = defineEmits(['update:modelValue'])
-const { t } = useTranslations()
     
 
 const selectedPeriod = computed({
@@ -40,13 +41,14 @@ const formatCurrency = (value) => {
   return value.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".")
 }
 
-// Since we're getting total stats for the selected period directly,
-// we don't need values in the period selector
-const periods = [
-  { id: 'today', label: t('expenses.periods.Today') },
-  { id: 'week', label: t('expenses.periods.ThisWeek') },
-  { id: 'month', label: t('expenses.periods.ThisMonth') }
-]
+// Period selector
+const periods = computed(() => {
+  return [
+    { id: 'today', label: t('expenses.periods.today') },
+    { id: 'week', label: t('expenses.periods.thisWeek') },
+    { id: 'month', label: t('expenses.periods.thisMonth') }
+  ]
+})
 
 const getTrendIndicator = (current, previous) => {
   if (!current || !previous) return { trend: 0, color: 'text-gray-500' }
@@ -169,7 +171,7 @@ const getBreakdownData = computed(() => {
         </div>
 
         <!-- Expenses Breakdown -->
-        <div class="space-y-1">
+        <div class="space-y-4">
           <div class="flex items-center justify-between mt-5">
             <div class="text-sm font-heading font-semibold text-gray-900">{{ t('expenses.breakdown') }}</div>
             <div class="text-xs text-gray-500">{{ t('expenses.total') }}: Rp {{ formatCurrency(selectedPeriodData) }}</div>

@@ -12,7 +12,10 @@ export default {
     viewDetails: 'View Details',
     back: 'Back',
     openInNewTab: 'Open in new tab',
-    share: 'Share'
+    share: 'Share',
+    viewAll: 'View All',
+    details: 'Details',
+    refresh: 'Refresh'
   },
   menu: {
     home: 'Home',
@@ -103,12 +106,13 @@ export default {
   },
   expenses: {
     title: 'Expenses',
+    total: 'Total',
     periods: {
-      Month: 'Monthly',
-      Week: 'Weekly',
-      Today: 'Today',
-      ThisMonth: 'This Month',
-      ThisWeek: 'This Week'
+      month: 'Monthly',
+      week: 'Weekly',
+      today: 'Today',
+      thisMonth: 'This Month',
+      thisWeek: 'This Week'
     },
     breakdown: 'Expense Breakdown',
     categories: {
@@ -125,6 +129,8 @@ export default {
   },
   vehicles: {
     title: 'Vehicles',
+    noVehicles: 'No vehicles found.',
+    lowFuel: 'Low Fuel',
     types: {
       deliveryTruck: 'Delivery Truck',
       van: 'Van',
@@ -135,6 +141,12 @@ export default {
       active: 'Active',
       maintenance: 'Maintenance',
       inactive: 'Inactive'
+    },
+    stats: {
+      total: 'Total Vehicles',
+      active: 'Active',
+      maintenance: 'In Maintenance',
+      lowFuel: 'Low Fuel'
     }
   },
   debug: {

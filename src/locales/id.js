@@ -12,7 +12,12 @@ export default {
     viewDetails: 'Lihat Detail',
     back: 'Kembali',
     openInNewTab: 'Buka di tab baru',
-    share: 'Bagikan'
+    share: 'Bagikan',
+    viewAll: 'Lihat Semua',
+    details: 'Detail',
+    refresh: 'Segarkan',
+    of: 'dari',
+    viewAllVehicles: 'Lihat Semua Kendaraan'
   },
   menu: {
     home: 'Beranda',
@@ -27,13 +32,15 @@ export default {
     title: 'Dashboard',
     recentDeliveries: 'Pengiriman Terkini',
     noDeliveries: 'Tidak ada pengiriman.',
+    refresh: 'Segarkan Data',
     deliveryStats: {
       total: 'Total Pengiriman',
       succesRate: 'Tingkat Keberhasilan',
       completed: 'Selesai',
       pending: 'Dalam Proses',
       cancelled: 'Dibatalkan',
-      deliveryStatus: 'Status Pengiriman'
+      deliveryStatus: 'Status Pengiriman',
+      todayDeliveries: 'Pengiriman Hari Ini'
     }
   },
   deliveries: {
@@ -113,12 +120,13 @@ export default {
   },
   expenses: {
     title: 'Pengeluaran',
+    total: 'Total',
     periods: {
-      Month: 'Bulanan',
-      Week: 'Mingguan',
-      Today: 'Hari Ini',
-      ThisMonth: 'Bulan Ini',
-      ThisWeek: 'Minggu Ini'
+      month: 'Bulanan',
+      week: 'Mingguan',
+      today: 'Hari Ini',
+      thisMonth: 'Bulan Ini',
+      thisWeek: 'Minggu Ini'
     },
     breakdown: 'Rincian Pengeluaran',
     categories: {
@@ -135,6 +143,8 @@ export default {
   },
   vehicles: {
     title: 'Kendaraan',
+    noVehicles: 'Tidak ada kendaraan.',
+    lowFuel: 'Bahan Bakar Rendah',
     types: {
       deliveryTruck: 'Truk Pengiriman',
       van: 'Van',
@@ -145,6 +155,16 @@ export default {
       active: 'Aktif',
       maintenance: 'Pemeliharaan',
       inactive: 'Tidak Aktif'
+    },
+    stats: {
+      total: 'Total Kendaraan',
+      active: 'Aktif',
+      maintenance: 'Pemeliharaan',
+      lowFuel: 'Bahan Bakar Rendah'
+    },
+    list: {
+      title: 'Daftar Kendaraan',
+      showing: 'Menampilkan'
     }
   },
   debug: {
