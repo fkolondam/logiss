@@ -149,13 +149,13 @@ export default {
               </div>
               
               <!-- Row 4: Link -->
-              <div class="flex items-end justify-end w-full">
+              <div class="flex items-end w-full">
                 <button 
                   @click="navigateToVehicle()"
-                  class="flex items-center gap-1 text-xs font-medium text-purple-700 hover:text-purple-800 transition-colors truncate max-w-full px-2"
+                  class="flex items-center gap-1 text-xs font-medium text-purple-700 hover:text-purple-800 transition-colors"
                 >
-                  <span class="truncate">{{ t('common.viewAll') }}</span>
-                  <ArrowRight class="w-3.5 h-3.5 flex-shrink-0" />
+                  <span>{{ t('common.viewDetails') }}</span>
+                  <ArrowRight class="w-3.5 h-3.5" />
                 </button>
               </div>
             </div>
@@ -262,9 +262,9 @@ export default {
         </div>
 
         <!-- Vehicle List Section -->
-        <div class="space-y-3">
+        <div>
           <!-- Section Header -->
-          <div class="flex items-center justify-between">
+          <div class="flex items-center justify-between mb-3">
             <div class="flex items-center gap-2">
               <h3 class="text-sm font-heading font-semibold text-gray-900">{{ t('vehicles.list.title') }}</h3>
               <span class="text-xs text-gray-500">{{ t('vehicles.list.showing') }} {{ Math.min(vehicles.length, 5) }} {{ t('common.of') }} {{ vehicles.length }}</span>
@@ -272,7 +272,7 @@ export default {
           </div>
 
           <!-- Vehicle Cards -->
-          <div class="grid gap-3">
+          <div class="grid gap-3 w-full">
             <div 
               v-for="vehicle in vehicles.slice(0, 5)" 
               :key="vehicle.id"
@@ -283,7 +283,7 @@ export default {
               <div class="flex items-start justify-between gap-3 mb-2">
                 <div class="flex-1 min-w-0">
                   <div class="flex items-center gap-2">
-                    <h3 class="text-sm font-heading font-semibold text-gray-900 truncate">{{ vehicle.name }}</h3>
+                    <h3 class="text-sm font-heading font-semibold text-gray-900 truncate">{{ vehicle.plateNumber }}</h3>
                     <!-- Status Badge -->
                     <span 
                       :class="[
@@ -318,8 +318,7 @@ export default {
                     <User class="w-4 h-4 text-gray-600" />
                   </div>
                   <div class="min-w-0">
-                    <div class="text-2xs text-gray-500">{{ t('vehicles.driver') }}</div>
-                    <div class="text-xs font-medium text-gray-900 truncate">{{ vehicle.driver }}</div>
+                    <div class="text-xs font-medium text-gray-900 truncate">{{ vehicle.assignedDriver?.name }}</div>
                   </div>
                 </div>
                 <!-- Location -->
@@ -328,8 +327,7 @@ export default {
                     <MapPin class="w-4 h-4 text-gray-600" />
                   </div>
                   <div class="min-w-0">
-                    <div class="text-2xs text-gray-500">{{ t('vehicles.location') }}</div>
-                    <div class="text-xs font-medium text-gray-900 truncate">{{ vehicle.location }}</div>
+                    <div class="text-xs font-medium text-gray-900 truncate">{{ vehicle.currentLocation?.address }}</div>
                   </div>
                 </div>
               </div>
