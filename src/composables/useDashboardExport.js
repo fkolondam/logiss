@@ -1,4 +1,5 @@
 import { saveAs } from 'file-saver'
+import ExcelJS from 'exceljs'
 import { format } from 'date-fns'
 import { id } from 'date-fns/locale'
 
@@ -33,34 +34,48 @@ export const useDashboardExport = () => {
 
   // Export data as Excel
   const exportExcel = async (data, headers, filename) => {
-    try {
-      const XLSX = await import('xlsx')
-      
-      // Convert data to worksheet format
-      const ws_data = [
-        headers.map(h => h.label),
-        ...data.map(item =>
-          headers.map(header => {
-            let value = header.getter ? header.getter(item) : item[header.key]
-            if (value instanceof Date) {
-              value = format(value, 'dd/MM/yyyy HH:mm', { locale: id })
-            }
-            return value
-          })
-        )
-      ]
+    const workbook = new ExcelJS.Workbook()
+    const worksheet = workbook.addWorksheet('Data')
 
-      const ws = XLSX.utils.aoa_to_sheet(ws_data)
-      const wb = XLSX.utils.book_new()
-      XLSX.utils.book_append_sheet(wb, ws, 'Data')
-      
-      // Generate Excel file
-      XLSX.writeFile(wb, `${filename}_${format(new Date(), 'yyyyMMdd_HHmm')}.xlsx`)
-    } catch (error) {
-      console.error('Error exporting to Excel:', error)
-      // Fallback to CSV if Excel export fails
-      exportCSV(data, headers, filename)
+    // Add headers
+    worksheet.addRow(headers.map(h => h.label))
+
+    // Add data
+    data.forEach(item => {
+      const row = headers.map(header => {
+        let value = header.getter ? header.getter(item) : item[header.key]
+        if (value instanceof Date) {
+          value = format(value, 'dd/MM/yyyy HH:mm', { locale: id })
+        }
+        return value
+      })
+      worksheet.addRow(row)
+    })
+
+    // Style headers
+    const headerRow = worksheet.getRow(1)
+    headerRow.font = { bold: true }
+    headerRow.fill = {
+      type: 'pattern',
+      pattern: 'solid',
+      fgColor: { argb: 'FFE6E6E6' }
     }
+
+    // Auto-fit columns
+    worksheet.columns.forEach(column => {
+      column.width = Math.max(
+        15,
+        ...worksheet.getColumn(column.number).values
+          .map(v => String(v || '').length)
+      )
+    })
+
+    // Generate Excel file
+    const buffer = await workbook.xlsx.writeBuffer()
+    const blob = new Blob([buffer], { 
+      type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' 
+    })
+    saveAs(blob, `${filename}_${format(new Date(), 'yyyyMMdd_HHmm')}.xlsx`)
   }
 
   // Export delivery data

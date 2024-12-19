@@ -75,49 +75,6 @@ export const useDashboardData = () => {
     }, {})
   }
 
-  // Calculate statistics
-  const calculateStats = (data, options = {}) => {
-    const {
-      valueField = 'amount',
-      categoryField = 'category',
-      dateField = 'date',
-      period = 'today'
-    } = options
-
-    if (!data?.length) return {
-      total: 0,
-      average: 0,
-      categories: {},
-      trend: 0
-    }
-
-    const filteredData = filterByPeriod(data, dateField, period)
-    const total = filteredData.reduce((sum, item) => sum + (item[valueField] || 0), 0)
-    const average = total / filteredData.length || 0
-    
-    const categories = filteredData.reduce((acc, item) => {
-      const category = item[categoryField]
-      acc[category] = (acc[category] || 0) + (item[valueField] || 0)
-      return acc
-    }, {})
-
-    // Calculate trend
-    const previousPeriodData = filterByPeriod(
-      data,
-      dateField,
-      period === 'today' ? 'yesterday' : period === 'week' ? 'lastWeek' : 'lastMonth'
-    )
-    const previousTotal = previousPeriodData.reduce((sum, item) => sum + (item[valueField] || 0), 0)
-    const trend = calculateTrend(total, previousTotal)
-
-    return {
-      total,
-      average,
-      categories,
-      trend
-    }
-  }
-
   return {
     formatCurrency,
     formatPercentage,
@@ -125,7 +82,6 @@ export const useDashboardData = () => {
     getDateRange,
     filterByPeriod,
     calculateTrend,
-    groupBy,
-    calculateStats
+    groupBy
   }
 }
