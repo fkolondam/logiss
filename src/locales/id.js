@@ -17,7 +17,13 @@ export default {
     details: 'Detail',
     refresh: 'Segarkan',
     of: 'dari',
-    viewAllVehicles: 'Lihat Semua Kendaraan'
+    viewAllVehicles: 'Lihat Semua Kendaraan',
+    filters: 'Filter',
+    search: 'Cari',
+    justNow: 'Baru saja',
+    minutesAgo: '{minutes} menit yang lalu',
+    hoursAgo: '{hours} jam yang lalu',
+    daysAgo: '{days} hari yang lalu'
   },
   menu: {
     home: 'Beranda',
@@ -42,6 +48,36 @@ export default {
       deliveryStatus: 'Status Pengiriman',
       todayDeliveries: 'Pengiriman Hari Ini'
     }
+  },
+  notifications: {
+    title: 'Notifikasi',
+    empty: 'Tidak ada notifikasi',
+    markAllRead: 'Tandai Semua Sudah Dibaca',
+    new: 'Baru'
+  },
+  quickActions: {
+    title: 'Aksi Cepat',
+    newDelivery: 'Pengiriman Baru',
+    viewReports: 'Lihat Laporan',
+    checkVehicles: 'Cek Kendaraan'
+  },
+  export: {
+    title: 'Export Data',
+    deliveries: 'Export Pengiriman',
+    expenses: 'Export Pengeluaran',
+    vehicles: 'Export Kendaraan'
+  },
+  errors: {
+    fetchDashboard: 'Gagal memuat data dashboard',
+    fetchDeliveries: 'Gagal memuat data pengiriman',
+    fetchExpenses: 'Gagal memuat data pengeluaran',
+    fetchVehicles: 'Gagal memuat data kendaraan',
+    unauthorized: 'Sesi anda telah berakhir',
+    forbidden: 'Anda tidak memiliki akses',
+    notFound: 'Data tidak ditemukan',
+    serverError: 'Terjadi kesalahan pada server',
+    network: 'Gagal terhubung ke server',
+    unknown: 'Terjadi kesalahan'
   },
   deliveries: {
     title: 'Pengiriman',

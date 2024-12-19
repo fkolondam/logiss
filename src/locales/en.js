@@ -7,7 +7,7 @@ export default {
   common: {
     close: 'Close',
     loading: 'Loading...',
-    error: 'Error occurred',
+    error: 'An error occurred',
     success: 'Success',
     viewDetails: 'View Details',
     back: 'Back',
@@ -16,8 +16,14 @@ export default {
     viewAll: 'View All',
     details: 'Details',
     refresh: 'Refresh',
-    of: 'from',
-    viewAllVehicles: 'View all Vehicles'
+    of: 'of',
+    viewAllVehicles: 'View All Vehicles',
+    filters: 'Filters',
+    search: 'Search',
+    justNow: 'Just now',
+    minutesAgo: '{minutes} minutes ago',
+    hoursAgo: '{hours} hours ago',
+    daysAgo: '{days} days ago'
   },
   menu: {
     home: 'Home',
@@ -31,16 +37,47 @@ export default {
   dashboard: {
     title: 'Dashboard',
     recentDeliveries: 'Recent Deliveries',
-    noDeliveries: 'No deliveries found.',
+    noDeliveries: 'No deliveries.',
     refresh: 'Refresh Data',
     deliveryStats: {
       total: 'Total Deliveries',
       succesRate: 'Success Rate',
       completed: 'Completed',
-      pending: 'Pending',
+      pending: 'In Progress',
       cancelled: 'Cancelled',
-      deliveryStatus: 'Delivery Status'
+      deliveryStatus: 'Delivery Status',
+      todayDeliveries: 'Today\'s Deliveries'
     }
+  },
+  notifications: {
+    title: 'Notifications',
+    empty: 'No notifications',
+    markAllRead: 'Mark All as Read',
+    new: 'New'
+  },
+  quickActions: {
+    title: 'Quick Actions',
+    newDelivery: 'New Delivery',
+    viewReports: 'View Reports',
+    checkVehicles: 'Check Vehicles'
+  },
+  export: {
+    title: 'Export Data',
+    deliveries: 'Export Deliveries',
+    expenses: 'Export Expenses',
+    vehicles: 'Export Vehicles'
+  },
+  errors: {
+    fetchDashboard: 'Failed to load dashboard data',
+    fetchDeliveries: 'Failed to load delivery data',
+    fetchExpenses: 'Failed to load expense data',
+    fetchVehicles: 'Failed to load vehicle data',
+    unauthorized: 'Your session has expired',
+    forbidden: 'You do not have access',
+    notFound: 'Data not found',
+    serverError: 'Server error occurred',
+    network: 'Failed to connect to server',
+    unknown: 'An error occurred'
   },
   deliveries: {
     title: 'Deliveries',
@@ -53,18 +90,18 @@ export default {
     allPayments: 'All Payments',
     resetFilters: 'Reset Filters',
     viewDetails: 'View Details',
-    noDeliveries: 'No Deliveries Found',
-    noDeliveriesDesc: 'There are no deliveries to display at the moment.',
+    noDeliveries: 'No Deliveries',
+    noDeliveriesDesc: 'No deliveries to display at this time.',
     tooltips: {
       search: 'Search deliveries by invoice, customer, or location',
       filter: 'Filter deliveries by status or date',
       status: {
-        delivered: 'Delivery completed successfully',
-        partial: 'Delivery partially completed',
-        cancelled: 'Delivery was cancelled'
+        delivered: 'Delivery completed',
+        partial: 'Partial delivery',
+        cancelled: 'Delivery cancelled'
       }
     },
-    noProofAvailable: 'No proof image available',
+    noProofAvailable: 'No delivery proof available',
     paymentMethod: {
       cash: 'Cash',
       kredit: 'Credit'
@@ -79,13 +116,23 @@ export default {
       status: 'Status',
       driver: 'Driver',
       licensePlate: 'License Plate',
+      shipment: 'Shipment',
       paymentMethod: 'Payment Method',
       details: 'Details',
       actions: 'Actions'
     },
+    pagination: {
+      showing: 'Showing',
+      to: 'to',
+      of: 'of',
+      items: 'items',
+      loadMore: 'Load More',
+      page: 'Page',
+      perPage: 'Per Page'
+    },
     status: {
-      'diterima - semua': 'Delivered',
-      'diterima - sebagian': 'Partially Delivered',
+      'diterima - semua': 'Received - All',
+      'diterima - sebagian': 'Received - Partial',
       'batal': 'Cancelled',
       'batal - toko tutup': 'Cancelled - Store Closed',
       'batal - toko tidak dapat diakses': 'Cancelled - Store Inaccessible',
@@ -99,9 +146,9 @@ export default {
       proof: 'Proof'
     },
     stats: {
-      todayDeliveries: 'Today Deliveries',
+      todayDeliveries: 'Today\'s Deliveries',
       completionRate: 'Completion Rate',
-      thisWeek: 'This Week', 
+      thisWeek: 'This Week',
       fromLastWeek: 'from last week',
       thisMonth: 'This Month',
       monthlyTarget: 'Monthly Target'
@@ -132,7 +179,7 @@ export default {
   },
   vehicles: {
     title: 'Vehicles',
-    noVehicles: 'No vehicles found.',
+    noVehicles: 'No vehicles.',
     lowFuel: 'Low Fuel',
     driver: 'Driver',
     location: 'Location',
@@ -151,11 +198,11 @@ export default {
       total: 'Total Vehicles',
       totalVehicles: 'Total Fleet',
       active: 'Active Vehicles',
-      activeVehicles: 'In Operation',
+      activeVehicles: 'Currently Operating',
       maintenance: 'In Maintenance',
       maintenanceVehicles: 'Under Service',
       lowFuel: 'Low Fuel',
-      lowFuelVehicles: 'Need Refuel'
+      lowFuelVehicles: 'Need Refueling'
     },
     list: {
       title: 'Vehicle List',
@@ -165,9 +212,9 @@ export default {
   debug: {
     title: 'Debug Tools',
     dataSourceControl: 'Data Source Control',
-    deliveriesTest: 'Deliveries Data Test',
-    expensesTest: 'Expenses Data Test',
-    vehiclesTest: 'Vehicles Data Test',
+    deliveriesTest: 'Test Deliveries Data',
+    expensesTest: 'Test Expenses Data',
+    vehiclesTest: 'Test Vehicles Data',
     recordsFound: 'Found {count} records',
     loading: 'Loading...',
     error: 'Error: {message}'
