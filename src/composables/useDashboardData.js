@@ -1,87 +1,129 @@
-import { computed } from 'vue'
-import { format, isToday, isThisWeek, isThisMonth, subDays } from 'date-fns'
-import { id } from 'date-fns/locale'
+import { ref, computed } from 'vue'
+import { startOfDay, endOfDay, startOfWeek, endOfWeek, startOfMonth, endOfMonth } from 'date-fns'
 
-export const useDashboardData = () => {
-  // Format currency with IDR
-  const formatCurrency = (value) => {
-    if (!value) return 'Rp 0'
-    return 'Rp ' + value.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".")
+export function useDashboardData() {
+  // Period options
+  const PERIODS = {
+    TODAY: 'today',
+    THIS_WEEK: 'this_week',
+    THIS_MONTH: 'this_month',
+    CUSTOM: 'custom'
   }
 
-  // Format percentage
-  const formatPercentage = (value, decimals = 0) => {
-    if (typeof value !== 'number') return '0%'
-    return value.toFixed(decimals) + '%'
-  }
-
-  // Format date
-  const formatDate = (date, formatStr = 'dd MMM yyyy') => {
-    if (!date) return ''
-    return format(new Date(date), formatStr, { locale: id })
-  }
-
-  // Get date range for period
+  // Get date range based on period
   const getDateRange = (period) => {
-    const today = new Date()
-    today.setHours(0, 0, 0, 0)
-
+    const now = new Date()
+    
     switch (period) {
-      case 'today':
-        return { start: today, end: new Date() }
-      case 'week':
-        return { start: subDays(today, 7), end: new Date() }
-      case 'month':
-        return { start: subDays(today, 30), end: new Date() }
+      case PERIODS.TODAY:
+        return {
+          start: startOfDay(now),
+          end: endOfDay(now)
+        }
+      case PERIODS.THIS_WEEK:
+        return {
+          start: startOfWeek(now),
+          end: endOfWeek(now)
+        }
+      case PERIODS.THIS_MONTH:
+        return {
+          start: startOfMonth(now),
+          end: endOfMonth(now)
+        }
+      case PERIODS.CUSTOM:
+        // Custom date range should be provided separately
+        return null
       default:
-        return { start: today, end: new Date() }
+        return {
+          start: startOfDay(now),
+          end: endOfDay(now)
+        }
     }
   }
 
   // Filter data by period
-  const filterByPeriod = (data, dateField, period) => {
-    if (!data?.length) return []
-    
+  const filterByPeriod = (data, period, dateField = 'date') => {
+    if (!data || !period) return data
+
+    const range = getDateRange(period)
+    if (!range) return data
+
     return data.filter(item => {
       const itemDate = new Date(item[dateField])
-      switch (period) {
-        case 'today':
-          return isToday(itemDate)
-        case 'week':
-          return isThisWeek(itemDate)
-        case 'month':
-          return isThisMonth(itemDate)
-        default:
-          return true
-      }
+      return itemDate >= range.start && itemDate <= range.end
     })
   }
 
-  // Calculate trend percentage
-  const calculateTrend = (current, previous) => {
-    if (!previous) return 0
-    return ((current - previous) / previous) * 100
+  // Filter data by search term
+  const filterBySearch = (data, searchTerm, fields = ['id', 'name', 'description']) => {
+    if (!data || !searchTerm) return data
+
+    const term = searchTerm.toLowerCase()
+    return data.filter(item => 
+      fields.some(field => 
+        item[field] && item[field].toString().toLowerCase().includes(term)
+      )
+    )
+  }
+
+  // Sort data
+  const sortData = (data, { field, direction = 'asc' }) => {
+    if (!data || !field) return data
+
+    return [...data].sort((a, b) => {
+      const aVal = a[field]
+      const bVal = b[field]
+
+      if (typeof aVal === 'string') {
+        return direction === 'asc' 
+          ? aVal.localeCompare(bVal)
+          : bVal.localeCompare(aVal)
+      }
+
+      return direction === 'asc' 
+        ? aVal - bVal
+        : bVal - aVal
+    })
   }
 
   // Group data by field
   const groupBy = (data, field) => {
-    if (!data?.length) return {}
-    
+    if (!data || !field) return {}
+
     return data.reduce((acc, item) => {
       const key = item[field]
-      if (!acc[key]) acc[key] = []
+      if (!acc[key]) {
+        acc[key] = []
+      }
       acc[key].push(item)
       return acc
     }, {})
   }
 
+  // Calculate statistics
+  const calculateStats = (data, field) => {
+    if (!data || !field) return null
+
+    const values = data.map(item => Number(item[field])).filter(val => !isNaN(val))
+    
+    if (!values.length) return null
+
+    return {
+      total: values.reduce((sum, val) => sum + val, 0),
+      average: values.reduce((sum, val) => sum + val, 0) / values.length,
+      min: Math.min(...values),
+      max: Math.max(...values),
+      count: values.length
+    }
+  }
+
   return {
-    formatCurrency,
-    formatPercentage,
-    formatDate,
+    PERIODS,
     getDateRange,
     filterByPeriod,
-    calculateTrend,
-    groupBy
+    filterBySearch,
+    sortData,
+    groupBy,
+    calculateStats
   }
 }

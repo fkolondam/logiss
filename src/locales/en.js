@@ -2,7 +2,7 @@ export default {
   app: {
     title: 'Fleet Management',
     loading: 'Loading...',
-    error: 'Error'
+    error: 'Error',
   },
   common: {
     close: 'Close',
@@ -23,7 +23,9 @@ export default {
     justNow: 'Just now',
     minutesAgo: '{minutes} minutes ago',
     hoursAgo: '{hours} hours ago',
-    daysAgo: '{days} days ago'
+    daysAgo: '{days} days ago',
+    today: 'Today',
+    yesterday: 'Yesterday',
   },
   menu: {
     home: 'Home',
@@ -32,7 +34,7 @@ export default {
     vehicles: 'Vehicles',
     profile: 'Profile',
     logout: 'Logout',
-    debug: 'Debug Tools'
+    debug: 'Debug Tools',
   },
   dashboard: {
     title: 'Dashboard',
@@ -46,26 +48,26 @@ export default {
       pending: 'In Progress',
       cancelled: 'Cancelled',
       deliveryStatus: 'Delivery Status',
-      todayDeliveries: 'Today\'s Deliveries'
-    }
+      todayDeliveries: "Today's Deliveries",
+    },
   },
   notifications: {
     title: 'Notifications',
     empty: 'No notifications',
     markAllRead: 'Mark All as Read',
-    new: 'New'
+    new: 'New',
   },
   quickActions: {
     title: 'Quick Actions',
     newDelivery: 'New Delivery',
     viewReports: 'View Reports',
-    checkVehicles: 'Check Vehicles'
+    checkVehicles: 'Check Vehicles',
   },
   export: {
     title: 'Export Data',
     deliveries: 'Export Deliveries',
     expenses: 'Export Expenses',
-    vehicles: 'Export Vehicles'
+    vehicles: 'Export Vehicles',
   },
   errors: {
     fetchDashboard: 'Failed to load dashboard data',
@@ -77,7 +79,7 @@ export default {
     notFound: 'Data not found',
     serverError: 'Server error occurred',
     network: 'Failed to connect to server',
-    unknown: 'An error occurred'
+    unknown: 'An error occurred',
   },
   deliveries: {
     title: 'Deliveries',
@@ -98,13 +100,13 @@ export default {
       status: {
         delivered: 'Delivery completed',
         partial: 'Partial delivery',
-        cancelled: 'Delivery cancelled'
-      }
+        cancelled: 'Delivery cancelled',
+      },
     },
     noProofAvailable: 'No delivery proof available',
     paymentMethod: {
       cash: 'Cash',
-      kredit: 'Credit'
+      kredit: 'Credit',
     },
     table: {
       invoice: 'Invoice',
@@ -119,7 +121,7 @@ export default {
       shipment: 'Shipment',
       paymentMethod: 'Payment Method',
       details: 'Details',
-      actions: 'Actions'
+      actions: 'Actions',
     },
     pagination: {
       showing: 'Showing',
@@ -128,31 +130,31 @@ export default {
       items: 'items',
       loadMore: 'Load More',
       page: 'Page',
-      perPage: 'Per Page'
+      perPage: 'Per Page',
     },
     status: {
       'diterima - semua': 'Received - All',
       'diterima - sebagian': 'Received - Partial',
-      'batal': 'Cancelled',
+      batal: 'Cancelled',
       'batal - toko tutup': 'Cancelled - Store Closed',
       'batal - toko tidak dapat diakses': 'Cancelled - Store Inaccessible',
       'batal - tidak ada uang': 'Cancelled - No Payment',
       'batal - salah order': 'Cancelled - Wrong Order',
-      'kirim ulang': 'Resend'
+      'kirim ulang': 'Resend',
     },
     tabs: {
       delivery: 'Delivery',
       customer: 'Customer',
-      proof: 'Proof'
+      proof: 'Proof',
     },
     stats: {
-      todayDeliveries: 'Today\'s Deliveries',
+      todayDeliveries: "Today's Deliveries",
       completionRate: 'Completion Rate',
       thisWeek: 'This Week',
       fromLastWeek: 'from last week',
       thisMonth: 'This Month',
-      monthlyTarget: 'Monthly Target'
-    }
+      monthlyTarget: 'Monthly Target',
+    },
   },
   expenses: {
     title: 'Expenses',
@@ -162,20 +164,20 @@ export default {
       week: 'Weekly',
       today: 'Today',
       thisMonth: 'This Month',
-      thisWeek: 'This Week'
+      thisWeek: 'This Week',
     },
     breakdown: 'Expense Breakdown',
     categories: {
       fuel: 'Fuel',
       maintenance: 'Maintenance',
       insurance: 'Insurance',
-      others: 'Others'
+      others: 'Others',
     },
     stats: {
       total: 'Total Expenses',
       approved: 'Approved',
-      pending: 'Pending'
-    }
+      pending: 'Pending',
+    },
   },
   vehicles: {
     title: 'Vehicles',
@@ -187,27 +189,30 @@ export default {
     types: {
       deliveryTruck: 'Delivery Truck',
       van: 'Van',
-      pickup: 'Pickup'
+      pickup: 'Pickup',
     },
     status: {
+      AVAILABLE: 'Available',
+      IN_USE: 'In Use',
+      OUT_OF_SERVICE: 'Out of Service',
       active: 'Active',
       maintenance: 'Maintenance',
-      inactive: 'Inactive'
+      inactive: 'Inactive',
     },
     stats: {
       total: 'Total Vehicles',
       totalVehicles: 'Total Fleet',
-      active: 'Active Vehicles',
-      activeVehicles: 'Currently Operating',
-      maintenance: 'In Maintenance',
-      maintenanceVehicles: 'Under Service',
+      active: 'Available Vehicles',
+      activeVehicles: 'Ready to Use',
+      maintenance: 'Maintenance',
+      maintenanceVehicles: 'Under Services',
       lowFuel: 'Low Fuel',
-      lowFuelVehicles: 'Need Refueling'
+      lowFuelVehicles: 'Need Refueling',
     },
     list: {
       title: 'Vehicle List',
-      showing: 'Showing'
-    }
+      showing: 'Showing',
+    },
   },
   debug: {
     title: 'Debug Tools',
@@ -217,11 +222,11 @@ export default {
     vehiclesTest: 'Test Vehicles Data',
     recordsFound: 'Found {count} records',
     loading: 'Loading...',
-    error: 'Error: {message}'
+    error: 'Error: {message}',
   },
   dataSources: {
     mock: 'Mock Data',
     mysql: 'MySQL',
-    google_sheets: 'Google Sheets'
-  }
+    google_sheets: 'Google Sheets',
+  },
 }

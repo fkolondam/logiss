@@ -1,5 +1,5 @@
 <script setup>
-import { ref } from 'vue'
+import { ref, onMounted, onUnmounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { 
   Plus,
@@ -104,6 +104,7 @@ onUnmounted(() => {
     <button
       class="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-gray-700 bg-white rounded-lg border hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
       @click="showActions = !showActions"
+      data-testid="quick-actions-button"
     >
       <Plus class="w-4 h-4" />
       {{ t('quickActions.title') }}
@@ -114,6 +115,7 @@ onUnmounted(() => {
     <div
       v-if="showActions"
       class="absolute right-0 mt-2 w-56 bg-white rounded-lg shadow-lg ring-1 ring-black ring-opacity-5 z-40"
+      data-testid="quick-actions-menu"
     >
       <div class="py-1">
         <!-- Quick Actions -->
@@ -122,6 +124,7 @@ onUnmounted(() => {
           :key="action.id"
           class="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 flex items-center gap-2"
           @click="handleActionClick(action)"
+          :data-testid="action.id"
         >
           <div :class="['p-1 rounded-lg', action.bg]">
             <component :is="action.icon" class="w-4 h-4" :class="action.color" />
@@ -136,6 +139,7 @@ onUnmounted(() => {
         <button
           class="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 flex items-center justify-between"
           @click="showExportMenu = !showExportMenu"
+          data-testid="export-button"
         >
           <div class="flex items-center gap-2">
             <div class="p-1 rounded-lg bg-gray-50">
@@ -150,12 +154,17 @@ onUnmounted(() => {
         </button>
 
         <!-- Export Submenu -->
-        <div v-if="showExportMenu" class="bg-gray-50 py-1">
+        <div 
+          v-if="showExportMenu" 
+          class="bg-gray-50 py-1"
+          data-testid="export-options"
+        >
           <button
             v-for="option in exportOptions"
             :key="option.id"
             class="w-full text-left px-6 py-2 text-sm text-gray-700 hover:bg-gray-100"
             @click="handleExportClick(option)"
+            :data-testid="option.id"
           >
             {{ option.label }}
           </button>
@@ -167,6 +176,7 @@ onUnmounted(() => {
         <button
           class="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 flex items-center gap-2"
           @click="$emit('toggleFilters')"
+          data-testid="toggle-filters"
         >
           <div class="p-1 rounded-lg bg-gray-50">
             <Filter class="w-4 h-4 text-gray-600" />
@@ -177,6 +187,7 @@ onUnmounted(() => {
         <button
           class="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 flex items-center gap-2"
           @click="$emit('toggleSearch')"
+          data-testid="toggle-search"
         >
           <div class="p-1 rounded-lg bg-gray-50">
             <Search class="w-4 h-4 text-gray-600" />
@@ -187,17 +198,3 @@ onUnmounted(() => {
     </div>
   </div>
 </template>
-
-<style scoped>
-/* Menu transition */
-.quick-actions-enter-active,
-.quick-actions-leave-active {
-  transition: opacity 0.2s, transform 0.2s;
-}
-
-.quick-actions-enter-from,
-.quick-actions-leave-to {
-  opacity: 0;
-  transform: translateY(-10px);
-}
-</style>

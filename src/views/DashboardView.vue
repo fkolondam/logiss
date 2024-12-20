@@ -1,6 +1,6 @@
 <script setup>
 import { ref, onMounted, watch } from 'vue'
-import { RefreshCw } from 'lucide-vue-next'
+import { RefreshCw, AlertCircle } from 'lucide-vue-next'
 import { useTranslations } from '../composables/useTranslations'
 import { dataProviderFactory } from '../services/DataProviderFactory'
 import { useDashboardCache } from '../composables/useDashboardCache'
@@ -13,13 +13,12 @@ import RecentDeliveries from '../components/dashboard/RecentDeliveries.vue'
 import ExpensesOverview from '../components/dashboard/ExpensesOverview.vue'
 import VehicleStatus from '../components/dashboard/VehicleStatus.vue'
 import DashboardSkeleton from '../components/dashboard/DashboardSkeleton.vue'
-import DashboardNotifications from '../components/dashboard/DashboardNotifications.vue'
 import DashboardQuickActions from '../components/dashboard/DashboardQuickActions.vue'
 
 const { t } = useTranslations()
 const provider = dataProviderFactory.getProvider()
 const { getCached, setCached, CACHE_KEYS } = useDashboardCache()
-const { getDateRange, filterByPeriod } = useDashboardData()
+const { getDateRange } = useDashboardData()
 const { loadingStates, errors, withLoadingState } = useDashboardState()
 const { checkVehicleNotifications, checkDeliveryNotifications } = useDashboardNotifications()
 
@@ -42,16 +41,18 @@ const fetchDashboardData = async () => {
       const [
         deliveriesData = cachedDeliveries,
         expensesData = cachedExpenses,
-        vehiclesData = cachedVehicles
+        vehiclesData = cachedVehicles,
       ] = await Promise.all([
-        !cachedDeliveries && provider.fetch('deliveries', {
-          sort: 'date,desc',
-          limit: 5
-        }),
-        !cachedExpenses && provider.getExpenseStats({ 
-          dateRange: getDateRange(selectedPeriod.value)
-        }),
-        !cachedVehicles && provider.fetch('vehicles')
+        !cachedDeliveries &&
+          provider.fetch('deliveries', {
+            sort: 'date,desc',
+            limit: 5,
+          }),
+        !cachedExpenses &&
+          provider.getExpenseStats({
+            dateRange: getDateRange(selectedPeriod.value),
+          }),
+        !cachedVehicles && provider.fetch('vehicles'),
       ])
 
       // Update data and cache
@@ -62,9 +63,9 @@ const fetchDashboardData = async () => {
       }
 
       if (expensesData) {
-        recentExpenses.value = { 
+        recentExpenses.value = {
           ...(expensesData || { total: 0, count: 0, byCategory: {} }),
-          loading: false
+          loading: false,
         }
         setCached(CACHE_KEYS.EXPENSES_STATS, expensesData)
       }
@@ -86,12 +87,12 @@ watch(selectedPeriod, async (newPeriod) => {
   if (!loadingStates.value.dashboard) {
     await withLoadingState('expenses', async () => {
       try {
-        const expensesData = await provider.getExpenseStats({ 
-          dateRange: getDateRange(newPeriod)
+        const expensesData = await provider.getExpenseStats({
+          dateRange: getDateRange(newPeriod),
         })
-        recentExpenses.value = { 
+        recentExpenses.value = {
           ...expensesData,
-          loading: false
+          loading: false,
         }
         setCached(CACHE_KEYS.EXPENSES_STATS, expensesData)
       } catch (error) {
@@ -111,23 +112,22 @@ onMounted(fetchDashboardData)
     <!-- Header -->
     <div class="flex justify-between items-center mb-6">
       <h1 class="text-2xl font-bold">{{ t('dashboard.title') }}</h1>
-      
-      <div class="flex items-center gap-4">
-        <!-- Notifications -->
-        <DashboardNotifications />
 
+      <div class="flex items-center gap-4">
         <!-- Quick Actions -->
-        <DashboardQuickActions />
+        <DashboardQuickActions data-testid="quick-actions-button" />
 
         <!-- Refresh Button -->
-        <button 
-          @click="fetchDashboardData" 
+        <button
+          @click="fetchDashboardData"
           class="flex items-center gap-2 px-3 py-2 text-sm font-medium text-gray-700 bg-white rounded-lg border hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
           :disabled="loadingStates.dashboard"
+          data-testid="refresh-button"
         >
-          <RefreshCw 
-            :class="{'animate-spin': loadingStates.dashboard}" 
-            class="w-4 h-4" 
+          <RefreshCw
+            :class="{ 'animate-spin': loadingStates.dashboard }"
+            class="w-4 h-4"
+            data-testid="loading-spinner"
           />
           {{ t('dashboard.refresh') }}
         </button>
@@ -135,9 +135,10 @@ onMounted(fetchDashboardData)
     </div>
 
     <!-- Error Alert -->
-    <div 
-      v-if="errors.dashboard" 
+    <div
+      v-if="errors.dashboard"
       class="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg"
+      data-testid="error-alert"
     >
       <div class="flex items-center gap-2 text-red-700">
         <AlertCircle class="w-5 h-5" />
@@ -146,41 +147,35 @@ onMounted(fetchDashboardData)
     </div>
 
     <!-- Dashboard Grid -->
-    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-      <!-- Recent Deliveries -->
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6" data-testid="dashboard-grid">
+      <!-- Loading States -->
       <template v-if="loadingStates.dashboard">
-        <DashboardSkeleton type="list" :rows="5" />
-      </template>
-      <template v-else>
-        <RecentDeliveries 
-          :deliveries="recentDeliveries" 
-          :loading="loadingStates.deliveries" 
-          :error="errors.deliveries" 
+        <DashboardSkeleton
+          v-for="i in 3"
+          :key="i"
+          :type="i === 1 ? 'list' : i === 2 ? 'card' : 'stats'"
+          data-testid="skeleton-card"
         />
       </template>
 
-      <!-- Expenses Overview -->
-      <template v-if="loadingStates.dashboard">
-        <DashboardSkeleton type="card" :rows="4" />
-      </template>
+      <!-- Content -->
       <template v-else>
-        <ExpensesOverview 
+        <RecentDeliveries
+          :deliveries="recentDeliveries"
+          :loading="loadingStates.deliveries"
+          :error="errors.deliveries"
+        />
+        <ExpensesOverview
           v-model="selectedPeriod"
-          :expenses="recentExpenses" 
-          :loading="loadingStates.expenses" 
+          :expenses="recentExpenses"
+          :loading="loadingStates.expenses"
           :error="errors.expenses"
+          data-testid="period-selector"
         />
-      </template>
-
-      <!-- Vehicle Status -->
-      <template v-if="loadingStates.dashboard">
-        <DashboardSkeleton type="stats" :rows="4" />
-      </template>
-      <template v-else>
-        <VehicleStatus 
-          :vehicles="vehicles" 
-          :loading="loadingStates.vehicles" 
-          :error="errors.vehicles" 
+        <VehicleStatus
+          :vehicles="vehicles"
+          :loading="loadingStates.vehicles"
+          :error="errors.vehicles"
         />
       </template>
     </div>

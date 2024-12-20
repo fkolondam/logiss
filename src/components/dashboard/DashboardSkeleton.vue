@@ -1,4 +1,3 @@
-<!-- Loading skeleton component for dashboard -->
 <script setup>
 import { computed } from 'vue'
 
@@ -33,79 +32,103 @@ const getWidth = (index) => {
   const widths = ['60%', '75%', '85%', '70%', '80%']
   return widths[index % widths.length]
 }
+
+// Compute test id based on type
+const skeletonTestId = computed(() => `skeleton-${props.type}`)
 </script>
 
 <template>
-  <!-- Card Skeleton -->
-  <div v-if="type === 'card'" class="bg-white rounded-lg shadow p-4 animate-pulse" :style="{ height }">
-    <!-- Header -->
-    <div class="flex items-center gap-3 mb-4">
-      <div class="w-8 h-8 bg-gray-200 rounded-lg"></div>
-      <div class="h-4 bg-gray-200 rounded w-1/3"></div>
+  <div 
+    :data-testid="skeletonTestId"
+    class="animate-pulse"
+  >
+    <!-- Card Skeleton -->
+    <div 
+      v-if="type === 'card'" 
+      class="bg-white rounded-lg shadow p-4" 
+      :style="{ height }"
+    >
+      <!-- Header -->
+      <div class="flex items-center gap-3 mb-4">
+        <div class="w-8 h-8 bg-gray-200 rounded-lg"></div>
+        <div class="h-4 bg-gray-200 rounded w-1/3"></div>
+      </div>
+      
+      <!-- Content -->
+      <div class="space-y-3">
+        <div 
+          v-for="i in rows" 
+          :key="i"
+          class="flex items-center gap-2"
+          :style="{ animationDelay: getAnimationDelay(i) }"
+        >
+          <div class="h-4 bg-gray-200 rounded" :style="{ width: getWidth(i) }"></div>
+        </div>
+      </div>
     </div>
-    
-    <!-- Content -->
-    <div class="space-y-3">
+
+    <!-- List Skeleton -->
+    <div 
+      v-else-if="type === 'list'" 
+      class="space-y-3" 
+      :style="{ height }"
+    >
       <div 
         v-for="i in rows" 
         :key="i"
-        class="flex items-center gap-2"
+        class="bg-white rounded-lg p-3 flex items-center gap-3"
         :style="{ animationDelay: getAnimationDelay(i) }"
       >
-        <div class="h-4 bg-gray-200 rounded" :style="{ width: getWidth(i) }"></div>
+        <div class="w-10 h-10 bg-gray-200 rounded-lg"></div>
+        <div class="flex-1 space-y-2">
+          <div class="h-4 bg-gray-200 rounded w-1/4"></div>
+          <div class="h-3 bg-gray-200 rounded w-3/4"></div>
+        </div>
       </div>
     </div>
-  </div>
 
-  <!-- List Skeleton -->
-  <div v-else-if="type === 'list'" class="space-y-3 animate-pulse" :style="{ height }">
+    <!-- Stats Skeleton -->
     <div 
-      v-for="i in rows" 
-      :key="i"
-      class="bg-white rounded-lg p-3 flex items-center gap-3"
-      :style="{ animationDelay: getAnimationDelay(i) }"
+      v-else-if="type === 'stats'" 
+      class="grid grid-cols-2 sm:grid-cols-4 gap-3" 
+      :style="{ height }"
     >
-      <div class="w-10 h-10 bg-gray-200 rounded-lg"></div>
-      <div class="flex-1 space-y-2">
+      <div 
+        v-for="i in 4" 
+        :key="i"
+        class="bg-white rounded-lg p-3"
+        :style="{ animationDelay: getAnimationDelay(i) }"
+      >
+        <div class="h-3 bg-gray-200 rounded w-1/2 mb-3"></div>
+        <div class="h-8 bg-gray-200 rounded w-2/3"></div>
+      </div>
+    </div>
+
+    <!-- Chart Skeleton -->
+    <div 
+      v-else-if="type === 'chart'" 
+      class="bg-white rounded-lg p-4" 
+      :style="{ height }"
+    >
+      <!-- Chart Header -->
+      <div class="flex items-center justify-between mb-4">
         <div class="h-4 bg-gray-200 rounded w-1/4"></div>
-        <div class="h-3 bg-gray-200 rounded w-3/4"></div>
+        <div class="h-4 bg-gray-200 rounded w-1/6"></div>
       </div>
-    </div>
-  </div>
-
-  <!-- Stats Skeleton -->
-  <div v-else-if="type === 'stats'" class="grid grid-cols-2 sm:grid-cols-4 gap-3 animate-pulse" :style="{ height }">
-    <div 
-      v-for="i in 4" 
-      :key="i"
-      class="bg-white rounded-lg p-3"
-      :style="{ animationDelay: getAnimationDelay(i) }"
-    >
-      <div class="h-3 bg-gray-200 rounded w-1/2 mb-3"></div>
-      <div class="h-8 bg-gray-200 rounded w-2/3"></div>
-    </div>
-  </div>
-
-  <!-- Chart Skeleton -->
-  <div v-else-if="type === 'chart'" class="bg-white rounded-lg p-4 animate-pulse" :style="{ height }">
-    <!-- Chart Header -->
-    <div class="flex items-center justify-between mb-4">
-      <div class="h-4 bg-gray-200 rounded w-1/4"></div>
-      <div class="h-4 bg-gray-200 rounded w-1/6"></div>
-    </div>
-    
-    <!-- Chart Area -->
-    <div class="relative" style="height: calc(100% - 2rem)">
-      <div class="absolute inset-0 flex items-end space-x-2">
-        <div 
-          v-for="i in 12" 
-          :key="i"
-          class="flex-1 bg-gray-200 rounded-t"
-          :style="{ 
-            height: Math.random() * 80 + 20 + '%',
-            animationDelay: getAnimationDelay(i)
-          }"
-        ></div>
+      
+      <!-- Chart Area -->
+      <div class="relative" style="height: calc(100% - 2rem)">
+        <div class="absolute inset-0 flex items-end space-x-2">
+          <div 
+            v-for="i in 12" 
+            :key="i"
+            class="flex-1 bg-gray-200 rounded-t"
+            :style="{ 
+              height: Math.random() * 80 + 20 + '%',
+              animationDelay: getAnimationDelay(i)
+            }"
+          ></div>
+        </div>
       </div>
     </div>
   </div>

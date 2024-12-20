@@ -43,23 +43,23 @@ export default {
 
     const getStatusColor = (status) => {
       const statusMap = {
-        active: {
+        AVAILABLE: {
           bg: 'bg-green-100',
           text: 'text-green-800',
           dot: 'bg-green-500'
         },
-        maintenance: {
+        IN_USE: {
           bg: 'bg-orange-100',
           text: 'text-orange-800',
           dot: 'bg-orange-500'
         },
-        inactive: {
+        OUT_OF_SERVICE: {
           bg: 'bg-red-100',
           text: 'text-red-800',
           dot: 'bg-red-500'
         }
       }
-      return statusMap[status] || statusMap.inactive
+      return statusMap[status] || statusMap.OUT_OF_SERVICE
     }
 
     const getFuelLevelColor = (level) => {
@@ -70,11 +70,12 @@ export default {
 
     const vehicleStats = computed(() => {
       const total = props.vehicles.length
-      const active = props.vehicles.filter(v => v.status === 'active').length
-      const maintenance = props.vehicles.filter(v => v.status === 'maintenance').length
+      const available = props.vehicles.filter(v => v.status === 'AVAILABLE').length
+      const inUse = props.vehicles.filter(v => v.status === 'IN_USE').length
+      const outOfService = props.vehicles.filter(v => v.status === 'OUT_OF_SERVICE').length
       const lowFuel = props.vehicles.filter(v => v.fuelLevel < 30).length
 
-      return { total, active, maintenance, lowFuel }
+      return { total, available, inUse, outOfService, lowFuel }
     })
 
     const navigateToVehicle = (vehicleId) => {
@@ -129,26 +130,22 @@ export default {
           <!-- Total Vehicles -->
           <div class="bg-purple-50 rounded-lg p-3">
             <div class="grid grid-rows-[54px_48px_24px_32px] h-full">
-              <!-- Row 1: Label (fixed 54px height for 3 lines) -->
               <div class="flex items-start h-[54px] w-full">
                 <div class="text-xs text-gray-600 uppercase tracking-wider leading-[18px] line-clamp-3 break-words w-full">{{ t('vehicles.stats.total') }}</div>
               </div>
               
-              <!-- Row 2: Value -->
               <div class="flex items-center">
                 <div class="text-4xl font-heading font-semibold text-purple-600 tabular-nums leading-none">
                   {{ vehicleStats.total }}
                 </div>
               </div>
               
-              <!-- Row 3: Indicator (vehicles count) -->
               <div class="flex items-center">
                 <div class="text-xs text-gray-500">
                   {{ t('vehicles.stats.totalVehicles') }}
                 </div>
               </div>
               
-              <!-- Row 4: Link -->
               <div class="flex items-end w-full">
                 <button 
                   @click="navigateToVehicle()"
@@ -161,27 +158,23 @@ export default {
             </div>
           </div>
 
-          <!-- Active Vehicles -->
+          <!-- Available Vehicles -->
           <div class="bg-green-50 rounded-lg p-3">
             <div class="grid grid-rows-[54px_48px_24px_32px] h-full">
-              <!-- Row 1: Label (fixed 54px height for 3 lines) -->
               <div class="flex items-start h-[54px]">
                 <div class="text-xs text-gray-600 uppercase tracking-wider leading-[18px] line-clamp-3">{{ t('vehicles.stats.active') }}</div>
               </div>
               
-              <!-- Row 2: Value -->
               <div class="flex items-center">
                 <div class="text-4xl font-heading font-semibold text-green-600 tabular-nums leading-none">
-                  {{ vehicleStats.active }}
+                  {{ vehicleStats.available }}
                 </div>
               </div>
               
-              <!-- Row 3: Indicator (description) -->
               <div class="flex items-center">
                 <div class="text-xs text-gray-500">{{ t('vehicles.stats.activeVehicles') }}</div>
               </div>
               
-              <!-- Row 4: Link -->
               <div class="flex items-end justify-end">
                 <button 
                   @click="navigateToVehicle()"
@@ -194,27 +187,23 @@ export default {
             </div>
           </div>
 
-          <!-- Maintenance -->
+          <!-- In Use -->
           <div class="bg-orange-50 rounded-lg p-3">
             <div class="grid grid-rows-[54px_48px_24px_32px] h-full">
-              <!-- Row 1: Label (fixed 54px height for 3 lines) -->
               <div class="flex items-start h-[54px]">
-                <div class="text-xs text-gray-600 uppercase tracking-wider leading-[18px] line-clamp-3">{{ t('vehicles.stats.maintenance') }}</div>
+                <div class="text-xs text-gray-600 uppercase tracking-wider leading-[18px] line-clamp-3">{{ t('vehicles.status.maintenance') }}</div>
               </div>
               
-              <!-- Row 2: Value -->
               <div class="flex items-center">
                 <div class="text-4xl font-heading font-semibold text-orange-600 tabular-nums leading-none">
-                  {{ vehicleStats.maintenance }}
+                  {{ vehicleStats.inUse }}
                 </div>
               </div>
               
-              <!-- Row 3: Indicator (description) -->
               <div class="flex items-center">
                 <div class="text-xs text-gray-500">{{ t('vehicles.stats.maintenanceVehicles') }}</div>
               </div>
               
-              <!-- Row 4: Link -->
               <div class="flex items-end justify-end">
                 <button 
                   @click="navigateToVehicle()"
@@ -230,24 +219,20 @@ export default {
           <!-- Low Fuel -->
           <div class="bg-red-50 rounded-lg p-3">
             <div class="grid grid-rows-[54px_48px_24px_32px] h-full">
-              <!-- Row 1: Label (fixed 54px height for 3 lines) -->
               <div class="flex items-start h-[54px]">
                 <div class="text-xs text-gray-600 uppercase tracking-wider leading-[18px] line-clamp-3">{{ t('vehicles.stats.lowFuel') }}</div>
               </div>
               
-              <!-- Row 2: Value -->
               <div class="flex items-center">
                 <div class="text-4xl font-heading font-semibold text-red-600 tabular-nums leading-none">
                   {{ vehicleStats.lowFuel }}
                 </div>
               </div>
               
-              <!-- Row 3: Indicator (description) -->
               <div class="flex items-center">
                 <div class="text-xs text-gray-500">{{ t('vehicles.stats.lowFuelVehicles') }}</div>
               </div>
               
-              <!-- Row 4: Link -->
               <div class="flex items-end justify-end">
                 <button 
                   @click="navigateToVehicle()"

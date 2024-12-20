@@ -1,156 +1,170 @@
-import { saveAs } from 'file-saver'
-import ExcelJS from 'exceljs'
-import { format } from 'date-fns'
-import { id } from 'date-fns/locale'
+import { ref } from 'vue'
+import { dataProviderFactory } from '../services/DataProviderFactory'
+import { useDashboardState } from './useDashboardState'
 
-export const useDashboardExport = () => {
-  // Convert data to CSV format
-  const convertToCSV = (data, headers) => {
-    if (!data?.length) return ''
+export function useDashboardExport() {
+  const provider = dataProviderFactory.getProvider()
+  const { withLoadingState } = useDashboardState()
+  const lastExport = ref(null)
 
-    const headerRow = headers.map(h => h.label).join(',')
-    const rows = data.map(item => 
+  // Helper to format data for Excel
+  const formatForExcel = (data, type) => {
+    switch (type) {
+      case 'deliveries':
+        return data.map(d => ({
+          'ID': d.id,
+          'Date': new Date(d.date).toLocaleDateString(),
+          'Status': d.status,
+          'Origin': d.origin,
+          'Destination': d.destination,
+          'Vehicle ID': d.vehicleId,
+          'Driver': d.driver,
+          'Distance (km)': d.distance,
+          'Duration (hrs)': d.duration,
+          'Cost': d.cost
+        }))
+      case 'expenses':
+        return data.map(e => ({
+          'ID': e.id,
+          'Date': new Date(e.date).toLocaleDateString(),
+          'Category': e.category,
+          'Description': e.description,
+          'Amount': e.amount,
+          'Vehicle ID': e.vehicleId,
+          'Notes': e.notes
+        }))
+      case 'vehicles':
+        return data.map(v => ({
+          'ID': v.id,
+          'Type': v.type,
+          'Status': v.status,
+          'License Plate': v.licensePlate,
+          'Brand': v.brand,
+          'Model': v.model,
+          'Year': v.year,
+          'Last Maintenance': new Date(v.lastMaintenance).toLocaleDateString(),
+          'Next Maintenance': new Date(v.nextMaintenance).toLocaleDateString(),
+          'Fuel Level': v.fuelLevel,
+          'Mileage': v.mileage
+        }))
+      default:
+        return data
+    }
+  }
+
+  // Helper to convert to CSV
+  const convertToCSV = (data) => {
+    if (!data || !data.length) return ''
+    
+    const headers = Object.keys(data[0])
+    const rows = data.map(obj => 
       headers.map(header => {
-        let value = header.getter ? header.getter(item) : item[header.key]
-        
-        // Handle special values
-        if (value === null || value === undefined) value = ''
-        if (typeof value === 'string') value = `"${value.replace(/"/g, '""')}"`
-        if (value instanceof Date) value = format(value, 'dd/MM/yyyy HH:mm', { locale: id })
-        
+        const value = obj[header]
+        // Handle values that need quotes (contains comma or newline)
+        if (typeof value === 'string' && (value.includes(',') || value.includes('\n'))) {
+          return `"${value.replace(/"/g, '""')}"`
+        }
         return value
       }).join(',')
     )
-
-    return [headerRow, ...rows].join('\n')
+    
+    return [headers.join(','), ...rows].join('\n')
   }
 
-  // Export data as CSV
-  const exportCSV = (data, headers, filename) => {
-    const csv = convertToCSV(data, headers)
-    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' })
-    saveAs(blob, `${filename}_${format(new Date(), 'yyyyMMdd_HHmm')}.csv`)
-  }
+  // Export deliveries
+  const exportDeliveries = async (data = [], format = 'excel') => {
+    return await withLoadingState('export', async () => {
+      const result = await provider.exportDeliveries(data, format)
+      const formattedData = formatForExcel(result.data, 'deliveries')
+      
+      lastExport.value = {
+        type: 'deliveries',
+        format,
+        timestamp: result.timestamp,
+        data: formattedData
+      }
 
-  // Export data as Excel
-  const exportExcel = async (data, headers, filename) => {
-    const workbook = new ExcelJS.Workbook()
-    const worksheet = workbook.addWorksheet('Data')
-
-    // Add headers
-    worksheet.addRow(headers.map(h => h.label))
-
-    // Add data
-    data.forEach(item => {
-      const row = headers.map(header => {
-        let value = header.getter ? header.getter(item) : item[header.key]
-        if (value instanceof Date) {
-          value = format(value, 'dd/MM/yyyy HH:mm', { locale: id })
-        }
-        return value
-      })
-      worksheet.addRow(row)
+      if (format === 'csv') {
+        return convertToCSV(formattedData)
+      }
+      
+      return formattedData
     })
+  }
 
-    // Style headers
-    const headerRow = worksheet.getRow(1)
-    headerRow.font = { bold: true }
-    headerRow.fill = {
-      type: 'pattern',
-      pattern: 'solid',
-      fgColor: { argb: 'FFE6E6E6' }
-    }
+  // Export expenses
+  const exportExpenses = async (data = [], format = 'excel') => {
+    return await withLoadingState('export', async () => {
+      const result = await provider.exportExpenses(data, format)
+      const formattedData = formatForExcel(result.data, 'expenses')
+      
+      lastExport.value = {
+        type: 'expenses',
+        format,
+        timestamp: result.timestamp,
+        data: formattedData
+      }
 
-    // Auto-fit columns
-    worksheet.columns.forEach(column => {
-      column.width = Math.max(
-        15,
-        ...worksheet.getColumn(column.number).values
-          .map(v => String(v || '').length)
-      )
+      if (format === 'csv') {
+        return convertToCSV(formattedData)
+      }
+      
+      return formattedData
     })
+  }
 
-    // Generate Excel file
-    const buffer = await workbook.xlsx.writeBuffer()
-    const blob = new Blob([buffer], { 
-      type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' 
+  // Export vehicle status
+  const exportVehicleStatus = async (data = [], format = 'excel') => {
+    return await withLoadingState('export', async () => {
+      const result = await provider.exportVehicleStatus(data, format)
+      const formattedData = formatForExcel(result.data, 'vehicles')
+      
+      lastExport.value = {
+        type: 'vehicles',
+        format,
+        timestamp: result.timestamp,
+        data: formattedData
+      }
+
+      if (format === 'csv') {
+        return convertToCSV(formattedData)
+      }
+      
+      return formattedData
     })
-    saveAs(blob, `${filename}_${format(new Date(), 'yyyyMMdd_HHmm')}.xlsx`)
   }
 
-  // Export delivery data
-  const exportDeliveries = (deliveries, type = 'csv') => {
-    const headers = [
-      { key: 'date', label: 'Tanggal' },
-      { key: 'time', label: 'Waktu' },
-      { key: 'invoice', label: 'No. Invoice' },
-      { key: 'customer', label: 'Customer' },
-      { key: 'location', label: 'Lokasi' },
-      { key: 'status', label: 'Status' },
-      { key: 'amount', label: 'Jumlah' },
-      { key: 'driver', label: 'Driver' },
-      { key: 'vehicleNumber', label: 'No. Kendaraan' },
-      { key: 'branch', label: 'Cabang' }
-    ]
-
-    if (type === 'excel') {
-      exportExcel(deliveries, headers, 'deliveries')
+  // Download helper
+  const downloadFile = (data, filename, format = 'excel') => {
+    let content, type, extension
+    
+    if (format === 'csv') {
+      content = data
+      type = 'text/csv'
+      extension = 'csv'
     } else {
-      exportCSV(deliveries, headers, 'deliveries')
+      content = JSON.stringify(data, null, 2)
+      type = 'application/json'
+      extension = 'json'
     }
-  }
-
-  // Export expenses data
-  const exportExpenses = (expenses, type = 'csv') => {
-    const headers = [
-      { key: 'date', label: 'Tanggal' },
-      { key: 'category', label: 'Kategori' },
-      { key: 'amount', label: 'Jumlah' },
-      { key: 'description', label: 'Keterangan' },
-      { key: 'vehicleNumber', label: 'No. Kendaraan' },
-      { key: 'driver', label: 'Driver' },
-      { key: 'status', label: 'Status' },
-      { key: 'branch', label: 'Cabang' }
-    ]
-
-    if (type === 'excel') {
-      exportExcel(expenses, headers, 'expenses')
-    } else {
-      exportCSV(expenses, headers, 'expenses')
-    }
-  }
-
-  // Export vehicle status data
-  const exportVehicleStatus = (vehicles, type = 'csv') => {
-    const headers = [
-      { key: 'plateNumber', label: 'No. Kendaraan' },
-      { key: 'type', label: 'Tipe' },
-      { key: 'status', label: 'Status' },
-      { key: 'fuelLevel', label: 'Level BBM' },
-      { 
-        key: 'assignedDriver',
-        label: 'Driver',
-        getter: (item) => item.assignedDriver?.name
-      },
-      { 
-        key: 'currentLocation',
-        label: 'Lokasi',
-        getter: (item) => item.currentLocation?.address
-      },
-      { key: 'lastServiceDate', label: 'Service Terakhir' },
-      { key: 'nextServiceDue', label: 'Service Berikutnya' }
-    ]
-
-    if (type === 'excel') {
-      exportExcel(vehicles, headers, 'vehicles')
-    } else {
-      exportCSV(vehicles, headers, 'vehicles')
-    }
+    
+    const blob = new Blob([content], { type })
+    const url = URL.createObjectURL(blob)
+    const link = document.createElement('a')
+    
+    link.href = url
+    link.download = `${filename}_${new Date().toISOString()}.${extension}`
+    document.body.appendChild(link)
+    link.click()
+    document.body.removeChild(link)
+    URL.revokeObjectURL(url)
   }
 
   return {
     exportDeliveries,
     exportExpenses,
-    exportVehicleStatus
+    exportVehicleStatus,
+    downloadFile,
+    lastExport
   }
 }

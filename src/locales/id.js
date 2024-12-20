@@ -2,7 +2,7 @@ export default {
   app: {
     title: 'Manajemen Armada',
     loading: 'Memuat...',
-    error: 'Error'
+    error: 'Error',
   },
   common: {
     close: 'Tutup',
@@ -23,7 +23,9 @@ export default {
     justNow: 'Baru saja',
     minutesAgo: '{minutes} menit yang lalu',
     hoursAgo: '{hours} jam yang lalu',
-    daysAgo: '{days} hari yang lalu'
+    daysAgo: '{days} hari yang lalu',
+    today: 'Hari Ini',
+    yesterday: 'Kemarin',
   },
   menu: {
     home: 'Beranda',
@@ -32,7 +34,7 @@ export default {
     vehicles: 'Kendaraan',
     profile: 'Profil',
     logout: 'Keluar',
-    debug: 'Debug Tools'
+    debug: 'Debug Tools',
   },
   dashboard: {
     title: 'Dashboard',
@@ -46,26 +48,26 @@ export default {
       pending: 'Dalam Proses',
       cancelled: 'Dibatalkan',
       deliveryStatus: 'Status Pengiriman',
-      todayDeliveries: 'Pengiriman Hari Ini'
-    }
+      todayDeliveries: 'Pengiriman Hari Ini',
+    },
   },
   notifications: {
     title: 'Notifikasi',
     empty: 'Tidak ada notifikasi',
     markAllRead: 'Tandai Semua Sudah Dibaca',
-    new: 'Baru'
+    new: 'Baru',
   },
   quickActions: {
     title: 'Aksi Cepat',
     newDelivery: 'Pengiriman Baru',
     viewReports: 'Lihat Laporan',
-    checkVehicles: 'Cek Kendaraan'
+    checkVehicles: 'Cek Kendaraan',
   },
   export: {
     title: 'Export Data',
     deliveries: 'Export Pengiriman',
     expenses: 'Export Pengeluaran',
-    vehicles: 'Export Kendaraan'
+    vehicles: 'Export Kendaraan',
   },
   errors: {
     fetchDashboard: 'Gagal memuat data dashboard',
@@ -77,7 +79,7 @@ export default {
     notFound: 'Data tidak ditemukan',
     serverError: 'Terjadi kesalahan pada server',
     network: 'Gagal terhubung ke server',
-    unknown: 'Terjadi kesalahan'
+    unknown: 'Terjadi kesalahan',
   },
   deliveries: {
     title: 'Pengiriman',
@@ -98,13 +100,13 @@ export default {
       status: {
         delivered: 'Pengiriman selesai',
         partial: 'Pengiriman sebagian',
-        cancelled: 'Pengiriman dibatalkan'
-      }
+        cancelled: 'Pengiriman dibatalkan',
+      },
     },
     noProofAvailable: 'Tidak ada bukti pengiriman',
     paymentMethod: {
       cash: 'Tunai',
-      kredit: 'Kredit'
+      kredit: 'Kredit',
     },
     table: {
       invoice: 'Faktur',
@@ -119,7 +121,7 @@ export default {
       shipment: 'Pengiriman',
       paymentMethod: 'Metode Pembayaran',
       details: 'Detail',
-      actions: 'Aksi'
+      actions: 'Aksi',
     },
     pagination: {
       showing: 'Menampilkan',
@@ -128,22 +130,22 @@ export default {
       items: 'data',
       loadMore: 'Muat Lebih Banyak',
       page: 'Halaman',
-      perPage: 'Per Halaman'
+      perPage: 'Per Halaman',
     },
     status: {
       'diterima - semua': 'Diterima - Semua',
       'diterima - sebagian': 'Diterima - Sebagian',
-      'batal': 'Batal',
+      batal: 'Batal',
       'batal - toko tutup': 'Batal - Toko Tutup',
       'batal - toko tidak dapat diakses': 'Batal - Toko Tidak Dapat Diakses',
       'batal - tidak ada uang': 'Batal - Tidak Ada Uang',
       'batal - salah order': 'Batal - Salah Order',
-      'kirim ulang': 'Kirim Ulang'
+      'kirim ulang': 'Kirim Ulang',
     },
     tabs: {
       delivery: 'Pengiriman',
       customer: 'Pelanggan',
-      proof: 'Bukti'
+      proof: 'Bukti',
     },
     stats: {
       todayDeliveries: 'Pengiriman Hari Ini',
@@ -151,8 +153,8 @@ export default {
       thisWeek: 'Minggu Ini',
       fromLastWeek: 'dari minggu lalu',
       thisMonth: 'Bulan Ini',
-      monthlyTarget: 'Target Bulanan'
-    }
+      monthlyTarget: 'Target Bulanan',
+    },
   },
   expenses: {
     title: 'Pengeluaran',
@@ -162,20 +164,20 @@ export default {
       week: 'Mingguan',
       today: 'Hari Ini',
       thisMonth: 'Bulan Ini',
-      thisWeek: 'Minggu Ini'
+      thisWeek: 'Minggu Ini',
     },
     breakdown: 'Rincian Pengeluaran',
     categories: {
       fuel: 'Bahan Bakar',
       maintenance: 'Pemeliharaan',
       insurance: 'Asuransi',
-      others: 'Lainnya'
+      others: 'Lainnya',
     },
     stats: {
       total: 'Total Pengeluaran',
       approved: 'Disetujui',
-      pending: 'Menunggu'
-    }
+      pending: 'Menunggu',
+    },
   },
   vehicles: {
     title: 'Kendaraan',
@@ -187,12 +189,15 @@ export default {
     types: {
       deliveryTruck: 'Truk Pengiriman',
       van: 'Van',
-      pickup: 'Pickup'
+      pickup: 'Pickup',
     },
     status: {
+      AVAILABLE: 'Tersedia',
+      IN_USE: 'Sedang Digunakan',
+      OUT_OF_SERVICE: 'Tidak Beroperasi',
       active: 'Aktif',
       maintenance: 'Pemeliharaan',
-      inactive: 'Tidak Aktif'
+      inactive: 'Tidak Aktif',
     },
     stats: {
       total: 'Total Kendaraan',
@@ -200,28 +205,28 @@ export default {
       active: 'Kendaraan Aktif',
       activeVehicles: 'Sedang Beroperasi',
       maintenance: 'Dalam Pemeliharaan',
-      maintenanceVehicles: 'Sedang Servis',
-      lowFuel: 'Bahan Bakar Rendah',
-      lowFuelVehicles: 'Perlu Isi Ulang'
+      maintenanceVehicles: 'Sedang Service',
+      lowFuel: 'BBM Rendah',
+      lowFuelVehicles: 'Perlu isi Ulang',
     },
     list: {
       title: 'Daftar Kendaraan',
-      showing: 'Menampilkan'
-    }
+      showing: 'Menampilkan',
+    },
   },
   debug: {
     title: 'Debug Tools',
-    dataSourceControl: 'Kontrol Sumber Data',
-    deliveriesTest: 'Test Data Pengiriman',
-    expensesTest: 'Test Data Pengeluaran',
-    vehiclesTest: 'Test Data Kendaraan',
-    recordsFound: 'Ditemukan {count} data',
-    loading: 'Memuat...',
-    error: 'Error: {message}'
+    dataSourceControl: 'Data Source Control',
+    deliveriesTest: 'Test Deliveries Data',
+    expensesTest: 'Test Expenses Data',
+    vehiclesTest: 'Test Vehicles Data',
+    recordsFound: 'Found {count} records',
+    loading: 'Loading...',
+    error: 'Error: {message}',
   },
   dataSources: {
-    mock: 'Data Simulasi',
+    mock: 'Mock Data',
     mysql: 'MySQL',
-    google_sheets: 'Google Sheets'
-  }
+    google_sheets: 'Google Sheets',
+  },
 }

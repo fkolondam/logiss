@@ -1,245 +1,446 @@
-import { BaseDataProvider } from './BaseDataProvider'
-import { deliveriesMockData } from './mockdata/deliveries_old.js'
-import { expensesMockData } from './mockdata/expenses_old.js'
-import { vehiclesMockData } from './mockdata/vehicles_old.js'
+import { generateMockData } from './mockdata/generators'
+import { parseDate } from './mockdata/generators/dateUtils'
+import { generateTestNotifications } from './mockdata/generators/notificationGenerator'
 
-export class MockDataProvider extends BaseDataProvider {
+export class MockDataProvider {
   constructor() {
-    super()
-    this.data = {
-      deliveries: deliveriesMockData,
-      expenses: expensesMockData,
-      vehicles: vehiclesMockData
+    // Generate initial data
+    this.refreshData()
+
+    // Cache for simulating data persistence
+    this.cache = new Map()
+
+    // Initialize notifications
+    this.notifications = []
+    this.notificationCheckInterval = null
+    this.startNotificationChecks()
+  }
+
+  // Refresh all data using integrated generator
+  refreshData() {
+    // Generate correlated data for Q4 2024
+    const mockData = generateMockData()
+
+    // Store all generated data
+    this.deliveries = mockData.deliveries
+    this.expenses = mockData.expenses
+    this.vehicles = mockData.vehicles
+    this.branchData = mockData.branchData
+    this.stats = mockData.stats
+
+    // Generate initial notifications
+    this.generateInitialNotifications()
+  }
+
+  // Generate initial set of notifications
+  generateInitialNotifications() {
+    const today = new Date()
+    const notifications = generateTestNotifications(
+      this.vehicles.slice(0, 5), // Use first 5 vehicles
+      this.deliveries.slice(0, 10), // Use first 10 deliveries
+      today,
+    )
+    this.notifications = notifications.map((notification) => ({
+      ...notification,
+      read: false,
+      id: `notif_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+    }))
+  }
+
+  // Start periodic notification checks
+  startNotificationChecks() {
+    // Clear existing interval if any
+    if (this.notificationCheckInterval) {
+      clearInterval(this.notificationCheckInterval)
     }
-  }
 
-  // Helper method to normalize date to start of day
-  #normalizeDate(date) {
-    const normalized = new Date(date)
-    normalized.setHours(0, 0, 0, 0)
-    return normalized
-  }
+    // Check for new notifications every 30 seconds
+    this.notificationCheckInterval = setInterval(() => {
+      const randomVehicles = this.vehicles.sort(() => 0.5 - Math.random()).slice(0, 2)
 
-  // Helper method to get previous period range
-  #getPreviousPeriodRange(dateRange) {
-    if (!dateRange?.start || !dateRange?.end) {
-      throw new Error('Invalid date range provided')
-    }
+      const randomDeliveries = this.deliveries.sort(() => 0.5 - Math.random()).slice(0, 2)
 
-    const start = this.#normalizeDate(dateRange.start)
-    const end = this.#normalizeDate(dateRange.end)
-    const daysDiff = Math.ceil((end - start) / (1000 * 60 * 60 * 24))
+      const newNotifications = generateTestNotifications(
+        randomVehicles,
+        randomDeliveries,
+        new Date(),
+      )
 
-    const previousStart = new Date(start)
-    previousStart.setDate(previousStart.getDate() - daysDiff)
-    
-    const previousEnd = new Date(start)
-    previousEnd.setDate(previousEnd.getDate() - 1)
+      // Add only a subset of generated notifications (30% chance for each)
+      newNotifications.forEach((notification) => {
+        if (Math.random() < 0.3) {
+          this.notifications.unshift({
+            ...notification,
+            read: false,
+            id: `notif_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+          })
+        }
+      })
 
-    return { start: previousStart, end: previousEnd }
-  }
-
-  // Helper method to filter by date range
-  #filterByDateRange(items, dateField, dateRange) {
-    const start = this.#normalizeDate(dateRange.start)
-    const end = this.#normalizeDate(dateRange.end)
-
-    return items.filter(item => {
-      const itemDate = this.#normalizeDate(item[dateField])
-      return itemDate >= start && itemDate <= end
-    })
-  }
-
-  // Helper method to handle string comparison
-  #compareStrings(a, b, direction = 'asc') {
-    const aStr = String(a).toLowerCase()
-    const bStr = String(b).toLowerCase()
-    if (direction === 'desc') {
-      return aStr > bStr ? -1 : aStr < bStr ? 1 : 0
-    }
-    return aStr < bStr ? -1 : aStr > bStr ? 1 : 0
-  }
-
-  // Helper method to handle date comparison
-  #compareDates(a, b, direction = 'asc') {
-    const aDate = new Date(a)
-    const bDate = new Date(b)
-    if (direction === 'desc') {
-      return aDate > bDate ? -1 : aDate < bDate ? 1 : 0
-    }
-    return aDate < bDate ? -1 : aDate > bDate ? 1 : 0
-  }
-
-  // Helper method to handle sorting
-  #sortItems(items, field, direction) {
-    return [...items].sort((a, b) => {
-      const aValue = a[field]
-      const bValue = b[field]
-
-      if (aValue instanceof Date || bValue instanceof Date) {
-        return this.#compareDates(aValue, bValue, direction)
+      // Keep only last 100 notifications
+      if (this.notifications.length > 100) {
+        this.notifications = this.notifications.slice(0, 100)
       }
-      if (typeof aValue === 'string' && typeof bValue === 'string') {
-        return this.#compareStrings(aValue, bValue, direction)
-      }
-      if (direction === 'desc') {
-        return aValue > bValue ? -1 : aValue < bValue ? 1 : 0
-      }
-      return aValue < bValue ? -1 : aValue > bValue ? 1 : 0
-    })
+    }, 30000) // 30 seconds
   }
 
-  async fetch(resource, options = {}) {
-    const data = this.data[resource]
-    if (!data) {
-      throw new Error(`Resource ${resource} not found`)
+  async fetch(resource, params = {}) {
+    // Simulate network delay
+    await new Promise((resolve) => setTimeout(resolve, 800))
+
+    switch (resource) {
+      case 'deliveries':
+        return this.handleDeliveries(params)
+      case 'expenses':
+        return this.handleExpenses(params)
+      case 'vehicles':
+        return this.handleVehicles(params)
+      case 'stats':
+        return this.handleStats(params)
+      case 'notifications':
+        return this.handleNotifications(params)
+      default:
+        throw new Error(`Unknown resource: ${resource}`)
+    }
+  }
+
+  handleNotifications({ limit = 50, unreadOnly = false, markAsRead = false } = {}) {
+    let result = [...this.notifications]
+
+    // Filter unread if requested
+    if (unreadOnly) {
+      result = result.filter((n) => !n.read)
     }
 
-    let result = [...data]
-
-    // Apply filters if any
-    if (options.filters) {
-      result = result.filter(item => {
-        return Object.entries(options.filters).every(([key, value]) => {
-          if (Array.isArray(value)) {
-            return value.includes(item[key])
-          }
-          if (typeof value === 'object' && value !== null) {
-            if (value.start && value.end) {
-              return this.#filterByDateRange([item], key, value).length > 0
-            }
-            return false
-          }
-          // Case-insensitive comparison for string values
-          if (typeof item[key] === 'string' && typeof value === 'string') {
-            return item[key].toLowerCase() === value.toLowerCase()
-          }
-          return item[key] === value
-        })
+    // Mark notifications as read if requested
+    if (markAsRead) {
+      result.forEach((notification) => {
+        const original = this.notifications.find((n) => n.id === notification.id)
+        if (original) {
+          original.read = true
+        }
       })
     }
 
-    // Apply search if specified
-    if (options.search) {
-      const searchLower = options.search.toLowerCase()
-      result = result.filter(item => {
-        return Object.values(item).some(value => {
-          if (typeof value === 'string') {
-            return value.toLowerCase().includes(searchLower)
-          }
-          return false
-        })
-      })
-    }
-
-    // Sort if requested
-    if (options.sort) {
-      const [field, direction] = options.sort.split(',')
-      result = this.#sortItems(result, field, direction)
-    }
-
-    // Apply pagination if requested
-    if (options.page && options.perPage) {
-      const start = (options.page - 1) * options.perPage
-      const end = start + options.perPage
-      result = result.slice(start, end)
-    }
-    // Apply limit if specified (without pagination)
-    else if (options.limit) {
-      result = result.slice(0, options.limit)
+    // Apply limit
+    if (limit) {
+      result = result.slice(0, limit)
     }
 
     return result
   }
 
-  async getExpenseStats({ dateRange }) {
-    if (!dateRange?.start || !dateRange?.end) {
-      throw new Error('Invalid date range provided')
+  // Mark specific notification as read
+  markNotificationAsRead(id) {
+    const notification = this.notifications.find((n) => n.id === id)
+    if (notification) {
+      notification.read = true
+      return true
+    }
+    return false
+  }
+
+  // Mark all notifications as read
+  markAllNotificationsAsRead() {
+    this.notifications.forEach((notification) => {
+      notification.read = true
+    })
+    return true
+  }
+
+  async getExpenseStats(params = {}) {
+    // Simulate network delay
+    await new Promise((resolve) => setTimeout(resolve, 800))
+
+    const { dateRange } = params
+    let expenses = [...this.expenses]
+
+    if (dateRange) {
+      expenses = expenses.filter((expense) => {
+        const expenseDate = parseDate(expense.date)
+        return expenseDate >= dateRange.start && expenseDate <= dateRange.end
+      })
     }
 
-    const expenses = this.data.expenses
-    if (!expenses) return null
-
-    // Filter expenses by date range
-    const filtered = this.#filterByDateRange(expenses, 'date', dateRange)
-
-    // Calculate totals
-    const total = filtered.reduce((sum, expense) => sum + expense.amount, 0)
-    const count = filtered.length
-
-    // Group by category
-    const byCategory = filtered.reduce((acc, expense) => {
-      acc[expense.category] = (acc[expense.category] || 0) + expense.amount
+    // Calculate stats
+    const total = expenses.reduce((sum, exp) => sum + exp.amount, 0)
+    const byCategory = expenses.reduce((acc, exp) => {
+      if (!acc[exp.category]) {
+        acc[exp.category] = { total: 0, count: 0 }
+      }
+      acc[exp.category].total += exp.amount
+      acc[exp.category].count++
       return acc
     }, {})
 
-    // Get previous period stats
-    const previousRange = this.#getPreviousPeriodRange(dateRange)
-    const previousFiltered = this.#filterByDateRange(expenses, 'date', previousRange)
-    const previousTotal = previousFiltered.reduce((sum, expense) => sum + expense.amount, 0)
+    // Calculate previous period for comparison
+    const previousStart = new Date(dateRange.start)
+    previousStart.setMonth(previousStart.getMonth() - 1)
+    const previousEnd = new Date(dateRange.end)
+    previousEnd.setMonth(previousEnd.getMonth() - 1)
+
+    const previousExpenses = this.expenses.filter((expense) => {
+      const expenseDate = parseDate(expense.date)
+      return expenseDate >= previousStart && expenseDate <= previousEnd
+    })
+
+    const previousTotal = previousExpenses.reduce((sum, exp) => sum + exp.amount, 0)
 
     return {
       total,
-      count,
+      count: expenses.length,
       byCategory,
       previousTotal,
-      dateRange: {
-        start: dateRange.start,
-        end: dateRange.end
-      }
     }
   }
 
-  async getDeliveryStats({ dateRange }) {
-    if (!dateRange?.start || !dateRange?.end) {
-      throw new Error('Invalid date range provided')
+  async getDeliveryStats(params = {}) {
+    // Simulate network delay
+    await new Promise((resolve) => setTimeout(resolve, 800))
+
+    const { dateRange } = params
+    let deliveries = [...this.deliveries]
+
+    if (dateRange) {
+      deliveries = deliveries.filter((delivery) => {
+        const deliveryDate = parseDate(delivery.date)
+        return deliveryDate >= dateRange.start && deliveryDate <= dateRange.end
+      })
     }
 
-    const deliveries = this.data.deliveries
-    if (!deliveries) return null
-
-    // Filter deliveries by date range
-    const filtered = this.#filterByDateRange(deliveries, 'date', dateRange)
-
     // Calculate stats
-    const stats = filtered.reduce((acc, delivery) => {
-      acc.total++
-      const status = delivery.status.toLowerCase()
+    const total = deliveries.length
+    const completed = deliveries.filter((d) => d.status === 'DITERIMA - SEMUA').length
+    const partial = deliveries.filter((d) => d.status === 'DITERIMA - SEBAGIAN').length
+    const pending = deliveries.filter((d) => d.status === 'KIRIM ULANG').length
+    const cancelled = deliveries.filter((d) => d.status.startsWith('BATAL')).length
 
-      if (status === 'diterima - semua') {
-        acc.completed++
-      } else if (status === 'diterima - sebagian') {
-        acc.partial++
-      } else if (status === 'kirim ulang') {
-        acc.pending++
-      } else if (status.includes('batal')) {
-        acc.cancelled++
-      }
+    const successRate = total ? Math.round(((completed + partial) / total) * 100) : 0
 
-      acc.totalAmount += delivery.amount || 0
+    return {
+      total,
+      completed,
+      partial,
+      pending,
+      cancelled,
+      successRate,
+    }
+  }
 
-      return acc
-    }, {
-      total: 0,
-      completed: 0,
-      partial: 0,
-      pending: 0,
-      cancelled: 0,
-      totalAmount: 0
-    })
+  handleDeliveries({ filters = {}, sort, limit, page, perPage, search } = {}) {
+    let result = [...this.deliveries]
 
-    // Calculate success rate
-    stats.successRate = stats.total ? Math.round((stats.completed / stats.total) * 100) : 0
+    // Apply filters
+    if (filters.status) {
+      result = result.filter((d) => d.status === filters.status)
+    }
+    if (filters.vehicleId) {
+      result = result.filter((d) => d.vehicleId === filters.vehicleId)
+    }
+    if (filters.dateRange) {
+      result = result.filter((d) => {
+        const date = parseDate(d.date)
+        return date >= filters.dateRange.start && date <= filters.dateRange.end
+      })
+    }
 
-    // Get previous period stats
-    const previousRange = this.#getPreviousPeriodRange(dateRange)
-    const previousFiltered = this.#filterByDateRange(deliveries, 'date', previousRange)
+    // Apply search
+    if (search) {
+      const searchTerm = search.toLowerCase()
+      result = result.filter((d) =>
+        Object.values(d).some(
+          (value) => typeof value === 'string' && value.toLowerCase().includes(searchTerm),
+        ),
+      )
+    }
 
-    stats.previousTotal = previousFiltered.length
-    stats.previousCompleted = previousFiltered.filter(d => 
-      d.status.toLowerCase() === 'diterima - semua'
-    ).length
+    // Apply sorting
+    if (sort) {
+      const [field, order] = sort.split(',')
+      result.sort((a, b) => {
+        if (field === 'date') {
+          const dateA = parseDate(a.date)
+          const dateB = parseDate(b.date)
+          return order === 'desc' ? dateB - dateA : dateA - dateB
+        }
+        if (order === 'desc') {
+          return b[field] > a[field] ? 1 : -1
+        }
+        return a[field] > b[field] ? 1 : -1
+      })
+    }
 
-    return stats
+    // Apply pagination
+    if (page && perPage) {
+      const start = (page - 1) * perPage
+      result = result.slice(start, start + perPage)
+    }
+    // Apply limit
+    else if (limit) {
+      result = result.slice(0, limit)
+    }
+
+    return result
+  }
+
+  handleExpenses({ filters = {}, sort, limit, page, perPage, search } = {}) {
+    let result = [...this.expenses]
+
+    // Apply filters
+    if (filters.category) {
+      result = result.filter((e) => e.category === filters.category)
+    }
+    if (filters.dateRange) {
+      result = result.filter((e) => {
+        const date = parseDate(e.date)
+        return date >= filters.dateRange.start && date <= filters.dateRange.end
+      })
+    }
+
+    // Apply search
+    if (search) {
+      const searchTerm = search.toLowerCase()
+      result = result.filter((e) =>
+        Object.values(e).some(
+          (value) => typeof value === 'string' && value.toLowerCase().includes(searchTerm),
+        ),
+      )
+    }
+
+    // Apply sorting
+    if (sort) {
+      const [field, order] = sort.split(',')
+      result.sort((a, b) => {
+        if (field === 'date') {
+          const dateA = parseDate(a.date)
+          const dateB = parseDate(b.date)
+          return order === 'desc' ? dateB - dateA : dateA - dateB
+        }
+        if (order === 'desc') {
+          return b[field] > a[field] ? 1 : -1
+        }
+        return a[field] > b[field] ? 1 : -1
+      })
+    }
+
+    // Apply pagination
+    if (page && perPage) {
+      const start = (page - 1) * perPage
+      result = result.slice(start, start + perPage)
+    }
+    // Apply limit
+    else if (limit) {
+      result = result.slice(0, limit)
+    }
+
+    return result
+  }
+
+  handleVehicles({ filters = {}, sort, limit, page, perPage, search } = {}) {
+    let result = [...this.vehicles]
+
+    // Apply filters
+    if (filters.status) {
+      result = result.filter((v) => v.status === filters.status)
+    }
+    if (filters.type) {
+      result = result.filter((v) => v.type === filters.type)
+    }
+
+    // Apply search
+    if (search) {
+      const searchTerm = search.toLowerCase()
+      result = result.filter((v) =>
+        Object.values(v).some(
+          (value) => typeof value === 'string' && value.toLowerCase().includes(searchTerm),
+        ),
+      )
+    }
+
+    // Apply sorting
+    if (sort) {
+      const [field, order] = sort.split(',')
+      result.sort((a, b) => {
+        if (order === 'desc') {
+          return b[field] > a[field] ? 1 : -1
+        }
+        return a[field] > b[field] ? 1 : -1
+      })
+    }
+
+    // Apply pagination
+    if (page && perPage) {
+      const start = (page - 1) * perPage
+      result = result.slice(start, start + perPage)
+    }
+    // Apply limit
+    else if (limit) {
+      result = result.slice(0, limit)
+    }
+
+    return result
+  }
+
+  handleStats({ type } = {}) {
+    if (type) {
+      return this.stats[type]
+    }
+    return this.stats
+  }
+
+  // Method to refresh data
+  async refresh() {
+    // Regenerate all data
+    this.refreshData()
+
+    // Clear cache
+    this.cache.clear()
+
+    // Simulate network delay
+    await new Promise((resolve) => setTimeout(resolve, 1000))
+
+    return true
+  }
+
+  // Export methods
+  async exportDeliveries(data, format = 'excel') {
+    const deliveries = data.length ? data : this.deliveries
+    // Simulate export delay
+    await new Promise((resolve) => setTimeout(resolve, 1500))
+    return {
+      data: deliveries,
+      format,
+      timestamp: new Date().toISOString(),
+    }
+  }
+
+  async exportExpenses(data, format = 'excel') {
+    const expenses = data.length ? data : this.expenses
+    // Simulate export delay
+    await new Promise((resolve) => setTimeout(resolve, 1500))
+    return {
+      data: expenses,
+      format,
+      timestamp: new Date().toISOString(),
+    }
+  }
+
+  async exportVehicleStatus(data, format = 'excel') {
+    const vehicles = data.length ? data : this.vehicles
+    // Simulate export delay
+    await new Promise((resolve) => setTimeout(resolve, 1500))
+    return {
+      data: vehicles,
+      format,
+      timestamp: new Date().toISOString(),
+    }
+  }
+
+  // Cleanup method
+  destroy() {
+    if (this.notificationCheckInterval) {
+      clearInterval(this.notificationCheckInterval)
+      this.notificationCheckInterval = null
+    }
   }
 }
