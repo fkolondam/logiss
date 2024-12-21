@@ -1,4 +1,4 @@
-<!-- Previous script section remains unchanged -->
+<!-- Previous template section remains unchanged -->
 <script setup>
 import { ref, onMounted, onUnmounted, watch } from 'vue'
 import { RefreshCw, AlertCircle } from 'lucide-vue-next'
@@ -27,7 +27,7 @@ const { checkVehicleNotifications, checkDeliveryNotifications } = useDashboardNo
 const recentDeliveries = ref([])
 const recentExpenses = ref({
   total: 0,
-  count: 0,
+  totalAmount: 0,
   byCategory: {},
   previousTotal: 0,
   loading: false,
@@ -99,27 +99,26 @@ const fetchExpenses = async (period = selectedPeriod.value) => {
 
     // Get provider from store
     const provider = await getProvider()
-    const response = await provider.getExpenseStats({ dateRange })
 
-    // Validate response
-    if (!response?.success) {
-      throw new Error(t('errors.fetchFailed'))
-    }
+    // Get previous period data for comparison
+    const previousRange = getPreviousPeriodRange(period)
+    const [currentStats, previousStats] = await Promise.all([
+      provider.getExpenseStats({ dateRange }),
+      provider.getExpenseStats({ dateRange: previousRange }),
+    ])
 
-    // Validate data
-    if (!response.data || typeof response.data !== 'object') {
-      throw new Error(t('errors.invalidData'))
+    // Combine current and previous data
+    const expensesData = {
+      ...currentStats,
+      previousTotal: previousStats.totalAmount || 0,
+      loading: false,
     }
 
     console.log('Received expenses data')
 
-    recentExpenses.value = {
-      ...response.data,
-      loading: false,
-      timestamp: response.timestamp,
-    }
-    setCached(CACHE_KEYS.EXPENSES_STATS, response.data)
-    return response.data
+    recentExpenses.value = expensesData
+    setCached(CACHE_KEYS.EXPENSES_STATS, expensesData)
+    return expensesData
   } catch (error) {
     console.error('Error fetching expenses:', error)
     handleError('expenses', {

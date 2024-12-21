@@ -9,7 +9,7 @@ const props = defineProps({
     type: Object,
     default: () => ({
       total: 0,
-      count: 0,
+      totalAmount: 0,
       byCategory: {},
       previousTotal: 0,
     }),
@@ -17,9 +17,8 @@ const props = defineProps({
       return (
         typeof value === 'object' &&
         'total' in value &&
-        'count' in value &&
-        'byCategory' in value &&
-        'previousTotal' in value
+        'totalAmount' in value &&
+        'byCategory' in value
       )
     },
   },
@@ -42,9 +41,15 @@ const emit = defineEmits(['update:modelValue'])
 const { t } = useTranslations()
 
 // Computed properties
-const totalExpenses = computed(() => props.expenses?.total || 0)
+const totalExpenses = computed(() => props.expenses?.totalAmount || 0)
 const previousTotal = computed(() => props.expenses?.previousTotal || 0)
-const expensesByCategory = computed(() => props.expenses?.byCategory || {})
+const expensesByCategory = computed(() => {
+  const categories = props.expenses?.byCategory || {}
+  return Object.entries(categories).reduce((acc, [category, data]) => {
+    acc[category] = data.amount
+    return acc
+  }, {})
+})
 
 // Period options
 const periodOptions = [
@@ -76,28 +81,34 @@ const percentageChange = computed(() => {
 
 // Category configuration for consistent styling
 const categoryConfig = {
-  fuel: {
+  Fuel: {
     color: 'text-amber-600',
     bgColor: 'bg-amber-50',
     borderColor: 'border-amber-100',
     icon: DollarSign,
   },
-  maintenance: {
+  Maintenance: {
     color: 'text-blue-600',
     bgColor: 'bg-blue-50',
     borderColor: 'border-blue-100',
     icon: DollarSign,
   },
-  insurance: {
+  'Vehicle License': {
     color: 'text-green-600',
     bgColor: 'bg-green-50',
     borderColor: 'border-green-100',
     icon: DollarSign,
   },
-  others: {
+  Labour: {
     color: 'text-purple-600',
     bgColor: 'bg-purple-50',
     borderColor: 'border-purple-100',
+    icon: DollarSign,
+  },
+  'Parking-Tol-Retribution': {
+    color: 'text-gray-600',
+    bgColor: 'bg-gray-50',
+    borderColor: 'border-gray-100',
     icon: DollarSign,
   },
 }

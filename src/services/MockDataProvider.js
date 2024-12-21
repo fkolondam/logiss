@@ -1,425 +1,221 @@
-import { generateMockData } from './mockdata/generators'
-import { parseDate, formatDate, startOfMonth, endOfMonth } from './mockdata/generators/dateUtils'
-import { generateTestNotifications } from './mockdata/generators/notificationGenerator'
-import { DataProviderError } from './errors/DataProviderError'
+import { BaseDataProvider } from './BaseDataProvider.js'
+import { deliveriesMockData, expensesMockData, vehiclesMockData } from './mockdata/index.js'
 
-export class MockDataProvider {
-  constructor() {
-    // Initialize data
-    this.deliveries = []
-    this.currentStats = {
-      total: 0,
-      completed: 0,
-      partial: 0,
-      pending: 0,
-      cancelled: 0,
-      successRate: 0,
-    }
-    this.previousStats = {
-      total: 0,
-      completed: 0,
-      partial: 0,
-      pending: 0,
-      cancelled: 0,
-      successRate: 0,
-    }
-    this.expenses = []
-    this.vehicles = []
-    this.branchData = {}
-    this.stats = {}
-    this.cache = new Map()
-    this.notifications = []
-    this.notificationCheckInterval = null
+const mockData = {
+  deliveries: deliveriesMockData,
+  expenses: expensesMockData,
+  vehicles: vehiclesMockData,
+}
 
-    // Generate initial data
-    this.refreshData()
-    this.startNotificationChecks()
-  }
-
-  // Refresh all data using integrated generator
-  refreshData() {
-    try {
-      console.log('Refreshing mock data...')
-      // Generate correlated data for Q4 2024
-      const mockData = generateMockData()
-
-      if (!mockData?.success) {
-        console.error('Failed to generate mock data:', mockData?.error)
-        return false
-      }
-
-      // Store all generated data
-      const { data } = mockData
-      if (!data) {
-        console.error('No data received from generator')
-        return false
-      }
-
-      // Update deliveries data
-      if (data.deliveries?.deliveries) {
-        this.deliveries = data.deliveries.deliveries
-        this.currentStats = data.deliveries.currentStats || this.currentStats
-        this.previousStats = data.deliveries.previousStats || this.previousStats
-      }
-
-      // Update other data
-      this.expenses = data.expenses || this.expenses
-      this.vehicles = data.vehicles || this.vehicles
-      this.branchData = data.branchData || this.branchData
-      this.stats = data.stats || this.stats
-
-      // Generate initial notifications if we have data
-      if (this.vehicles.length && this.deliveries.length) {
-        this.generateInitialNotifications()
-      }
-
-      console.log('Mock data refreshed successfully')
-      return true
-    } catch (error) {
-      console.error('Error refreshing mock data:', error)
-      return false
-    }
-  }
-
-  // Generate initial set of notifications
-  generateInitialNotifications() {
-    try {
-      console.log('Generating initial notifications...')
-      const today = new Date()
-      const vehicleSample = this.vehicles.slice(0, 5)
-      const deliverySample = this.deliveries.slice(0, 10)
-
-      const notifications = generateTestNotifications(vehicleSample, deliverySample, today)
-      this.notifications = notifications.map((notification) => ({
-        ...notification,
-        read: false,
-        id: `notif_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
-      }))
-      console.log('Generated', this.notifications.length, 'notifications')
-    } catch (error) {
-      console.error('Error generating notifications:', error)
-    }
-  }
-
-  // Start periodic notification checks
-  startNotificationChecks() {
-    if (this.notificationCheckInterval) {
-      clearInterval(this.notificationCheckInterval)
-    }
-
-    this.notificationCheckInterval = setInterval(() => {
-      try {
-        if (!this.vehicles?.length || !this.deliveries?.length) return
-
-        const randomVehicles = [...this.vehicles].sort(() => 0.5 - Math.random()).slice(0, 2)
-        const randomDeliveries = [...this.deliveries].sort(() => 0.5 - Math.random()).slice(0, 2)
-        const newNotifications = generateTestNotifications(
-          randomVehicles,
-          randomDeliveries,
-          new Date(),
-        )
-
-        newNotifications.forEach((notification) => {
-          if (Math.random() < 0.3) {
-            this.notifications.unshift({
-              ...notification,
-              read: false,
-              id: `notif_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
-            })
-          }
-        })
-
-        if (this.notifications.length > 100) {
-          this.notifications = this.notifications.slice(0, 100)
-        }
-      } catch (error) {
-        console.error('Error in notification check:', error)
-      }
-    }, 30000)
-  }
-
+export class MockDataProvider extends BaseDataProvider {
   async fetch(resource, params = {}) {
-    try {
-      if (!['deliveries', 'expenses', 'vehicles', 'stats', 'notifications'].includes(resource)) {
-        throw DataProviderError.createError('INVALID_RESOURCE', `Unknown resource: ${resource}`)
-      }
+    return new Promise((resolve) => {
+      setTimeout(() => {
+        let data = mockData[resource] || []
 
-      // Simulate network delay
-      await new Promise((resolve) => setTimeout(resolve, 800))
+        // Handle filtering
+        if (params.filter) {
+          Object.keys(params.filter).forEach((key) => {
+            data = data.filter((item) => item[key] === params.filter[key])
+          })
+        }
 
-      // Ensure data is loaded
-      if (!this.vehicles?.length || !this.deliveries?.length || !this.expenses?.length) {
-        await this.refreshData()
-      }
+        // Handle sorting
+        if (params.sort) {
+          const [field, order] = params.sort.split(',')
+          data = [...data].sort((a, b) => {
+            if (order === 'desc') {
+              return b[field] > a[field] ? 1 : -1
+            }
+            return a[field] > b[field] ? 1 : -1
+          })
+        }
 
-      const handlers = {
-        deliveries: () => this.handleDeliveries(params),
-        expenses: () => this.handleExpenses(params),
-        vehicles: () => this.handleVehicles(params),
-        stats: () => this.handleStats(params),
-        notifications: () => this.handleNotifications(params),
-      }
+        // Handle pagination
+        if (params.page && params.limit) {
+          const start = (params.page - 1) * params.limit
+          data = data.slice(start, start + params.limit)
+        }
 
-      const result = await handlers[resource]()
-      if (result === undefined || result === null) {
-        throw DataProviderError.createError('DATA_NOT_FOUND', `No data found for ${resource}`)
-      }
+        // Handle search by customer, location, or invoice
+        if (params.search) {
+          const searchLower = params.search.toLowerCase()
+          data = data.filter(
+            (item) =>
+              item.customer?.toLowerCase().includes(searchLower) ||
+              item.location?.toLowerCase().includes(searchLower) ||
+              item.invoice?.toLowerCase().includes(searchLower),
+          )
+        }
 
-      return { data: result, timestamp: new Date().toISOString(), success: true }
-    } catch (error) {
-      console.error('Error in fetch:', error)
-      if (error instanceof DataProviderError) throw error
-      throw DataProviderError.createError('FETCH_ERROR', error.message)
-    }
+        // Handle date range filtering with proper date parsing
+        if (params.dateRange) {
+          const { start, end } = params.dateRange
+          data = data.filter((item) => {
+            const itemDate = new Date(item.date)
+            return itemDate >= new Date(start) && itemDate <= new Date(end)
+          })
+        }
+
+        // Handle multiple status filtering
+        if (params.status) {
+          const statuses = Array.isArray(params.status) ? params.status : [params.status]
+          data = data.filter((item) => statuses.includes(item.status))
+        }
+
+        // Handle multiple branch filtering
+        if (params.branch) {
+          const branches = Array.isArray(params.branch) ? params.branch : [params.branch]
+          data = data.filter((item) => branches.includes(item.branch))
+        }
+
+        // Handle region filtering
+        if (params.region) {
+          data = data.filter((item) => item.region === params.region)
+        }
+
+        // Handle vehicle filtering
+        if (params.vehicle) {
+          data = data.filter((item) => item.vehicleNumber === params.vehicle)
+        }
+
+        // Handle payment method filtering
+        if (params.paymentMethod) {
+          data = data.filter((item) => item.paymentMethod === params.paymentMethod)
+        }
+
+        resolve({
+          data,
+          total: data.length,
+          page: params.page || 1,
+          limit: params.limit || data.length,
+        })
+      }, 300) // Reduced delay for better responsiveness
+    })
   }
 
-  handleNotifications({ limit = 50, unreadOnly = false, markAsRead = false } = {}) {
-    let result = [...this.notifications]
-    if (unreadOnly) result = result.filter((n) => !n.read)
-    if (markAsRead) {
-      result.forEach((notification) => {
-        const original = this.notifications.find((n) => n.id === notification.id)
-        if (original) original.read = true
-      })
-    }
-    if (limit) result = result.slice(0, limit)
-    return result
+  async create(resource, data) {
+    return new Promise((resolve) => {
+      setTimeout(() => {
+        const newId = Math.max(...mockData[resource].map((item) => item.id)) + 1
+        const newItem = {
+          ...data,
+          id: newId,
+          date: new Date().toISOString().split('T')[0],
+          time: new Date().toLocaleTimeString(),
+        }
+        mockData[resource].push(newItem)
+        resolve(newItem)
+      }, 300)
+    })
   }
 
-  markNotificationAsRead(id) {
-    const notification = this.notifications.find((n) => n.id === id)
-    if (notification) {
-      notification.read = true
-      return true
-    }
-    return false
+  async update(resource, id, data) {
+    return new Promise((resolve) => {
+      setTimeout(() => {
+        const index = mockData[resource].findIndex((item) => item.id === id)
+        if (index !== -1) {
+          mockData[resource][index] = { ...mockData[resource][index], ...data }
+          resolve(mockData[resource][index])
+        }
+        resolve(null)
+      }, 300)
+    })
   }
 
-  markAllNotificationsAsRead() {
-    this.notifications.forEach((notification) => (notification.read = true))
-    return true
+  async delete(resource, id) {
+    return new Promise((resolve) => {
+      setTimeout(() => {
+        const index = mockData[resource].findIndex((item) => item.id === id)
+        if (index !== -1) {
+          mockData[resource].splice(index, 1)
+          resolve(true)
+        }
+        resolve(false)
+      }, 300)
+    })
   }
 
-  async getExpenseStats(params = {}) {
-    if (!params.dateRange?.start || !params.dateRange?.end) {
-      throw DataProviderError.createError(
-        'INVALID_PARAMS',
-        'Date range is required for expense stats',
-      )
-    }
+  async getDeliveryStats(params = {}) {
+    const { data: deliveries } = await this.fetch('deliveries', params)
 
-    // Ensure data is loaded
-    if (!this.expenses?.length) {
-      await this.refreshData()
-    }
+    // Calculate total amount
+    const totalAmount = deliveries.reduce((sum, d) => sum + d.amount, 0)
 
-    const { dateRange } = params
-    const startDate = parseDate(dateRange.start)
-    const endDate = parseDate(dateRange.end)
-
-    if (!startDate || !endDate) {
-      throw DataProviderError.createError('INVALID_PARAMS', 'Invalid date range format')
-    }
-
-    const expenses =
-      this.expenses?.filter((expense) => {
-        const expenseDate = parseDate(expense.date)
-        return expenseDate && expenseDate >= startDate && expenseDate <= endDate
-      }) || []
-
-    const total = expenses.reduce((sum, exp) => sum + (exp.amount || 0), 0)
-    const byCategory = expenses.reduce((acc, exp) => {
-      if (!acc[exp.category]) acc[exp.category] = 0
-      acc[exp.category] += exp.amount || 0
+    // Count deliveries by status
+    const statusCounts = deliveries.reduce((acc, d) => {
+      acc[d.status] = (acc[d.status] || 0) + 1
       return acc
     }, {})
 
-    const previousStart = startOfMonth(startDate)
-    previousStart.setMonth(previousStart.getMonth() - 1)
-    const previousEnd = endOfMonth(previousStart)
+    // Group by payment method
+    const paymentMethodStats = deliveries.reduce((acc, d) => {
+      if (!acc[d.paymentMethod]) {
+        acc[d.paymentMethod] = { count: 0, amount: 0 }
+      }
+      acc[d.paymentMethod].count++
+      acc[d.paymentMethod].amount += d.amount
+      return acc
+    }, {})
 
-    const previousExpenses =
-      this.expenses?.filter((expense) => {
-        const expenseDate = parseDate(expense.date)
-        return expenseDate && expenseDate >= previousStart && expenseDate <= previousEnd
-      }) || []
-
-    const previousTotal = previousExpenses.reduce((sum, exp) => sum + (exp.amount || 0), 0)
+    // Group by branch
+    const branchStats = deliveries.reduce((acc, d) => {
+      if (!acc[d.branch]) {
+        acc[d.branch] = { count: 0, amount: 0 }
+      }
+      acc[d.branch].count++
+      acc[d.branch].amount += d.amount
+      return acc
+    }, {})
 
     return {
-      data: { total, count: expenses.length, byCategory, previousTotal },
-      timestamp: new Date().toISOString(),
-      success: true,
+      total: deliveries.length,
+      totalAmount,
+      byStatus: statusCounts,
+      byPaymentMethod: paymentMethodStats,
+      byBranch: branchStats,
     }
   }
 
-  handleDeliveries({ filters = {}, sort, limit, page, perPage, search } = {}) {
-    let result = [...(this.deliveries || [])]
+  async getExpenseStats(params = {}) {
+    const { data: expenses } = await this.fetch('expenses', params)
 
-    if (filters.status) result = result.filter((d) => d.status === filters.status)
-    if (filters.vehicleId) result = result.filter((d) => d.vehicleId === filters.vehicleId)
-    if (filters.dateRange) {
-      const startDate = parseDate(filters.dateRange.start)
-      const endDate = parseDate(filters.dateRange.end)
-      if (startDate && endDate) {
-        result = result.filter((d) => {
-          const date = parseDate(d.date)
-          return date && date >= startDate && date <= endDate
-        })
-      }
-    }
-
-    if (search) {
-      const searchTerm = search.toLowerCase()
-      result = result.filter((d) =>
-        Object.values(d).some(
-          (value) => typeof value === 'string' && value.toLowerCase().includes(searchTerm),
-        ),
-      )
-    }
-
-    if (sort) {
-      const [field, order] = sort.split(',')
-      result.sort((a, b) => {
-        if (field === 'date') {
-          const dateA = parseDate(a.date)
-          const dateB = parseDate(b.date)
-          if (dateA && dateB) {
-            return order === 'desc' ? dateB - dateA : dateA - dateB
-          }
-          return 0
+    // Calculate totals and group by category
+    const stats = expenses.reduce(
+      (acc, exp) => {
+        if (!acc.byCategory[exp.category]) {
+          acc.byCategory[exp.category] = { count: 0, amount: 0 }
         }
-        return order === 'desc' ? (b[field] > a[field] ? 1 : -1) : a[field] > b[field] ? 1 : -1
-      })
-    }
+        acc.byCategory[exp.category].count++
+        acc.byCategory[exp.category].amount += exp.amount
+        acc.totalAmount += exp.amount
+        return acc
+      },
+      { totalAmount: 0, byCategory: {} },
+    )
 
-    if (page && perPage) {
-      const start = (page - 1) * perPage
-      result = result.slice(start, start + perPage)
-    } else if (limit) {
-      result = result.slice(0, limit)
+    return {
+      total: expenses.length,
+      ...stats,
     }
-
-    return result
   }
 
-  handleExpenses({ filters = {}, sort, limit, page, perPage, search } = {}) {
-    let result = [...(this.expenses || [])]
+  async getVehicleStats(params = {}) {
+    const { data: vehicles } = await this.fetch('vehicles', params)
 
-    if (filters.category) result = result.filter((e) => e.category === filters.category)
-    if (filters.dateRange) {
-      const startDate = parseDate(filters.dateRange.start)
-      const endDate = parseDate(filters.dateRange.end)
-      if (startDate && endDate) {
-        result = result.filter((e) => {
-          const date = parseDate(e.date)
-          return date && date >= startDate && date <= endDate
-        })
+    // Group by branch
+    const byBranch = vehicles.reduce((acc, v) => {
+      if (!acc[v.branch]) {
+        acc[v.branch] = { total: 0, active: 0, maintenance: 0 }
       }
-    }
+      acc[v.branch].total++
+      acc[v.branch][v.status]++
+      return acc
+    }, {})
 
-    if (search) {
-      const searchTerm = search.toLowerCase()
-      result = result.filter((e) =>
-        Object.values(e).some(
-          (value) => typeof value === 'string' && value.toLowerCase().includes(searchTerm),
-        ),
-      )
-    }
-
-    if (sort) {
-      const [field, order] = sort.split(',')
-      result.sort((a, b) => {
-        if (field === 'date') {
-          const dateA = parseDate(a.date)
-          const dateB = parseDate(b.date)
-          if (dateA && dateB) {
-            return order === 'desc' ? dateB - dateA : dateA - dateB
-          }
-          return 0
-        }
-        return order === 'desc' ? (b[field] > a[field] ? 1 : -1) : a[field] > b[field] ? 1 : -1
-      })
-    }
-
-    if (page && perPage) {
-      const start = (page - 1) * perPage
-      result = result.slice(start, start + perPage)
-    } else if (limit) {
-      result = result.slice(0, limit)
-    }
-
-    return result
-  }
-
-  handleVehicles({ filters = {}, sort, limit, page, perPage, search } = {}) {
-    let result = [...(this.vehicles || [])]
-
-    if (filters.status) result = result.filter((v) => v.status === filters.status)
-    if (filters.type) result = result.filter((v) => v.type === filters.type)
-
-    if (search) {
-      const searchTerm = search.toLowerCase()
-      result = result.filter((v) =>
-        Object.values(v).some(
-          (value) => typeof value === 'string' && value.toLowerCase().includes(searchTerm),
-        ),
-      )
-    }
-
-    if (sort) {
-      const [field, order] = sort.split(',')
-      result.sort((a, b) =>
-        order === 'desc' ? (b[field] > a[field] ? 1 : -1) : a[field] > b[field] ? 1 : -1,
-      )
-    }
-
-    if (page && perPage) {
-      const start = (page - 1) * perPage
-      result = result.slice(start, start + perPage)
-    } else if (limit) {
-      result = result.slice(0, limit)
-    }
-
-    return result
-  }
-
-  handleStats({ type } = {}) {
-    return type ? this.stats[type] : this.stats
-  }
-
-  async refresh() {
-    const success = this.refreshData()
-    if (success) {
-      this.cache.clear()
-      await new Promise((resolve) => setTimeout(resolve, 1000))
-      return { success: true, timestamp: new Date().toISOString() }
-    }
-    return { success: false, error: 'Failed to refresh data', timestamp: new Date().toISOString() }
-  }
-
-  async exportDeliveries(data, format = 'excel') {
-    const deliveries = data?.length ? data : this.deliveries
-    await new Promise((resolve) => setTimeout(resolve, 1500))
-    return { data: deliveries, format, timestamp: new Date().toISOString(), success: true }
-  }
-
-  async exportExpenses(data, format = 'excel') {
-    const expenses = data?.length ? data : this.expenses
-    await new Promise((resolve) => setTimeout(resolve, 1500))
-    return { data: expenses, format, timestamp: new Date().toISOString(), success: true }
-  }
-
-  async exportVehicleStatus(data, format = 'excel') {
-    const vehicles = data?.length ? data : this.vehicles
-    await new Promise((resolve) => setTimeout(resolve, 1500))
-    return { data: vehicles, format, timestamp: new Date().toISOString(), success: true }
-  }
-
-  destroy() {
-    if (this.notificationCheckInterval) {
-      clearInterval(this.notificationCheckInterval)
-      this.notificationCheckInterval = null
+    return {
+      total: vehicles.length,
+      byBranch,
     }
   }
 }
