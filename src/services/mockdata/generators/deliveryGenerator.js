@@ -1,49 +1,57 @@
-import { branchConfig, amountRanges, deliveryStatusConfig, paymentMethodConfig } from './branchData';
-import { getWorkingDaysInRange, getRandomTimeInWorkingHours, formatDate } from './dateUtils';
-import { 
-  getRandomAmount, 
-  getRandomItem, 
+import {
+  branchConfig,
+  amountRanges,
+  deliveryStatusConfig,
+  paymentMethodConfig,
+} from './branchData.js'
+import { getWorkingDaysInRange, getRandomTimeInWorkingHours, formatDate } from './dateUtils.js'
+import {
+  getRandomAmount,
+  getRandomItem,
   getRandomStatus,
   getRandomCoordinates,
   generateInvoiceNumber,
-  generateProofImageUrl
-} from './randomUtils';
+  generateProofImageUrl,
+} from './randomUtils.js'
 
 const generateDeliveryData = (startDate, endDate) => {
-  const deliveries = [];
-  let deliveryIndex = 0;
+  const deliveries = []
+  let deliveryIndex = 0
 
   // Get all working days in the date range
-  const workingDays = getWorkingDaysInRange(new Date(startDate), new Date(endDate));
+  const workingDays = getWorkingDaysInRange(new Date(startDate), new Date(endDate))
 
   // Generate deliveries for each branch
   Object.entries(branchConfig).forEach(([branchName, branchData]) => {
-    const { vehicles, drivers, customers, coordinates } = branchData;
-    
+    const { vehicles, drivers, customers, coordinates } = branchData
+
     // For each working day
-    workingDays.forEach(date => {
+    workingDays.forEach((date) => {
       // Generate 8-12 deliveries per day for each branch
-      const dailyDeliveryCount = Math.floor(Math.random() * 5) + 8;
+      const dailyDeliveryCount = Math.floor(Math.random() * 5) + 8
 
       // Assign vehicles and drivers for the day
-      const dayVehicle = getRandomItem(vehicles);
-      const dayDriver = getRandomItem(drivers);
+      const dayVehicle = getRandomItem(vehicles)
+      const dayDriver = getRandomItem(drivers)
 
       for (let i = 0; i < dailyDeliveryCount; i++) {
         // Get random customer
-        const customer = getRandomItem(customers);
+        const customer = getRandomItem(customers)
 
         // Generate random coordinates within branch radius
         const deliveryCoords = getRandomCoordinates(
           coordinates.center.lat,
           coordinates.center.lng,
-          coordinates.radius
-        );
+          coordinates.radius,
+        )
 
         // Determine amount range based on probabilities
-        const amountRange = Math.random() < 0.4 ? amountRanges.small :
-                          Math.random() < 0.75 ? amountRanges.medium :
-                          amountRanges.large;
+        const amountRange =
+          Math.random() < 0.4
+            ? amountRanges.small
+            : Math.random() < 0.75
+              ? amountRanges.medium
+              : amountRanges.large
 
         // Generate delivery data
         const delivery = {
@@ -60,24 +68,24 @@ const generateDeliveryData = (startDate, endDate) => {
           amount: getRandomAmount(amountRange.min, amountRange.max),
           status: getRandomStatus(deliveryStatusConfig),
           coordinates: deliveryCoords,
-          paymentMethod: Math.random() < paymentMethodConfig.TUNAI ? "TUNAI" : "KREDIT"
-        };
+          paymentMethod: Math.random() < paymentMethodConfig.TUNAI ? 'TUNAI' : 'KREDIT',
+        }
 
         // Add proof image after other fields are set
-        delivery.proofImage = generateProofImageUrl(delivery.branch, delivery.invoice);
+        delivery.proofImage = generateProofImageUrl(delivery.branch, delivery.invoice)
 
-        deliveries.push(delivery);
-        deliveryIndex++;
+        deliveries.push(delivery)
+        deliveryIndex++
       }
-    });
-  });
+    })
+  })
 
   // Sort deliveries by date and time
   return deliveries.sort((a, b) => {
-    const dateA = new Date(a.date + " " + a.time);
-    const dateB = new Date(b.date + " " + b.time);
-    return dateA - dateB;
-  });
-};
+    const dateA = new Date(a.date + ' ' + a.time)
+    const dateB = new Date(b.date + ' ' + b.time)
+    return dateA - dateB
+  })
+}
 
-export { generateDeliveryData };
+export { generateDeliveryData }
