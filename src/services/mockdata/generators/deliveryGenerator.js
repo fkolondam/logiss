@@ -51,7 +51,7 @@ const generateDeliveryData = (startDate, endDate) => {
 
     // For each working day
     workingDays.forEach((date) => {
-      // Determine if it's peak time
+      // Determine if it's peak time (used for delivery count calculation)
       const isPeakTime = isInPeakPeriod(date)
 
       // Get eligible customers for this date
@@ -81,7 +81,7 @@ const generateDeliveryData = (startDate, endDate) => {
             coordinates.radius,
           )
 
-          // Determine amount range based on probabilities
+          // Determine amount range based on probabilities and peak time
           const amountRange =
             Math.random() < 0.4
               ? amountRanges.small
@@ -105,7 +105,6 @@ const generateDeliveryData = (startDate, endDate) => {
             status: getRandomStatus(deliveryStatusConfig),
             coordinates: deliveryCoords,
             paymentMethod: Math.random() < paymentMethodConfig.TUNAI ? 'TUNAI' : 'KREDIT',
-            isPeakTime,
             region: branchData.region,
           }
 

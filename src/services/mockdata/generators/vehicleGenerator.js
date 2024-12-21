@@ -71,6 +71,7 @@ const generateBaseVehicle = (plateNumber, branch, driver, coordinates) => {
   return {
     id: parseInt(plateNumber.replace(/\D/g, '').slice(-4)),
     plateNumber,
+    branch,
     type,
     model,
     capacity: capacity + ' kg',
