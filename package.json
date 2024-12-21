@@ -4,6 +4,7 @@
   "type": "module",
   "scripts": {
     "test:mock": "node src/services/mockdata/testMockData.js",
+    "test:provider": "node src/services/mockdata/generators/__tests__/mockProviderTester.js",
     "dev": "vite",
     "build": "vite build",
     "preview": "vite preview",
