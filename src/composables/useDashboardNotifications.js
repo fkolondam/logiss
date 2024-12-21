@@ -1,88 +1,127 @@
 import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { differenceInDays, parseISO } from 'date-fns'
 import { useDataSource } from '../stores/dataSource'
+import { useDashboardState } from './useDashboardState'
+import { useDashboardCache } from './useDashboardCache'
 
+// Notification type definitions with metadata
 export const NOTIFICATION_TYPES = {
   LOW_FUEL: {
     id: 'LOW_FUEL',
     color: 'text-orange-600',
     bg: 'bg-orange-50',
     icon: '⛽',
+    priority: 'high',
+    autoExpire: 24, // hours
   },
   MAINTENANCE_DUE: {
     id: 'MAINTENANCE_DUE',
     color: 'text-blue-600',
     bg: 'bg-blue-50',
     icon: '🔧',
+    priority: 'medium',
+    autoExpire: 72,
   },
   DELIVERY_FAILED: {
     id: 'DELIVERY_FAILED',
     color: 'text-red-600',
     bg: 'bg-red-50',
     icon: '❌',
+    priority: 'high',
+    autoExpire: 48,
   },
   DELIVERY_SUCCESS: {
     id: 'DELIVERY_SUCCESS',
     color: 'text-green-600',
     bg: 'bg-green-50',
     icon: '✅',
+    priority: 'low',
+    autoExpire: 24,
   },
   ERROR: {
     id: 'ERROR',
     color: 'text-red-600',
     bg: 'bg-red-50',
     icon: '⚠️',
+    priority: 'critical',
+    autoExpire: null, // never auto-expire errors
   },
   SYSTEM: {
     id: 'SYSTEM',
     color: 'text-gray-600',
     bg: 'bg-gray-50',
     icon: '🔔',
+    priority: 'medium',
+    autoExpire: 48,
   },
 }
 
 const STORAGE_KEY = 'dashboard_notifications'
 const MAX_NOTIFICATIONS = 50
 const POLLING_INTERVAL = 30000 // 30 seconds
+const NOTIFICATION_DEBOUNCE = 1000 // 1 second
 
 export function useDashboardNotifications() {
   const notifications = ref([])
   const notificationSound = ref(null)
-  const error = ref(null)
   const pollingInterval = ref(null)
   const dataSource = useDataSource()
+  const { withLoadingState, handleError } = useDashboardState()
+  const { getCached, setCached, CACHE_KEYS } = useDashboardCache()
 
   // Computed properties
   const unreadNotifications = computed(() => notifications.value.filter((n) => !n.read))
+
   const hasUnread = computed(() => unreadNotifications.value.length > 0)
-  const notificationsByType = computed(() => {
+
+  const notificationsByPriority = computed(() => {
     return notifications.value.reduce((acc, notification) => {
-      if (!acc[notification.type]) {
-        acc[notification.type] = []
-      }
-      acc[notification.type].push(notification)
+      const type = Object.values(NOTIFICATION_TYPES).find((t) => t.id === notification.type)
+      const priority = type?.priority || 'low'
+      if (!acc[priority]) acc[priority] = []
+      acc[priority].push(notification)
       return acc
     }, {})
   })
 
-  // Load notifications from localStorage
+  // Load notifications from localStorage with validation
   const loadNotifications = () => {
     try {
       const stored = localStorage.getItem(STORAGE_KEY)
-      if (stored) {
-        notifications.value = JSON.parse(stored)
+      if (!stored) return
+
+      const parsed = JSON.parse(stored)
+      if (!Array.isArray(parsed)) {
+        console.warn('Invalid notifications format in storage')
+        return
       }
+
+      // Filter out expired notifications
+      notifications.value = parsed.filter((notification) => {
+        const type = Object.values(NOTIFICATION_TYPES).find((t) => t.id === notification.type)
+        if (!type?.autoExpire) return true
+
+        const expiryTime =
+          new Date(notification.timestamp).getTime() + type.autoExpire * 60 * 60 * 1000
+        return Date.now() < expiryTime
+      })
     } catch (err) {
-      handleError('Failed to load notifications', err)
+      handleError('notifications', err)
     }
   }
 
-  // Save notifications to localStorage
-  const saveNotifications = () => {
+  // Save notifications to localStorage with retry
+  const saveNotifications = async (retries = 3) => {
     try {
       localStorage.setItem(STORAGE_KEY, JSON.stringify(notifications.value))
     } catch (err) {
-      handleError('Failed to save notifications', err)
+      if (retries > 0) {
+        // Remove oldest notifications and retry
+        notifications.value = notifications.value.slice(-MAX_NOTIFICATIONS)
+        await saveNotifications(retries - 1)
+      } else {
+        handleError('notifications', err)
+      }
     }
   }
 
@@ -90,197 +129,131 @@ export function useDashboardNotifications() {
   const initSound = () => {
     try {
       notificationSound.value = new Audio('/notification.mp3')
+      // Preload audio
+      notificationSound.value.load()
     } catch (err) {
-      handleError('Failed to initialize notification sound', err)
+      console.warn('Failed to initialize notification sound:', err)
     }
   }
 
-  // Handle errors
-  const handleError = (message, err = null) => {
-    error.value = { message, details: err?.message }
-    console.error(message, err)
-
-    // Add error notification
-    addNotification({
-      type: NOTIFICATION_TYPES.ERROR.id,
-      title: 'System Error',
-      message: message,
-      data: { error: err?.message },
-    })
-  }
-
-  // Add notification
+  // Add notification with deduplication
   const addNotification = (notification) => {
     try {
       const id = `notif_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
+      const type = Object.values(NOTIFICATION_TYPES).find((t) => t.id === notification.type)
 
-      // Add new notification at the start
-      notifications.value.unshift({
+      // Check for duplicate notifications
+      const isDuplicate = notifications.value.some(
+        (n) =>
+          n.type === notification.type &&
+          n.message === notification.message &&
+          Date.now() - new Date(n.timestamp).getTime() < NOTIFICATION_DEBOUNCE,
+      )
+
+      if (isDuplicate) return null
+
+      const newNotification = {
         id,
         timestamp: new Date().toISOString(),
         read: false,
+        priority: type?.priority || 'low',
         ...notification,
-      })
+      }
+
+      // Add based on priority
+      if (type?.priority === 'critical' || type?.priority === 'high') {
+        notifications.value.unshift(newNotification)
+      } else {
+        notifications.value.push(newNotification)
+      }
 
       // Limit total notifications
       if (notifications.value.length > MAX_NOTIFICATIONS) {
-        notifications.value = notifications.value.slice(0, MAX_NOTIFICATIONS)
+        notifications.value = notifications.value
+          .sort((a, b) => {
+            const priorityOrder = { critical: 0, high: 1, medium: 2, low: 3 }
+            return priorityOrder[a.priority] - priorityOrder[b.priority]
+          })
+          .slice(0, MAX_NOTIFICATIONS)
       }
 
-      // Play sound if enabled
-      if (notificationSound.value) {
-        notificationSound.value.play().catch(() => {
-          // Ignore audio play errors
-        })
+      // Play sound if enabled and notification is high priority
+      if (notificationSound.value && (type?.priority === 'critical' || type?.priority === 'high')) {
+        notificationSound.value.play().catch(() => {})
       }
 
-      // Save to localStorage
       saveNotifications()
-
       return id
     } catch (err) {
-      handleError('Failed to add notification', err)
+      handleError('notifications', err)
       return null
     }
   }
 
   // Mark notification as read
-  const markAsRead = (id) => {
+  const markAsRead = async (id) => {
     try {
       const notification = notifications.value.find((n) => n.id === id)
       if (notification) {
         notification.read = true
-        saveNotifications()
+        await saveNotifications()
       }
     } catch (err) {
-      handleError('Failed to mark notification as read', err)
+      handleError('notifications', err)
     }
   }
 
   // Mark all notifications as read
-  const markAllAsRead = () => {
+  const markAllAsRead = async () => {
     try {
       notifications.value.forEach((n) => (n.read = true))
-      saveNotifications()
+      await saveNotifications()
     } catch (err) {
-      handleError('Failed to mark all notifications as read', err)
+      handleError('notifications', err)
     }
   }
 
   // Remove notification
-  const removeNotification = (id) => {
+  const removeNotification = async (id) => {
     try {
       const index = notifications.value.findIndex((n) => n.id === id)
       if (index !== -1) {
         notifications.value.splice(index, 1)
-        saveNotifications()
+        await saveNotifications()
       }
     } catch (err) {
-      handleError('Failed to remove notification', err)
+      handleError('notifications', err)
     }
   }
 
   // Clear all notifications
-  const clearNotifications = () => {
+  const clearNotifications = async () => {
     try {
       notifications.value = []
-      saveNotifications()
+      await saveNotifications()
     } catch (err) {
-      handleError('Failed to clear notifications', err)
+      handleError('notifications', err)
     }
   }
 
-  // Fetch notifications from data provider
-  const fetchNotifications = async () => {
-    try {
-      const provider = await dataSource.getProvider()
-
-      // Add retry mechanism for network failures
-      let retries = 3
-      let newNotifications
-
-      while (retries > 0) {
-        try {
-          newNotifications = await provider.fetch('notifications', {
-            limit: MAX_NOTIFICATIONS,
-          })
-          break
-        } catch (fetchError) {
-          retries--
-          if (retries === 0) throw fetchError
-          await new Promise((resolve) => setTimeout(resolve, 1000)) // Wait 1s before retry
-        }
-      }
-
-      // Add any new notifications that don't exist yet
-      if (newNotifications) {
-        newNotifications.forEach((notification) => {
-          // Check for duplicates with more robust comparison
-          const isDuplicate = notifications.value.some(
-            (n) =>
-              n.timestamp === notification.timestamp &&
-              n.type === notification.type &&
-              n.message === notification.message &&
-              JSON.stringify(n.data) === JSON.stringify(notification.data),
-          )
-
-          if (!isDuplicate) {
-            addNotification(notification)
-          }
-        })
-      }
-    } catch (err) {
-      handleError('Failed to fetch notifications', err)
-
-      // Add system notification for persistent failures
-      if (
-        !notifications.value.some(
-          (n) =>
-            n.type === NOTIFICATION_TYPES.ERROR.id && n.message.includes('notification service'),
-        )
-      ) {
-        addNotification({
-          type: NOTIFICATION_TYPES.ERROR.id,
-          title: 'Notification Service Error',
-          message: 'Unable to fetch new notifications. Please check your connection.',
-          data: { error: err?.message },
-        })
-      }
-    }
-  }
-
-  // Start polling for new notifications
-  const startPolling = () => {
-    stopPolling() // Clear any existing interval
-    pollingInterval.value = setInterval(fetchNotifications, POLLING_INTERVAL)
-  }
-
-  // Stop polling for new notifications
-  const stopPolling = () => {
-    if (pollingInterval.value) {
-      clearInterval(pollingInterval.value)
-      pollingInterval.value = null
-    }
-  }
-
-  // Check vehicle notifications
+  // Check vehicle notifications with improved validation
   const checkVehicleNotifications = (vehicles) => {
-    if (!vehicles) return
+    if (!Array.isArray(vehicles)) return
 
-    try {
-      vehicles.forEach((vehicle) => {
-        // Check fuel level
-        if (vehicle.fuelLevel < 20) {
-          addNotification({
-            type: NOTIFICATION_TYPES.LOW_FUEL.id,
-            title: 'Low Fuel Alert',
-            message: `Vehicle ${vehicle.plateNumber} is running low on fuel (${vehicle.fuelLevel}%)`,
-            data: { vehicleId: vehicle.id },
-          })
-        }
+    vehicles.forEach((vehicle) => {
+      // Fuel level check
+      if (typeof vehicle.fuelLevel === 'number' && vehicle.fuelLevel < 20) {
+        addNotification({
+          type: NOTIFICATION_TYPES.LOW_FUEL.id,
+          title: 'Low Fuel Alert',
+          message: `Vehicle ${vehicle.plateNumber} is running low on fuel (${vehicle.fuelLevel}%)`,
+          data: { vehicleId: vehicle.id },
+        })
+      }
 
-        // Check maintenance using nextServiceDue field
-        if (vehicle.nextServiceDue) {
+      // Maintenance check
+      if (vehicle.nextServiceDue) {
+        try {
           const daysToMaintenance = differenceInDays(parseISO(vehicle.nextServiceDue), new Date())
 
           if (daysToMaintenance <= 7 && daysToMaintenance > 0) {
@@ -291,88 +264,132 @@ export function useDashboardNotifications() {
               data: { vehicleId: vehicle.id },
             })
           }
+        } catch (err) {
+          console.warn('Invalid nextServiceDue date:', err)
         }
+      }
 
-        // Check vehicle status
-        if (vehicle.status === 'BREAKDOWN') {
-          addNotification({
-            type: NOTIFICATION_TYPES.ERROR.id,
-            title: 'Vehicle Breakdown',
-            message: `Vehicle ${vehicle.plateNumber} has reported a breakdown`,
-            data: { vehicleId: vehicle.id },
-          })
-        }
-      })
-    } catch (err) {
-      handleError('Failed to check vehicle notifications', err)
-    }
+      // Status check
+      if (vehicle.status === 'BREAKDOWN') {
+        addNotification({
+          type: NOTIFICATION_TYPES.ERROR.id,
+          title: 'Vehicle Breakdown',
+          message: `Vehicle ${vehicle.plateNumber} has reported a breakdown`,
+          data: { vehicleId: vehicle.id },
+        })
+      }
+    })
   }
 
-  // Check delivery notifications
+  // Check delivery notifications with improved validation
   const checkDeliveryNotifications = (deliveries) => {
-    if (!deliveries) return
+    if (!Array.isArray(deliveries)) return
 
-    try {
-      deliveries.forEach((delivery) => {
-        // Check for failed deliveries (any BATAL status)
-        if (delivery.status.startsWith('BATAL')) {
-          addNotification({
-            type: NOTIFICATION_TYPES.DELIVERY_FAILED.id,
-            title: 'Delivery Failed',
-            message: `Delivery #${delivery.id} has failed: ${delivery.status}`,
-            data: { deliveryId: delivery.id },
+    deliveries.forEach((delivery) => {
+      if (!delivery.status) return
+
+      // Failed delivery check
+      if (delivery.status.startsWith('BATAL')) {
+        addNotification({
+          type: NOTIFICATION_TYPES.DELIVERY_FAILED.id,
+          title: 'Delivery Failed',
+          message: `Delivery #${delivery.id} has failed: ${delivery.status}`,
+          data: { deliveryId: delivery.id },
+        })
+      }
+
+      // Successful delivery check
+      if (delivery.status === 'DITERIMA - SEMUA' && !delivery.notified) {
+        addNotification({
+          type: NOTIFICATION_TYPES.DELIVERY_SUCCESS.id,
+          title: 'Delivery Completed',
+          message: `Delivery #${delivery.id} has been completed successfully`,
+          data: { deliveryId: delivery.id },
+        })
+      }
+
+      // Delayed delivery check
+      if (delivery.status === 'TERLAMBAT') {
+        addNotification({
+          type: NOTIFICATION_TYPES.SYSTEM.id,
+          title: 'Delivery Delayed',
+          message: `Delivery #${delivery.id} is experiencing delays`,
+          data: { deliveryId: delivery.id },
+        })
+      }
+    })
+  }
+
+  // Start polling with error handling and backoff
+  const startPolling = (retryCount = 0) => {
+    stopPolling()
+
+    const poll = async () => {
+      try {
+        const provider = await dataSource.getProvider()
+        const newNotifications = await withLoadingState('notifications', () =>
+          provider.fetch('notifications', { limit: MAX_NOTIFICATIONS }),
+        )
+
+        if (Array.isArray(newNotifications)) {
+          newNotifications.forEach((notification) => {
+            if (
+              !notifications.value.some(
+                (n) =>
+                  n.timestamp === notification.timestamp &&
+                  n.type === notification.type &&
+                  n.message === notification.message,
+              )
+            ) {
+              addNotification(notification)
+            }
           })
         }
 
-        // Check for completed deliveries
-        if (delivery.status === 'DITERIMA - SEMUA' && !delivery.notified) {
-          addNotification({
-            type: NOTIFICATION_TYPES.DELIVERY_SUCCESS.id,
-            title: 'Delivery Completed',
-            message: `Delivery #${delivery.id} has been completed successfully`,
-            data: { deliveryId: delivery.id },
-          })
-        }
+        // Reset retry count on success
+        retryCount = 0
+      } catch (err) {
+        console.warn('Polling error:', err)
+        retryCount++
 
-        // Check for delayed deliveries
-        if (delivery.status === 'TERLAMBAT') {
-          addNotification({
-            type: NOTIFICATION_TYPES.SYSTEM.id,
-            title: 'Delivery Delayed',
-            message: `Delivery #${delivery.id} is experiencing delays`,
-            data: { deliveryId: delivery.id },
-          })
+        // Exponential backoff
+        if (retryCount > 3) {
+          const backoffTime = Math.min(1000 * Math.pow(2, retryCount - 3), 30000)
+          await new Promise((resolve) => setTimeout(resolve, backoffTime))
         }
-      })
-    } catch (err) {
-      handleError('Failed to check delivery notifications', err)
+      }
+    }
+
+    pollingInterval.value = setInterval(poll, POLLING_INTERVAL)
+    poll() // Initial poll
+  }
+
+  // Stop polling
+  const stopPolling = () => {
+    if (pollingInterval.value) {
+      clearInterval(pollingInterval.value)
+      pollingInterval.value = null
     }
   }
 
-  // Initialize on mount
+  // Initialize
   onMounted(() => {
     loadNotifications()
     initSound()
-    fetchNotifications()
     startPolling()
   })
 
-  // Cleanup on unmount
+  // Cleanup
   onUnmounted(() => {
     stopPolling()
   })
 
   return {
-    // State
     notifications,
     unreadNotifications,
     hasUnread,
-    notificationsByType,
-    error,
+    notificationsByPriority,
     NOTIFICATION_TYPES,
-
-    // Methods
-    initSound,
     addNotification,
     markAsRead,
     markAllAsRead,

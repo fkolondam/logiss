@@ -1,124 +1,302 @@
-// Format date to ISO string for internal use
-export function formatDateISO(date) {
-  return date.toISOString().split('T')[0]
+// List of holidays in Q4 2024
+const HOLIDAYS_2024 = [
+  '2024-11-27', // Maulid Nabi Muhammad
+  '2024-12-25', // Hari Pahlawan
+  '2024-12-31', // Hari Natal
+]
+
+// Format date to MM/DD/YYYY string
+export const formatDate = (date) => {
+  if (!isValidDate(date)) return null
+  const month = (date.getMonth() + 1).toString().padStart(2, '0')
+  const day = date.getDate().toString().padStart(2, '0')
+  const year = date.getFullYear()
+  return `${month}/${day}/${year}`
 }
 
-// Format date to MM/DD/YY for display and test compatibility
-export function formatDate(date) {
-  // Ensure we're working with a Date object
-  const d = date instanceof Date ? new Date(date) : new Date(date)
-  // Set to noon UTC to avoid timezone issues
-  d.setUTCHours(12, 0, 0, 0)
-
-  const month = d.getUTCMonth() + 1
-  const day = d.getUTCDate()
-  const year = d.getUTCFullYear() % 100 // Get last two digits of year
-
-  // Format as MM/DD/YY
-  return `${month.toString().padStart(2, '0')}/${day.toString().padStart(2, '0')}/${year.toString().padStart(2, '0')}`
+// Format date to YYYY-MM-DD string
+export const formatISODate = (date) => {
+  if (!isValidDate(date)) return null
+  const year = date.getFullYear()
+  const month = (date.getMonth() + 1).toString().padStart(2, '0')
+  const day = date.getDate().toString().padStart(2, '0')
+  return `${year}-${month}-${day}`
 }
 
-// Parse date string in MM/DD/YY format
-export function parseDate(dateStr) {
-  if (!dateStr) return null
-  const [month, day, year] = dateStr.split('/').map(Number)
-  if (!month || !day || !year) return null
+// Parse date string to Date object
+export const parseDate = (dateString) => {
+  if (!dateString) return null
 
-  // Assume 20xx for two-digit years
-  const fullYear = year < 100 ? 2000 + year : year
-
-  // Create date at noon UTC to avoid timezone issues
-  const date = new Date(Date.UTC(fullYear, month - 1, day, 12))
-
-  // Ensure the date is in Q4 2024 before returning
-  return ensureQ4Date(date)
-}
-
-// Get working days in range (excluding weekends and holidays)
-export function getWorkingDaysInRange(start, end) {
-  const days = []
-  const current = new Date(Date.UTC(start.getFullYear(), start.getMonth(), start.getDate(), 12))
-  const endDate = new Date(Date.UTC(end.getFullYear(), end.getMonth(), end.getDate(), 12))
-
-  while (current <= endDate) {
-    if (isWorkingDay(current)) {
-      days.push(new Date(current))
+  try {
+    // Handle Date objects
+    if (dateString instanceof Date) {
+      return isValidDate(dateString) ? dateString : null
     }
-    current.setUTCDate(current.getUTCDate() + 1)
+
+    // Handle ISO format (YYYY-MM-DD)
+    if (typeof dateString === 'string' && dateString.includes('-')) {
+      const [year, month, day] = dateString.split('-')
+      const date = new Date(parseInt(year), parseInt(month) - 1, parseInt(day))
+      return isValidDate(date) ? date : null
+    }
+
+    // Handle MM/DD/YYYY format
+    if (typeof dateString === 'string' && dateString.includes('/')) {
+      const [month, day, year] = dateString.split('/')
+      const date = new Date(parseInt(year), parseInt(month) - 1, parseInt(day))
+      return isValidDate(date) ? date : null
+    }
+
+    // Handle timestamps
+    if (typeof dateString === 'number') {
+      const date = new Date(dateString)
+      return isValidDate(date) ? date : null
+    }
+
+    return null
+  } catch (error) {
+    console.error('Error parsing date:', dateString, error)
+    return null
   }
-  return days
 }
 
-// Check if date is a weekend
-export function isWeekend(date) {
-  return date.getUTCDay() === 0 || date.getUTCDay() === 6 // 0 = Sunday, 6 = Saturday
+// Validate date object
+export const isValidDate = (date) => {
+  return date instanceof Date && !isNaN(date.getTime())
 }
 
 // Check if date is a holiday
-export function isHoliday(date) {
-  const holidays = [
-    '2024-11-27', // Hari Pilkada Nasional
-    '2024-12-25', // Natal
-    '2024-12-31', // Tahun Baru
-  ]
-  const dateStr = formatDateISO(date)
-  return holidays.includes(dateStr)
+export const isHoliday = (date) => {
+  if (!isValidDate(date)) return false
+  const isoDate = formatISODate(date)
+  return HOLIDAYS_2024.includes(isoDate)
+}
+
+// Check if date is a weekend (Sunday)
+export const isWeekend = (date) => {
+  if (!isValidDate(date)) return false
+  return date.getDay() === 0 // 0 = Sunday
 }
 
 // Check if date is a working day
-export function isWorkingDay(date) {
+export const isWorkingDay = (date) => {
+  if (!isValidDate(date)) return false
   return !isWeekend(date) && !isHoliday(date)
 }
 
-// Get random time in working hours (8 AM - 5 PM)
-export function getRandomTimeInWorkingHours() {
-  const hour = Math.floor(Math.random() * 9) + 8 // 8 AM - 5 PM
-  const minute = Math.floor(Math.random() * 60)
-  return `${hour.toString().padStart(2, '0')}:${minute.toString().padStart(2, '0')} ${hour >= 12 ? 'PM' : 'AM'}`
+// Get Q4 2024 date range
+export const getQ4DateRange = () => {
+  const start = new Date(2024, 9, 1) // October 1, 2024
+  const end = new Date(2024, 11, 31) // December 31, 2024
+  return { start, end }
 }
 
 // Ensure date is in Q4 2024
-export function ensureQ4Date(date) {
-  if (!date) return new Date(Date.UTC(2024, 9, 1, 12)) // October 1, 2024
+export const ensureQ4Date = (date) => {
+  if (!isValidDate(date)) return null
 
-  const q4Start = new Date(Date.UTC(2024, 9, 1, 12)) // October 1, 2024
-  const q4End = new Date(Date.UTC(2024, 11, 31, 12)) // December 31, 2024
-
-  const d = new Date(date)
-  d.setUTCHours(12, 0, 0, 0)
-
-  // Always set year to 2024
-  d.setUTCFullYear(2024)
-
-  // Ensure month is in Q4 (Oct-Dec)
-  const month = d.getUTCMonth()
-  if (month < 9) {
-    // Before October
-    d.setUTCMonth(9)
-    d.setUTCDate(1)
-  } else if (month > 11) {
-    // After December
-    d.setUTCMonth(11)
-    d.setUTCDate(31)
-  }
-
-  // Ensure date is within Q4 bounds
-  const time = d.getTime()
-  if (time < q4Start.getTime()) {
-    return new Date(q4Start)
-  }
-  if (time > q4End.getTime()) {
-    return new Date(q4End)
-  }
-
-  // Return a new Date object to avoid mutations
-  return new Date(Date.UTC(2024, d.getUTCMonth(), d.getUTCDate(), 12))
+  const { start, end } = getQ4DateRange()
+  if (date < start) return start
+  if (date > end) return end
+  return date
 }
 
-// Get date range for Q4 2024
-export function getQ4DateRange() {
-  return {
-    start: new Date(Date.UTC(2024, 9, 1, 12)), // October 1, 2024 at noon UTC
-    end: new Date(Date.UTC(2024, 11, 31, 12)), // December 31, 2024 at noon UTC
+// Get working days (Monday-Saturday, excluding holidays) in date range
+export const getWorkingDaysInRange = (start, end) => {
+  if (!isValidDate(start) || !isValidDate(end)) {
+    console.warn('Invalid date range for getWorkingDaysInRange')
+    return []
   }
+
+  const days = []
+  const current = new Date(start)
+
+  while (current <= end) {
+    if (isWorkingDay(current)) {
+      days.push(new Date(current))
+    }
+    current.setDate(current.getDate() + 1)
+  }
+
+  return days
+}
+
+// Get start of month
+export const startOfMonth = (date) => {
+  if (!isValidDate(date)) return null
+  const start = new Date(date)
+  start.setDate(1)
+  start.setHours(0, 0, 0, 0)
+  return start
+}
+
+// Get end of month
+export const endOfMonth = (date) => {
+  if (!isValidDate(date)) return null
+  const end = new Date(date)
+  end.setMonth(end.getMonth() + 1)
+  end.setDate(0)
+  end.setHours(23, 59, 59, 999)
+  return end
+}
+
+// Get start of week (Monday)
+export const startOfWeek = (date) => {
+  if (!isValidDate(date)) return null
+  const start = new Date(date)
+  const day = start.getDay()
+  const diff = start.getDate() - day + (day === 0 ? -6 : 1)
+  start.setDate(diff)
+  start.setHours(0, 0, 0, 0)
+  return start
+}
+
+// Get end of week (Sunday)
+export const endOfWeek = (date) => {
+  if (!isValidDate(date)) return null
+  const end = new Date(date)
+  const day = end.getDay()
+  const diff = end.getDate() + (day === 0 ? 0 : 7 - day)
+  end.setDate(diff)
+  end.setHours(23, 59, 59, 999)
+  return end
+}
+
+// Get start of day
+export const startOfDay = (date) => {
+  if (!isValidDate(date)) return null
+  const start = new Date(date)
+  start.setHours(0, 0, 0, 0)
+  return start
+}
+
+// Get end of day
+export const endOfDay = (date) => {
+  if (!isValidDate(date)) return null
+  const end = new Date(date)
+  end.setHours(23, 59, 59, 999)
+  return end
+}
+
+// Get previous period
+export const getPreviousPeriod = (date, period = 'month') => {
+  if (!isValidDate(date)) return null
+  const start = new Date(date)
+
+  switch (period) {
+    case 'month':
+      start.setMonth(start.getMonth() - 1)
+      break
+    case 'week':
+      start.setDate(start.getDate() - 7)
+      break
+    case 'day':
+      start.setDate(start.getDate() - 1)
+      break
+    default:
+      throw new Error(`Invalid period: ${period}`)
+  }
+
+  return start
+}
+
+// Format date range for display
+export const formatDateRange = (start, end) => {
+  if (!isValidDate(start) || !isValidDate(end)) return ''
+  return `${formatDate(start)} - ${formatDate(end)}`
+}
+
+// Check if date is end of month
+export const isEndOfMonth = (date) => {
+  if (!isValidDate(date)) return false
+  const end = endOfMonth(date)
+  return date.getDate() === end.getDate()
+}
+
+// Check if date is end of week
+export const isEndOfWeek = (date) => {
+  if (!isValidDate(date)) return false
+  return date.getDay() === 6 // Saturday
+}
+
+// Get working days in month
+export const getWorkingDaysInMonth = (date) => {
+  if (!isValidDate(date)) return []
+  const start = startOfMonth(date)
+  const end = endOfMonth(date)
+  return getWorkingDaysInRange(start, end)
+}
+
+// Get working days in week
+export const getWorkingDaysInWeek = (date) => {
+  if (!isValidDate(date)) return []
+  const start = startOfWeek(date)
+  const end = endOfWeek(date)
+  return getWorkingDaysInRange(start, end)
+}
+
+// Get date range for period
+export const getDateRangeForPeriod = (date, period = 'month') => {
+  if (!isValidDate(date)) return null
+
+  switch (period) {
+    case 'month':
+      return {
+        start: startOfMonth(date),
+        end: endOfMonth(date),
+      }
+    case 'week':
+      return {
+        start: startOfWeek(date),
+        end: endOfWeek(date),
+      }
+    case 'day':
+      return {
+        start: startOfDay(date),
+        end: endOfDay(date),
+      }
+    default:
+      throw new Error(`Invalid period: ${period}`)
+  }
+}
+
+// Get previous period range
+export const getPreviousPeriodRange = (date, period = 'month') => {
+  if (!isValidDate(date)) return null
+  const previousDate = getPreviousPeriod(date, period)
+  return getDateRangeForPeriod(previousDate, period)
+}
+
+// Format time (HH:MM AM/PM)
+export const formatTime = (date) => {
+  if (!isValidDate(date)) return null
+  const hours = date.getHours()
+  const minutes = date.getMinutes()
+  const ampm = hours >= 12 ? 'PM' : 'AM'
+  const formattedHours = hours % 12 || 12
+  return `${formattedHours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')} ${ampm}`
+}
+
+// Get random time in working hours (8 AM - 5 PM)
+export const getRandomTimeInWorkingHours = () => {
+  const hours = Math.floor(Math.random() * 9) + 8 // 8 AM - 5 PM
+  const minutes = Math.floor(Math.random() * 60)
+  const date = new Date()
+  date.setHours(hours, minutes, 0, 0)
+  return formatTime(date)
+}
+
+// Get random working time for delivery
+export const getRandomWorkingTime = (index, total) => {
+  if (typeof index !== 'number' || typeof total !== 'number' || total === 0) {
+    return getRandomTimeInWorkingHours()
+  }
+
+  // Distribute deliveries evenly throughout the day (8 AM - 5 PM)
+  const timeSlot = 9 * (index / total) // 9 hours
+  const hour = Math.floor(timeSlot) + 8 // Start from 8 AM
+  const minute = Math.floor((timeSlot % 1) * 60)
+  const date = new Date()
+  date.setHours(hour, minute, 0, 0)
+  return formatTime(date)
 }

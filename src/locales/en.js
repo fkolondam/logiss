@@ -1,4 +1,39 @@
 export default {
+  errors: {
+    // General errors
+    unexpectedError: 'An unexpected error occurred',
+    unknown: 'An error occurred',
+    unauthorized: 'Your session has expired',
+    forbidden: 'You do not have access',
+    notFound: 'Data not found',
+    serverError: 'Server error occurred',
+    network: 'Failed to connect to server',
+    invalidData: 'Invalid data received',
+    invalidStatsData: 'Invalid statistics data received',
+    invalidDateRange: 'Invalid date range',
+    fetchFailed: 'Failed to fetch data',
+    fetchStatsFailed: 'Failed to fetch statistics',
+
+    // Dashboard specific errors
+    allSectionsFailed: 'Failed to load dashboard data',
+    someSectionsFailed: 'Some dashboard sections failed to load',
+    fetchDashboard: 'Failed to load dashboard data',
+    fetchDeliveries: 'Failed to load delivery data',
+    fetchExpenses: 'Failed to load expense data',
+    fetchVehicles: 'Failed to load vehicle data',
+
+    // Error codes
+    code: 'Error code',
+    FETCH_ERROR: 'Failed to fetch data',
+    UPDATE_ERROR: 'Failed to update data',
+    REFRESH_ERROR: 'Failed to refresh data',
+    INIT_ERROR: 'Failed to initialize',
+    PARTIAL_FAILURE: 'Partial data load failure',
+
+    // Actions
+    retry: 'Retry',
+    dismiss: 'Dismiss',
+  },
   app: {
     title: 'Fleet Management',
     loading: 'Loading...',
@@ -69,18 +104,6 @@ export default {
     expenses: 'Export Expenses',
     vehicles: 'Export Vehicles',
   },
-  errors: {
-    fetchDashboard: 'Failed to load dashboard data',
-    fetchDeliveries: 'Failed to load delivery data',
-    fetchExpenses: 'Failed to load expense data',
-    fetchVehicles: 'Failed to load vehicle data',
-    unauthorized: 'Your session has expired',
-    forbidden: 'You do not have access',
-    notFound: 'Data not found',
-    serverError: 'Server error occurred',
-    network: 'Failed to connect to server',
-    unknown: 'An error occurred',
-  },
   deliveries: {
     title: 'Deliveries',
     details: 'Delivery Details',
@@ -148,6 +171,14 @@ export default {
       proof: 'Proof',
     },
     stats: {
+      total: 'Total Deliveries',
+      completed: 'Completed',
+      pending: 'Pending',
+      cancelled: 'Cancelled',
+      successRate: '{rate}% Success Rate',
+      fromTotal: '{percentage}% of Total',
+      needsAttention: 'Need Attention',
+      vsLastMonth: '{change} vs Last Month',
       todayDeliveries: "Today's Deliveries",
       completionRate: 'Completion Rate',
       thisWeek: 'This Week',

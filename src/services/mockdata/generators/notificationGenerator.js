@@ -42,17 +42,19 @@ const generateNotification = (type, data = {}, timestamp = null) => {
 
 // Generate vehicle-related notifications
 const generateVehicleNotifications = (vehicle, date) => {
+  if (!vehicle || typeof vehicle !== 'object') return []
+
   const notifications = []
-  const timestamp = getRandomTimeInWorkingHours(date)
+  const timestamp = getRandomTimeInWorkingHours(date || new Date())
 
   // Low fuel notification (20% chance)
-  if (vehicle.fuelLevel < 20 && Math.random() < 0.2) {
+  if (typeof vehicle.fuelLevel === 'number' && vehicle.fuelLevel < 20 && Math.random() < 0.2) {
     notifications.push(
       generateNotification(
         'LOW_FUEL',
         {
-          vehicleId: vehicle.id,
-          details: `${vehicle.plateNumber} (${vehicle.fuelLevel}%)`,
+          vehicleId: vehicle.id || 'unknown',
+          details: `${vehicle.plateNumber || 'Unknown Vehicle'} (${vehicle.fuelLevel}%)`,
         },
         timestamp,
       ),
@@ -61,20 +63,24 @@ const generateVehicleNotifications = (vehicle, date) => {
 
   // Maintenance notification (30% chance if maintenance is due)
   if (vehicle.nextServiceDue && Math.random() < 0.3) {
-    const daysToService = Math.floor(
-      (new Date(vehicle.nextServiceDue) - date) / (1000 * 60 * 60 * 24),
-    )
-    if (daysToService <= 7) {
-      notifications.push(
-        generateNotification(
-          'MAINTENANCE_DUE',
-          {
-            vehicleId: vehicle.id,
-            details: `${vehicle.plateNumber} (${daysToService} days remaining)`,
-          },
-          timestamp,
-        ),
+    try {
+      const daysToService = Math.floor(
+        (new Date(vehicle.nextServiceDue) - (date || new Date())) / (1000 * 60 * 60 * 24),
       )
+      if (daysToService <= 7) {
+        notifications.push(
+          generateNotification(
+            'MAINTENANCE_DUE',
+            {
+              vehicleId: vehicle.id || 'unknown',
+              details: `${vehicle.plateNumber || 'Unknown Vehicle'} (${daysToService} days remaining)`,
+            },
+            timestamp,
+          ),
+        )
+      }
+    } catch (err) {
+      console.warn('Invalid nextServiceDue date:', err)
     }
   }
 
@@ -84,8 +90,8 @@ const generateVehicleNotifications = (vehicle, date) => {
       generateNotification(
         'ERROR',
         {
-          vehicleId: vehicle.id,
-          details: `${vehicle.plateNumber} reported breakdown`,
+          vehicleId: vehicle.id || 'unknown',
+          details: `${vehicle.plateNumber || 'Unknown Vehicle'} reported breakdown`,
         },
         timestamp,
       ),
@@ -97,16 +103,18 @@ const generateVehicleNotifications = (vehicle, date) => {
 
 // Generate delivery-related notifications
 const generateDeliveryNotifications = (delivery, date) => {
+  if (!delivery || typeof delivery !== 'object') return []
+
   const notifications = []
-  const timestamp = getRandomTimeInWorkingHours(date)
+  const timestamp = getRandomTimeInWorkingHours(date || new Date())
 
   // Failed delivery notification
-  if (delivery.status.startsWith('BATAL')) {
+  if (delivery.status && delivery.status.startsWith('BATAL')) {
     notifications.push(
       generateNotification(
         'DELIVERY_FAILED',
         {
-          deliveryId: delivery.id,
+          deliveryId: delivery.id || 'unknown',
           details: delivery.status,
         },
         timestamp,
@@ -120,8 +128,8 @@ const generateDeliveryNotifications = (delivery, date) => {
       generateNotification(
         'DELIVERY_SUCCESS',
         {
-          deliveryId: delivery.id,
-          details: `Order #${delivery.id}`,
+          deliveryId: delivery.id || 'unknown',
+          details: `Order #${delivery.id || 'unknown'}`,
         },
         timestamp,
       ),
@@ -134,8 +142,8 @@ const generateDeliveryNotifications = (delivery, date) => {
       generateNotification(
         'SYSTEM',
         {
-          deliveryId: delivery.id,
-          details: `Order #${delivery.id} experiencing delays`,
+          deliveryId: delivery.id || 'unknown',
+          details: `Order #${delivery.id || 'unknown'} experiencing delays`,
         },
         timestamp,
       ),
@@ -148,14 +156,15 @@ const generateDeliveryNotifications = (delivery, date) => {
 // Generate system notifications
 const generateSystemNotifications = (date, count = 1) => {
   const notifications = []
-  const timestamp = getRandomTimeInWorkingHours(date)
+  const timestamp = getRandomTimeInWorkingHours(date || new Date())
+  const safeCount = Math.max(1, Math.min(count || 1, 10)) // Ensure count is between 1 and 10
 
-  for (let i = 0; i < count; i++) {
+  for (let i = 0; i < safeCount; i++) {
     notifications.push(
       generateNotification(
         'SYSTEM',
         {
-          details: `System update ${formatDate(date)}`,
+          details: `System update ${formatDate(date || new Date())}`,
         },
         timestamp,
       ),
@@ -166,24 +175,38 @@ const generateSystemNotifications = (date, count = 1) => {
 }
 
 // Generate a batch of test notifications
-const generateTestNotifications = (vehicles, deliveries, date = new Date()) => {
+const generateTestNotifications = (vehicles = [], deliveries = [], date = new Date()) => {
   let notifications = []
 
+  // Ensure inputs are arrays
+  const safeVehicles = Array.isArray(vehicles) ? vehicles : []
+  const safeDeliveries = Array.isArray(deliveries) ? deliveries : []
+  const safeDate = date instanceof Date ? date : new Date()
+
   // Generate vehicle notifications
-  vehicles.forEach((vehicle) => {
-    notifications = notifications.concat(generateVehicleNotifications(vehicle, date))
+  safeVehicles.forEach((vehicle) => {
+    if (vehicle && typeof vehicle === 'object') {
+      notifications = notifications.concat(generateVehicleNotifications(vehicle, safeDate))
+    }
   })
 
   // Generate delivery notifications
-  deliveries.forEach((delivery) => {
-    notifications = notifications.concat(generateDeliveryNotifications(delivery, date))
+  safeDeliveries.forEach((delivery) => {
+    if (delivery && typeof delivery === 'object') {
+      notifications = notifications.concat(generateDeliveryNotifications(delivery, safeDate))
+    }
   })
 
   // Add some system notifications
-  notifications = notifications.concat(generateSystemNotifications(date, getRandomNumber(1, 3)))
+  notifications = notifications.concat(generateSystemNotifications(safeDate, getRandomNumber(1, 3)))
 
-  // Sort by timestamp
-  notifications.sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime())
+  // Sort by timestamp and ensure unique IDs
+  notifications = notifications
+    .sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime())
+    .map((notification, index) => ({
+      ...notification,
+      id: `notif_${Date.now()}_${index}`,
+    }))
 
   return notifications
 }
