@@ -6,6 +6,145 @@ import { generateMockData } from './generators/index.js'
 const __filename = fileURLToPath(import.meta.url)
 const __dirname = path.dirname(__filename)
 
+function calculateDeliveryStatistics(deliveries) {
+  // Per Branch Statistics
+  const branchStats = {}
+  // Per Vehicle Statistics
+  const vehicleStats = {}
+  // Per Customer Category Statistics
+  const categoryStats = {
+    weekly: { count: 0, amount: 0 },
+    biweekly: { count: 0, amount: 0 },
+    monthly: { count: 0, amount: 0 },
+  }
+  // Per Payment Method Statistics
+  const paymentStats = {
+    TUNAI: { count: 0, amount: 0 },
+    KREDIT: { count: 0, amount: 0 },
+  }
+  // Per Status Statistics
+  const statusStats = {}
+  // Per Region Statistics
+  const regionStats = {}
+
+  deliveries.forEach((delivery) => {
+    // Branch Statistics
+    if (!branchStats[delivery.branch]) {
+      branchStats[delivery.branch] = {
+        totalDeliveries: 0,
+        totalAmount: 0,
+        vehicles: new Set(),
+        drivers: new Set(),
+        customers: new Set(),
+        statuses: {},
+      }
+    }
+    branchStats[delivery.branch].totalDeliveries++
+    branchStats[delivery.branch].totalAmount += delivery.amount
+    branchStats[delivery.branch].vehicles.add(delivery.vehicleNumber)
+    branchStats[delivery.branch].drivers.add(delivery.driver)
+    branchStats[delivery.branch].customers.add(delivery.customer)
+    branchStats[delivery.branch].statuses[delivery.status] =
+      (branchStats[delivery.branch].statuses[delivery.status] || 0) + 1
+
+    // Vehicle Statistics
+    if (!vehicleStats[delivery.vehicleNumber]) {
+      vehicleStats[delivery.vehicleNumber] = {
+        totalDeliveries: 0,
+        totalAmount: 0,
+        branch: delivery.branch,
+      }
+    }
+    vehicleStats[delivery.vehicleNumber].totalDeliveries++
+    vehicleStats[delivery.vehicleNumber].totalAmount += delivery.amount
+
+    // Payment Method Statistics
+    paymentStats[delivery.paymentMethod].count++
+    paymentStats[delivery.paymentMethod].amount += delivery.amount
+
+    // Status Statistics
+    if (!statusStats[delivery.status]) {
+      statusStats[delivery.status] = { count: 0, amount: 0 }
+    }
+    statusStats[delivery.status].count++
+    statusStats[delivery.status].amount += delivery.amount
+
+    // Region Statistics
+    if (!regionStats[delivery.region]) {
+      regionStats[delivery.region] = { count: 0, amount: 0, branches: new Set() }
+    }
+    regionStats[delivery.region].count++
+    regionStats[delivery.region].amount += delivery.amount
+    regionStats[delivery.region].branches.add(delivery.branch)
+  })
+
+  return {
+    branchStats,
+    vehicleStats,
+    categoryStats,
+    paymentStats,
+    statusStats,
+    regionStats,
+  }
+}
+
+function printStatistics(stats) {
+  console.log('\n=== Detailed Statistics ===\n')
+
+  // Branch Statistics
+  console.log('Branch Statistics:')
+  console.log('-----------------')
+  Object.entries(stats.branchStats).forEach(([branch, data]) => {
+    console.log(`\n${branch}:`)
+    console.log(`  Total Deliveries: ${data.totalDeliveries}`)
+    console.log(`  Total Amount: Rp ${data.totalAmount.toLocaleString()}`)
+    console.log(`  Unique Vehicles: ${data.vehicles.size}`)
+    console.log(`  Unique Drivers: ${data.drivers.size}`)
+    console.log(`  Unique Customers: ${data.customers.size}`)
+    console.log('  Delivery Status Distribution:')
+    Object.entries(data.statuses).forEach(([status, count]) => {
+      console.log(`    ${status}: ${count}`)
+    })
+  })
+
+  // Vehicle Statistics
+  console.log('\nVehicle Statistics:')
+  console.log('-----------------')
+  Object.entries(stats.vehicleStats).forEach(([vehicle, data]) => {
+    console.log(`\n${vehicle} (${data.branch}):`)
+    console.log(`  Total Deliveries: ${data.totalDeliveries}`)
+    console.log(`  Total Amount: Rp ${data.totalAmount.toLocaleString()}`)
+  })
+
+  // Payment Method Statistics
+  console.log('\nPayment Method Statistics:')
+  console.log('-----------------------')
+  Object.entries(stats.paymentStats).forEach(([method, data]) => {
+    console.log(`\n${method}:`)
+    console.log(`  Total Transactions: ${data.count}`)
+    console.log(`  Total Amount: Rp ${data.amount.toLocaleString()}`)
+  })
+
+  // Status Statistics
+  console.log('\nDelivery Status Statistics:')
+  console.log('-------------------------')
+  Object.entries(stats.statusStats).forEach(([status, data]) => {
+    console.log(`\n${status}:`)
+    console.log(`  Total Deliveries: ${data.count}`)
+    console.log(`  Total Amount: Rp ${data.amount.toLocaleString()}`)
+  })
+
+  // Region Statistics
+  console.log('\nRegion Statistics:')
+  console.log('-----------------')
+  Object.entries(stats.regionStats).forEach(([region, data]) => {
+    console.log(`\n${region}:`)
+    console.log(`  Total Deliveries: ${data.count}`)
+    console.log(`  Total Amount: Rp ${data.amount.toLocaleString()}`)
+    console.log(`  Number of Branches: ${data.branches.size}`)
+  })
+}
+
 async function exportMockData() {
   console.log('\n=== Generating Mock Data ===\n')
 
@@ -43,8 +182,12 @@ async function exportMockData() {
       console.log(`CSV exported: ${filename}`)
     }
 
-    // Print Statistics
-    console.log('\nData Generation Stats:')
+    // Calculate and print statistics
+    const statistics = calculateDeliveryStatistics(mockData.deliveries)
+    printStatistics(statistics)
+
+    // Print basic stats
+    console.log('\nBasic Data Generation Stats:')
     console.log('-----------------------')
     console.log(`Deliveries: ${mockData.deliveries.length} records`)
     console.log(`Expenses: ${mockData.expenses.length} records`)
