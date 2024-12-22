@@ -1,339 +1,123 @@
-<script>
-// Script section remains unchanged
-import { Truck, TrendingUp, Clock, AlertCircle, ArrowRight } from 'lucide-vue-next'
-import { useTranslations } from '../../composables/useTranslations'
-import { useRouter } from 'vue-router'
-
-export default {
-  name: 'RecentDeliveries',
-  components: {
-    Truck,
-    TrendingUp,
-    Clock,
-    AlertCircle,
-    ArrowRight
-  },
-  props: {
-    deliveries: {
-      type: Array,
-      default: () => []
-    },
-    loading: {
-      type: Boolean,
-      default: false
-    },
-    error: {
-      type: String,
-      default: null
-    }
-  },
-  setup(props) {
-    const { t } = useTranslations()
-    const router = useRouter()
-
-    const getDeliveryStats = () => {
-      if (!props.deliveries?.length) return { 
-        total: 0, 
-        completed: 0, 
-        partial: 0,
-        pending: 0,
-        cancelled: 0,
-        todayCount: 0,
-        successRate: 0
-      }
-      
-      const today = new Date()
-      today.setHours(0, 0, 0, 0)
-
-      const stats = props.deliveries.reduce((acc, delivery) => {
-        // Total counts
-        acc.total++
-        const status = delivery.status.toLowerCase()
-        
-        if (status === 'diterima - semua') {
-          acc.completed++
-        } 
-        else if (status === 'diterima - sebagian') {
-          acc.partial++
-        }
-        else if (status === 'kirim ulang') {
-          acc.pending++
-        }
-        else if (status.includes('batal')) {
-          acc.cancelled++
-        }
-
-        // Today's deliveries
-        const deliveryDate = new Date(delivery.date)
-        if (deliveryDate >= today) {
-          acc.todayCount++
-        }
-
-        return acc
-      }, { 
-        total: 0, 
-        completed: 0, 
-        partial: 0,
-        pending: 0,
-        cancelled: 0,
-        todayCount: 0
-      })
-
-      // Calculate success rate
-      stats.successRate = Math.round((stats.completed / stats.total) * 100) || 0
-      
-      return stats
-    }
-
-    const navigateToDeliveries = (params = {}) => {
-      router.push({
-        name: 'deliveries',
-        query: params
-      })
-    }
-
-    return {
-      t,
-      getDeliveryStats,
-      navigateToDeliveries
-    }
-  }
-}
-</script>
-
 <template>
-  <div class="bg-white rounded-lg shadow">
-    <div class="p-4 border-b">
-      <div class="flex items-center justify-between">
-        <div class="flex items-center gap-2">
-          <Truck class="w-5 h-5 text-blue-500" />
-          <h2 class="text-base font-heading font-semibold tracking-tight">{{ t('dashboard.recentDeliveries') }}</h2>
+  <div class="bg-white border border-gray-200 rounded-lg shadow-sm p-6">
+    <!-- Header -->
+    <div class="flex items-center justify-between mb-6">
+      <h2 class="text-lg font-semibold text-gray-900">{{ t('deliveries.title') }}</h2>
+      <div class="text-sm text-gray-500">{{ t('deliveries.today') }}</div>
+    </div>
+
+    <!-- Stats Overview -->
+    <div class="grid grid-cols-2 gap-4 mb-6">
+      <div class="bg-blue-50 rounded-lg p-4">
+        <div class="text-sm text-blue-700 mb-1">{{ t('deliveries.stats.todayDeliveries') }}</div>
+        <div class="flex items-end gap-2">
+          <div class="text-2xl font-bold text-blue-900">
+            {{ loading ? '...' : stats?.total || 0 }}
+          </div>
+          <div v-if="stats?.trend" class="text-sm text-blue-600 mb-1">
+            {{ stats.trend > 0 ? '+' : '' }}{{ stats.trend }}%
+          </div>
         </div>
-        <div class="flex items-center gap-2 text-sm">
-          <Clock class="w-4 h-4 text-gray-500" />
-          <span class="text-gray-600">Hari Ini: {{ getDeliveryStats().todayCount }}</span>
+        <div class="text-xs text-blue-600 mt-1">{{ t('deliveries.stats.fromLastWeek') }}</div>
+      </div>
+      <div class="bg-green-50 rounded-lg p-4">
+        <div class="text-sm text-green-700 mb-1">{{ t('deliveries.stats.completionRate') }}</div>
+        <div class="flex items-end gap-2">
+          <div class="text-2xl font-bold text-green-900">
+            {{ loading ? '...' : calculateCompletionRate() }}%
+          </div>
+          <div v-if="stats?.completionTrend" class="text-sm text-green-600 mb-1">
+            {{ stats.completionTrend > 0 ? '+' : '' }}{{ stats.completionTrend }}%
+          </div>
         </div>
+        <div class="text-xs text-green-600 mt-1">{{ t('deliveries.stats.thisWeek') }}</div>
       </div>
     </div>
 
-    <div class="p-4">
-      <!-- Loading State -->
-      <div v-if="loading" class="flex justify-center py-4">
-        <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
-      </div>
-
-      <!-- Error State -->
-      <div v-else-if="error" class="flex items-center gap-2 text-red-600 py-4">
-        <AlertCircle class="w-5 h-5" />
-        <span>{{ error }}</span>
-      </div>
-
-      <!-- Empty State -->
-      <div v-else-if="!deliveries.length" class="text-gray-500 text-center py-4">
-        {{ t('dashboard.noDeliveries') }}
-      </div>
-
-      <!-- Content -->
-      <div v-else class="space-y-6">
-        <!-- Key Metrics -->
-        <div class="grid grid-cols-1 sm:grid-cols-3 gap-2">
-          <!-- Total Pengiriman -->
-          <div class="bg-blue-50 rounded-lg p-3">
-            <div class="grid grid-rows-[36px_48px_24px_32px] h-full">
-              <!-- Row 1: Label (fixed 36px height for 2 lines) -->
-              <div class="flex items-start h-[36px]">
-                <div class="text-[12px] text-gray-500 uppercase tracking-wider leading-[16px] line-clamp-3">{{ t('dashboard.deliveryStats.total') }}</div>
-              </div>
-              
-              <!-- Row 2: Value -->
-              <div class="flex items-center">
-                <div class="text-4xl font-heading font-semibold text-blue-600 tabular-nums leading-none">
-                  {{ getDeliveryStats().total }}
-                </div>
-              </div>
-              
-              <!-- Row 3: Indicator (empty for consistency) -->
-              <div class="flex items-center"></div>
-              
-              <!-- Row 4: Link -->
-              <div class="flex items-end justify-end">
-                <button 
-                  @click="navigateToDeliveries()"
-                  class="flex items-center gap-1 text-[12px] font-medium text-blue-700 hover:text-blue-800 transition-colors"
-                >
-                  <span>{{ t('common.viewAll') }}</span>
-                  <ArrowRight class="w-3 h-3" />
-                </button>
-              </div>
-            </div>
+    <!-- Delivery Status Breakdown -->
+    <div>
+      <h3 class="text-sm font-medium text-gray-700 mb-4">{{ t('deliveries.deliveryStatus') }}</h3>
+      <div class="space-y-4">
+        <!-- Completed -->
+        <div class="flex items-center gap-3">
+          <div class="bg-green-50 p-2 rounded-lg">
+            <PackageCheck class="w-5 h-5 text-green-600" />
           </div>
-          
-          <!-- Tingkat Keberhasilan -->
-          <div class="bg-green-50 rounded-lg p-3">
-            <div class="grid grid-rows-[36px_48px_24px_32px] h-full">
-              <!-- Row 1: Label (fixed 36px height for 2 lines) -->
-              <div class="flex items-start h-[36px]">
-                <div class="text-[12px] text-gray-500 uppercase tracking-wider leading-[16px] line-clamp-2">{{ t('dashboard.deliveryStats.succesRate') }}</div>
+          <div class="flex-1 min-w-0">
+            <div class="flex justify-between items-center mb-1">
+              <div class="text-sm font-medium text-gray-700">
+                {{ t('deliveries.status.completed') }}
               </div>
-              
-              <!-- Row 2: Value -->
-              <div class="flex items-center">
-                <div class="text-4xl font-heading font-semibold text-green-600 tabular-nums leading-none">
-                  {{ getDeliveryStats().successRate }}%
-                </div>
-              </div>
-              
-              <!-- Row 3: Indicator -->
-              <div class="flex items-center">
-                <div class="flex items-center text-green-600 text-[14px]">
-                  <TrendingUp class="w-5 h-5 mr-1" />
-                  <span>+5%</span>
-                </div>
-              </div>
-              
-              <!-- Row 4: Link -->
-              <div class="flex items-end justify-end">
-                <button 
-                  @click="navigateToDeliveries({ status: 'completed' })"
-                  class="flex items-center gap-1 text-[12px] font-medium text-green-700 hover:text-green-800 transition-colors"
-                >
-                  <span>{{ t('common.details') }}</span>
-                  <ArrowRight class="w-3 h-3" />
-                </button>
-              </div>
+              <div class="text-sm text-gray-900 font-medium">{{ stats?.completed || 0 }}</div>
             </div>
-          </div>
-          
-          <!-- Pembatalan -->
-          <div class="bg-red-50 rounded-lg p-3">
-            <div class="grid grid-rows-[36px_48px_24px_32px] h-full">
-              <!-- Row 1: Label (fixed 36px height for 2 lines) -->
-              <div class="flex items-start h-[36px]">
-                <div class="text-[12px] text-gray-500 uppercase tracking-wider leading-[16px] line-clamp-2">{{ t('dashboard.deliveryStats.cancelled') }}</div>
-              </div>
-              
-              <!-- Row 2: Value -->
-              <div class="flex items-center">
-                <div class="text-4xl font-heading font-semibold text-red-600 tabular-nums leading-none">
-                  {{ getDeliveryStats().cancelled }}
-                </div>
-              </div>
-              
-              <!-- Row 3: Indicator (empty for consistency) -->
-              <div class="flex items-center"></div>
-              
-              <!-- Row 4: Link -->
-              <div class="flex items-end justify-end">
-                <button 
-                  @click="navigateToDeliveries({ status: 'cancelled' })"
-                  class="flex items-center gap-1 text-[12px] font-medium text-red-700 hover:text-red-800 transition-colors"
-                >
-                  <span>{{ t('common.details') }}</span>
-                  <ArrowRight class="w-3 h-3" />
-                </button>
-              </div>
+            <div class="w-full bg-gray-100 rounded-full h-1.5">
+              <div
+                class="h-1.5 rounded-full bg-green-500 transition-all duration-500"
+                :style="{ width: `${calculatePercentage('completed')}%` }"
+              ></div>
             </div>
           </div>
         </div>
 
-        <!-- Status Breakdown -->
-        <div class="space-y-1">
-          <div class="text-sm font-heading font-semibold text-gray-900">{{ t('dashboard.deliveryStats.deliveryStatus') }}</div>
-          <div class="space-y-0">
-            <!-- Completed -->
-            <div 
-              class="flex items-center gap-2 p-2 hover:bg-gray-50 rounded-lg cursor-pointer transition-colors"
-              @click="navigateToDeliveries({ status: 'completed' })"
-            >
-              <div class="flex-1">
-                <div class="flex items-center justify-between mb-0.5">
-                  <div class="flex items-center gap-1.5">
-                    <span class="w-1.5 h-1.5 rounded-full bg-green-600"></span>
-                    <span class="text-sm text-gray-600 truncate">{{ t('deliveries.status.diterima - semua') }}</span>
-                  </div>
-                  <div class="flex items-center gap-1.5">
-                    <span class="text-base font-medium tabular-nums">{{ getDeliveryStats().completed }}</span>
-                    <span class="text-[10px] text-gray-500 tabular-nums">{{ Math.round(getDeliveryStats().completed / getDeliveryStats().total * 100) }}%</span>
-                  </div>
-                </div>
-                <div class="flex-1 bg-gray-200 rounded-full h-1.5 text-2xs">
-                  <div class="bg-green-600 h-1.5 rounded-full transition-all duration-300" 
-                       :style="{ width: (getDeliveryStats().completed / getDeliveryStats().total * 100) + '%' }">
-                  </div>
-                </div>
+        <!-- In Transit -->
+        <div class="flex items-center gap-3">
+          <div class="bg-blue-50 p-2 rounded-lg">
+            <Truck class="w-5 h-5 text-blue-600" />
+          </div>
+          <div class="flex-1 min-w-0">
+            <div class="flex justify-between items-center mb-1">
+              <div class="text-sm font-medium text-gray-700">
+                {{ t('deliveries.status.in_transit') }}
               </div>
+              <div class="text-sm text-gray-900 font-medium">{{ stats?.inTransit || 0 }}</div>
             </div>
-
-            <!-- Partial -->
-            <div 
-              class="flex items-center gap-2 p-2 hover:bg-gray-50 rounded-lg cursor-pointer transition-colors"
-              @click="navigateToDeliveries({ status: 'partial' })"
-            >
-              <div class="flex-1">
-                <div class="flex items-center justify-between mb-0.5">
-                  <div class="flex items-center gap-1.5">
-                    <span class="w-1.5 h-1.5 rounded-full bg-amber-200"></span>
-                    <span class="text-sm text-gray-600 truncate">{{ t('deliveries.status.diterima - sebagian') }}</span>
-                  </div>
-                  <div class="flex items-center gap-1.5">
-                    <span class="text-base font-medium tabular-nums">{{ getDeliveryStats().partial }}</span>
-                    <span class="text-[10px] text-gray-500 tabular-nums">{{ Math.round(getDeliveryStats().partial / getDeliveryStats().total * 100) }}%</span>
-                  </div>
-                </div>
-                <div class="flex-1 bg-gray-200 rounded-full h-1.5">
-                  <div class="bg-amber-200 h-1.5 rounded-full transition-all duration-300" 
-                       :style="{ width: (getDeliveryStats().partial / getDeliveryStats().total * 100) + '%' }">
-                  </div>
-                </div>
-              </div>
+            <div class="w-full bg-gray-100 rounded-full h-1.5">
+              <div
+                class="h-1.5 rounded-full bg-blue-500 transition-all duration-500"
+                :style="{ width: `${calculatePercentage('inTransit')}%` }"
+              ></div>
             </div>
+          </div>
+        </div>
 
-            <!-- Pending (Kirim Ulang) -->
-            <div 
-              class="flex items-center gap-2 p-2 hover:bg-gray-50 rounded-lg cursor-pointer transition-colors"
-              @click="navigateToDeliveries({ status: 'pending' })"
-            >
-              <div class="flex-1">
-                <div class="flex items-center justify-between mb-1.5">
-                  <div class="flex items-center gap-1.5">
-                    <span class="w-1.5 h-1.5 rounded-full bg-blue-600"></span>
-                    <span class="text-sm text-gray-600 truncate">{{ t('deliveries.status.kirim ulang') }}</span>
-                  </div>
-                  <div class="flex items-center gap-1.5">
-                    <span class="text-base font-medium tabular-nums">{{ getDeliveryStats().pending }}</span>
-                    <span class="text-[10px] text-gray-500 tabular-nums">{{ Math.round(getDeliveryStats().pending / getDeliveryStats().total * 100) }}%</span>
-                  </div>
-                </div>
-                <div class="flex-1 bg-gray-200 rounded-full h-1.5">
-                  <div class="bg-blue-600 h-1.5 rounded-full transition-all duration-300" 
-                       :style="{ width: (getDeliveryStats().pending / getDeliveryStats().total * 100) + '%' }">
-                  </div>
-                </div>
+        <!-- Pending -->
+        <div class="flex items-center gap-3">
+          <div class="bg-orange-50 p-2 rounded-lg">
+            <Clock class="w-5 h-5 text-orange-600" />
+          </div>
+          <div class="flex-1 min-w-0">
+            <div class="flex justify-between items-center mb-1">
+              <div class="text-sm font-medium text-gray-700">
+                {{ t('deliveries.status.pending') }}
               </div>
+              <div class="text-sm text-gray-900 font-medium">{{ stats?.pending || 0 }}</div>
             </div>
+            <div class="w-full bg-gray-100 rounded-full h-1.5">
+              <div
+                class="h-1.5 rounded-full bg-orange-500 transition-all duration-500"
+                :style="{ width: `${calculatePercentage('pending')}%` }"
+              ></div>
+            </div>
+          </div>
+        </div>
 
-            <!-- Cancelled -->
-            <div 
-              class="flex items-center gap-2 p-2 hover:bg-gray-50 rounded-lg cursor-pointer transition-colors"
-              @click="navigateToDeliveries({ status: 'cancelled' })"
-            >
-              <div class="flex-1">
-                <div class="flex items-center justify-between mb-1.5">
-                  <div class="flex items-center gap-1.5">
-                    <span class="w-1.5 h-1.5 rounded-full bg-red-600"></span>
-                    <span class="text-sm text-gray-600 truncate">{{ t('deliveries.status.batal') }}</span>
-                  </div>
-                  <div class="flex items-center gap-1.5">
-                    <span class="text-base font-medium tabular-nums">{{ getDeliveryStats().cancelled }}</span>
-                    <span class="text-[10px] text-gray-500 tabular-nums">{{ Math.round(getDeliveryStats().cancelled / getDeliveryStats().total * 100) }}%</span>
-                  </div>
-                </div>
-                <div class="flex-1 bg-gray-200 rounded-full h-1.5">
-                  <div class="bg-red-600 h-1.5 rounded-full transition-all duration-300" 
-                       :style="{ width: (getDeliveryStats().cancelled / getDeliveryStats().total * 100) + '%' }">
-                  </div>
-                </div>
+        <!-- Cancelled -->
+        <div class="flex items-center gap-3">
+          <div class="bg-red-50 p-2 rounded-lg">
+            <PackageX class="w-5 h-5 text-red-600" />
+          </div>
+          <div class="flex-1 min-w-0">
+            <div class="flex justify-between items-center mb-1">
+              <div class="text-sm font-medium text-gray-700">
+                {{ t('deliveries.status.cancelled') }}
               </div>
+              <div class="text-sm text-gray-900 font-medium">{{ stats?.cancelled || 0 }}</div>
+            </div>
+            <div class="w-full bg-gray-100 rounded-full h-1.5">
+              <div
+                class="h-1.5 rounded-full bg-red-500 transition-all duration-500"
+                :style="{ width: `${calculatePercentage('cancelled')}%` }"
+              ></div>
             </div>
           </div>
         </div>
@@ -341,3 +125,32 @@ export default {
     </div>
   </div>
 </template>
+
+<script setup>
+import { computed } from 'vue'
+import { PackageCheck, PackageX, Truck, Clock } from 'lucide-vue-next'
+import { useTranslations } from '../../composables/useTranslations'
+
+const { t } = useTranslations()
+
+const props = defineProps({
+  stats: {
+    type: Object,
+    default: null,
+  },
+  loading: {
+    type: Boolean,
+    default: false,
+  },
+})
+
+const calculateCompletionRate = () => {
+  if (!props.stats?.total || !props.stats?.completed) return 0
+  return Math.round((props.stats.completed / props.stats.total) * 100)
+}
+
+const calculatePercentage = (status) => {
+  if (!props.stats?.total || !props.stats?.[status]) return 0
+  return Math.round((props.stats[status] / props.stats.total) * 100)
+}
+</script>

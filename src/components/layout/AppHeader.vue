@@ -18,13 +18,13 @@
           <span class="text-sm text-gray-600 whitespace-nowrap">
             {{ t('dataSelector.filterBy') }}
           </span>
-          <DataSelector />
+          <DataSelectorEnhanced />
         </div>
       </div>
 
       <!-- Center Section (Mobile Data Selector) -->
       <div class="flex-1 md:hidden flex items-center justify-center">
-        <DataSelector />
+        <DataSelectorEnhanced />
       </div>
 
       <!-- Right Section -->
@@ -65,20 +65,8 @@
           <span class="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full"></span>
         </button>
 
-        <!-- User Profile -->
-        <button
-          class="flex items-center gap-2 p-1 hover:bg-gray-50 rounded-lg"
-          @click="isMobileMenuOpen = !isMobileMenuOpen"
-        >
-          <div class="w-8 h-8 rounded-full bg-gray-200 flex items-center justify-center shrink-0">
-            <User class="w-4 h-4 text-gray-500" />
-          </div>
-          <div class="hidden md:block text-left">
-            <div class="text-sm text-gray-700">
-              {{ currentUser?.name || 'Profil' }}
-            </div>
-          </div>
-        </button>
+        <!-- Enhanced User Selector -->
+        <UserSelectorEnhanced />
       </div>
     </div>
 
@@ -120,40 +108,70 @@
     </div>
   </header>
 
-  <!-- Mobile Menu -->
+  <!-- Mobile Menu Overlay -->
   <div
     v-if="isMobileMenuOpen"
     class="fixed inset-0 bg-gray-900/20 backdrop-blur-sm z-40 md:hidden"
     @click="isMobileMenuOpen = false"
   ></div>
+
+  <!-- Mobile Menu Content -->
   <div
     v-if="isMobileMenuOpen"
     class="fixed inset-x-0 top-16 bg-white z-50 md:hidden border-b shadow-lg"
   >
-    <!-- Profile Section -->
-    <div class="p-4">
+    <!-- Mobile User Info -->
+    <div class="p-4 border-b">
       <div class="flex items-center gap-3">
         <div class="w-12 h-12 rounded-full bg-gray-200 flex items-center justify-center">
           <User class="w-6 h-6 text-gray-500" />
         </div>
         <div>
           <div class="text-sm font-medium text-gray-900">
-            {{ currentUser?.name || 'Profil' }}
+            {{ currentUser?.name || t('userSelector.selectUser') }}
           </div>
           <div class="text-xs text-gray-500">{{ getScopeLabel(currentUser?.scope) }}</div>
+          <!-- Role Badge -->
+          <div v-if="currentUser" class="mt-1">
+            <span
+              class="inline-flex items-center px-2 py-0.5 text-xs font-medium rounded-full"
+              :class="getRoleBadgeClasses(currentUser.role)"
+            >
+              {{ t(`roles.${currentUser.role}`) }}
+            </span>
+          </div>
         </div>
       </div>
+    </div>
+
+    <!-- Mobile Quick Actions -->
+    <div class="p-4 space-y-2">
+      <button
+        class="w-full flex items-center gap-2 px-3 py-2 text-sm text-gray-700 hover:bg-gray-50 rounded-lg"
+        @click="isMobileMenuOpen = false"
+      >
+        <Settings class="w-4 h-4" />
+        {{ t('settings.title') }}
+      </button>
+      <button
+        class="w-full flex items-center gap-2 px-3 py-2 text-sm text-gray-700 hover:bg-gray-50 rounded-lg"
+        @click="isMobileMenuOpen = false"
+      >
+        <LogOut class="w-4 h-4" />
+        {{ t('menu.logout') }}
+      </button>
     </div>
   </div>
 </template>
 
 <script setup>
-import { ref, computed } from 'vue'
+import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { useRoute } from 'vue-router'
-import { Menu, Bell, User } from 'lucide-vue-next'
+import { Menu, Bell, User, Settings, LogOut } from 'lucide-vue-next'
 import { useTranslations } from '../../composables/useTranslations'
 import { useUserStore } from '../../stores/user'
-import DataSelector from './DataSelector.vue'
+import DataSelectorEnhanced from './DataSelectorEnhanced.vue'
+import UserSelectorEnhanced from './UserSelectorEnhanced.vue'
 
 const route = useRoute()
 const isMobileMenuOpen = ref(false)
@@ -166,6 +184,18 @@ const currentUser = computed(() => userStore.currentUser)
 // Toggle language on mobile
 const toggleLanguage = () => {
   setLanguage(currentLanguage.value === 'en' ? 'id' : 'en')
+}
+
+// Get role badge classes
+const getRoleBadgeClasses = (role) => {
+  const classes = {
+    admin: 'bg-purple-100 text-purple-700',
+    regional_manager: 'bg-blue-100 text-blue-700',
+    branch_manager: 'bg-green-100 text-green-700',
+    staff: 'bg-orange-100 text-orange-700',
+    operational: 'bg-gray-100 text-gray-700',
+  }
+  return classes[role] || 'bg-gray-100 text-gray-700'
 }
 
 // Get readable scope label
@@ -185,6 +215,21 @@ const getScopeLabel = (scope) => {
       return ''
   }
 }
+
+// Handle click outside for mobile menu
+const handleClickOutside = (event) => {
+  if (!event.target.closest('.mobile-menu') && !event.target.closest('.menu-button')) {
+    isMobileMenuOpen.value = false
+  }
+}
+
+onMounted(() => {
+  document.addEventListener('click', handleClickOutside)
+})
+
+onUnmounted(() => {
+  document.removeEventListener('click', handleClickOutside)
+})
 
 defineEmits(['toggle-sidebar'])
 

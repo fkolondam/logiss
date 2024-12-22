@@ -1,61 +1,141 @@
 <template>
   <div>
-    <div class="flex justify-between items-center mb-6">
+    <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
       <div class="flex items-center gap-4">
         <h1 class="text-2xl font-bold">{{ t('dashboard.title') }}</h1>
         <!-- Scope indicator -->
         <div
           v-if="currentScope"
-          class="px-3 py-1 text-sm font-medium rounded-full bg-blue-50 text-blue-700"
+          class="px-3 py-1 text-sm font-medium rounded-full bg-blue-50 text-blue-700 flex items-center gap-2"
         >
+          <component :is="getScopeIcon" class="w-4 h-4" />
           {{ getScopeLabel(currentScope) }}
         </div>
       </div>
-      <button
-        @click="refreshDashboard"
-        class="flex items-center gap-2 px-3 py-2 text-sm font-medium text-gray-700 bg-white rounded-lg border hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
-        :disabled="isLoading"
-      >
-        <RefreshCw :class="{ 'animate-spin': isLoading }" class="w-4 h-4" />
-        {{ t('dashboard.refresh') }}
-      </button>
+
+      <!-- Period Selector with Enhanced UI -->
+      <div class="w-full sm:w-auto flex items-center gap-4">
+        <!-- Refresh Button -->
+        <button
+          @click="refreshData"
+          class="p-2 text-gray-500 hover:text-gray-700 rounded-lg hover:bg-gray-100 transition-colors duration-200"
+          :class="{ 'animate-spin': isLoading }"
+          :disabled="isLoading"
+        >
+          <RefreshCw class="w-5 h-5" />
+        </button>
+
+        <!-- Period Selector -->
+        <div class="flex-1 sm:flex-none">
+          <div
+            class="grid grid-cols-3 w-full text-sm border border-gray-200 rounded-lg overflow-hidden bg-white"
+          >
+            <button
+              v-for="period in periods"
+              :key="period.value"
+              @click="handlePeriodChange(period.value)"
+              class="px-4 py-2 font-medium text-center transition-all duration-200 relative"
+              :class="[
+                selectedPeriod === period.value
+                  ? 'bg-blue-500 text-white'
+                  : 'text-gray-600 hover:bg-gray-50',
+              ]"
+            >
+              {{ t(`expenses.periods.${period.value}`) }}
+              <div
+                v-if="loadingStates[period.value]"
+                class="absolute inset-0 bg-black/5 flex items-center justify-center"
+              >
+                <Loader2 class="w-4 h-4 animate-spin text-current" />
+              </div>
+            </button>
+          </div>
+        </div>
+      </div>
     </div>
 
     <!-- Error Alert -->
-    <div v-if="error" class="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg">
+    <div v-if="error" class="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg animate-fadeIn">
       <div class="flex items-center gap-2 text-red-700">
         <AlertCircle class="w-5 h-5" />
         <span class="font-medium">{{ error }}</span>
       </div>
     </div>
 
-    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-      <template v-if="userStore.hasPermission('read_deliveries')">
-        <RecentDeliveries
-          :deliveries="recentDeliveries"
-          :stats="deliveryStats"
-          :loading="isLoading"
-        />
-      </template>
-      <template v-if="userStore.hasPermission('read_expenses')">
-        <ExpensesOverview
-          v-model="selectedPeriod"
-          :expenses="recentExpenses"
-          :stats="expenseStats"
-          :loading="isLoading"
-        />
-      </template>
-      <template v-if="userStore.hasPermission('read_vehicles')">
-        <VehicleStatus :vehicles="vehicles" :stats="vehicleStats" :loading="isLoading" />
-      </template>
-      <!-- Show message if no permissions -->
+    <!-- Loading Skeleton -->
+    <div v-if="!hasLoadedInitialData" class="grid grid-cols-1 md:grid-cols-3 gap-6">
       <div
-        v-if="!hasAnyPermissions"
-        class="col-span-full flex items-center justify-center p-8 bg-gray-50 rounded-lg"
+        v-for="i in 3"
+        :key="i"
+        class="bg-white border border-gray-200 rounded-lg shadow-sm p-6 animate-pulse"
       >
-        <div class="text-center">
-          <AlertCircle class="w-8 h-8 text-gray-400 mx-auto mb-2" />
-          <p class="text-gray-600">{{ t('dashboard.noAccess') }}</p>
+        <div class="h-4 bg-gray-200 rounded w-1/3 mb-4"></div>
+        <div class="space-y-3">
+          <div class="h-3 bg-gray-200 rounded"></div>
+          <div class="h-3 bg-gray-200 rounded w-5/6"></div>
+          <div class="h-3 bg-gray-200 rounded w-4/6"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Dashboard Content -->
+    <div v-else>
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <template v-if="userStore.hasPermission('read_deliveries')">
+          <Suspense>
+            <template #default>
+              <RecentDeliveries
+                :key="`deliveries-${selectedPeriod}-${scopeKey}`"
+                :stats="deliveryStats"
+                :loading="loadingStates.deliveries"
+              />
+            </template>
+            <template #fallback>
+              <DashboardSkeleton />
+            </template>
+          </Suspense>
+        </template>
+
+        <template v-if="userStore.hasPermission('read_expenses')">
+          <Suspense>
+            <template #default>
+              <ExpensesOverview
+                :key="`expenses-${selectedPeriod}-${scopeKey}`"
+                v-model="selectedPeriod"
+                :stats="expenseStats"
+                :loading="loadingStates.expenses"
+              />
+            </template>
+            <template #fallback>
+              <DashboardSkeleton />
+            </template>
+          </Suspense>
+        </template>
+
+        <template v-if="userStore.hasPermission('read_vehicles')">
+          <Suspense>
+            <template #default>
+              <VehicleStatus
+                :key="`vehicles-${selectedPeriod}-${scopeKey}`"
+                :stats="vehicleStats"
+                :loading="loadingStates.vehicles"
+              />
+            </template>
+            <template #fallback>
+              <DashboardSkeleton />
+            </template>
+          </Suspense>
+        </template>
+
+        <!-- Show message if no permissions -->
+        <div
+          v-if="!hasAnyPermissions"
+          class="col-span-full flex items-center justify-center p-8 bg-gray-50 rounded-lg animate-fadeIn"
+        >
+          <div class="text-center">
+            <AlertCircle class="w-8 h-8 text-gray-400 mx-auto mb-2" />
+            <p class="text-gray-600">{{ t('dashboard.noAccess') }}</p>
+          </div>
         </div>
       </div>
     </div>
@@ -64,7 +144,7 @@
 
 <script setup>
 import { ref, computed, onMounted, watch } from 'vue'
-import { RefreshCw, AlertCircle } from 'lucide-vue-next'
+import { AlertCircle, Globe, Map, Building2, RefreshCw, Loader2 } from 'lucide-vue-next'
 import { useTranslations } from '../composables/useTranslations'
 import { useUserStore } from '../stores/user'
 import { useDashboardData } from '../composables/useDashboardData'
@@ -72,9 +152,30 @@ import RecentDeliveries from '../components/dashboard/RecentDeliveries.vue'
 import ExpensesOverview from '../components/dashboard/ExpensesOverview.vue'
 import VehicleStatus from '../components/dashboard/VehicleStatus.vue'
 
+// Skeleton component for loading state
+const DashboardSkeleton = {
+  template: `
+    <div class="bg-white border border-gray-200 rounded-lg shadow-sm p-6 animate-pulse">
+      <div class="h-4 bg-gray-200 rounded w-1/3 mb-4"></div>
+      <div class="space-y-3">
+        <div class="h-3 bg-gray-200 rounded"></div>
+        <div class="h-3 bg-gray-200 rounded w-5/6"></div>
+      </div>
+    </div>
+  `,
+}
+
 const { t } = useTranslations()
 const userStore = useUserStore()
 const selectedPeriod = ref('today')
+const hasLoadedInitialData = ref(false)
+
+// Available periods
+const periods = [
+  { value: 'today', label: t('expenses.periods.today') },
+  { value: 'week', label: t('expenses.periods.week') },
+  { value: 'month', label: t('expenses.periods.month') },
+]
 
 // Check if user has any dashboard permissions
 const hasAnyPermissions = computed(() => {
@@ -88,19 +189,38 @@ const hasAnyPermissions = computed(() => {
 // Get dashboard data using the composable
 const {
   isLoading,
+  loadingStates,
   error,
   deliveryStats,
   expenseStats,
   vehicleStats,
-  recentDeliveries,
-  recentExpenses,
-  vehicles,
   loadDashboardData,
   refreshSection,
 } = useDashboardData()
 
 // Get current user's scope
 const currentScope = computed(() => userStore.scope)
+
+// Generate a unique key for scope changes
+const scopeKey = computed(() => {
+  const scope = currentScope.value
+  return scope ? `${scope.type}-${scope.value || 'all'}` : 'global'
+})
+
+// Get scope icon
+const getScopeIcon = computed(() => {
+  if (!currentScope.value) return Globe
+  switch (currentScope.value.type) {
+    case 'global':
+      return Globe
+    case 'region':
+      return Map
+    case 'branch':
+      return Building2
+    default:
+      return Globe
+  }
+})
 
 // Get readable scope label
 const getScopeLabel = (scope) => {
@@ -120,16 +240,23 @@ const getScopeLabel = (scope) => {
   }
 }
 
-const refreshDashboard = () => {
-  loadDashboardData()
+// Handle period change with loading state
+const handlePeriodChange = async (period) => {
+  if (selectedPeriod.value === period || isLoading.value) return
+
+  selectedPeriod.value = period
+  await Promise.all([
+    refreshSection('deliveries', { period }),
+    refreshSection('expenses', { period }),
+    refreshSection('vehicles', { period }),
+  ])
 }
 
-// Watch for period changes and update expenses
-watch(selectedPeriod, () => {
-  if (!isLoading.value) {
-    refreshSection('expenses')
-  }
-})
+// Refresh all data
+const refreshData = async () => {
+  if (isLoading.value) return
+  await loadDashboardData()
+}
 
 // Watch for scope changes and refresh all data
 watch(
@@ -140,5 +267,25 @@ watch(
 )
 
 // Load initial data
-onMounted(loadDashboardData)
+onMounted(async () => {
+  await loadDashboardData()
+  hasLoadedInitialData.value = true
+})
 </script>
+
+<style>
+.animate-fadeIn {
+  animation: fadeIn 0.3s ease-out;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+</style>

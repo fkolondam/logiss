@@ -1,23 +1,8 @@
 export default {
   app: {
-    title: 'Manajemen Armada',
-    loading: 'Memuat...',
-    error: 'Error',
-  },
-  common: {
-    close: 'Tutup',
+    title: 'Logistik Dashboard',
     loading: 'Memuat...',
     error: 'Terjadi kesalahan',
-    success: 'Berhasil',
-    viewDetails: 'Lihat Detail',
-    back: 'Kembali',
-    openInNewTab: 'Buka di tab baru',
-    share: 'Bagikan',
-    viewAll: 'Lihat Semua',
-    details: 'Detail',
-    refresh: 'Segarkan',
-    of: 'dari',
-    viewAllVehicles: 'Lihat Semua Kendaraan',
   },
   menu: {
     home: 'Beranda',
@@ -29,15 +14,45 @@ export default {
     debug: 'Debug Tools',
     selectUser: 'Pilih Pengguna',
   },
+  dataSelector: {
+    title: 'Pemilih Data',
+    source: 'Sumber Data',
+    scope: 'Cakupan',
+    filterBy: 'Filter berdasarkan',
+    filters: {
+      recent: 'Terbaru',
+      favorites: 'Favorit',
+    },
+    loading: 'Memuat sumber data...',
+    error: 'Gagal memuat sumber data',
+    select: 'Pilih sumber data',
+    noData: 'Tidak ada data tersedia',
+  },
+  scope: {
+    global: 'Akses Global',
+    region: 'Region',
+    branch: 'Cabang',
+    personal: 'Personal',
+    select: 'Pilih Cakupan',
+    all: 'Semua',
+    allData: 'Semua Data',
+    level: {
+      global: 'Akses Global',
+      region: 'Akses Region',
+      branch: 'Akses Cabang',
+      personal: 'Akses Personal',
+    },
+  },
   dashboard: {
     title: 'Dashboard',
+    refresh: 'Segarkan Data',
+    noAccess: 'Anda tidak memiliki akses ke data dashboard',
+    overview: 'Ringkasan',
+    details: 'Detail',
     recentDeliveries: 'Pengiriman Terkini',
     noDeliveries: 'Tidak ada pengiriman.',
-    refresh: 'Segarkan Data',
-    noAccess: 'Anda tidak memiliki izin untuk melihat data dashboard.',
     deliveryStats: {
       total: 'Total Pengiriman',
-      succesRate: 'Tingkat Keberhasilan',
       completed: 'Selesai',
       pending: 'Dalam Proses',
       cancelled: 'Dibatalkan',
@@ -47,6 +62,8 @@ export default {
   },
   deliveries: {
     title: 'Pengiriman',
+    today: 'Hari Ini',
+    deliveryStatus: 'Status Pengiriman',
     details: 'Detail Pengiriman',
     loading: 'Memuat pengiriman...',
     search: 'Cari pengiriman...',
@@ -70,7 +87,7 @@ export default {
     noProofAvailable: 'Tidak ada bukti pengiriman',
     paymentMethod: {
       cash: 'Tunai',
-      kredit: 'Kredit',
+      credit: 'Kredit',
     },
     table: {
       invoice: 'Faktur',
@@ -97,6 +114,10 @@ export default {
       perPage: 'Per Halaman',
     },
     status: {
+      completed: 'Selesai',
+      in_transit: 'Dalam Perjalanan',
+      pending: 'Menunggu',
+      cancelled: 'Dibatalkan',
       'diterima - semua': 'Diterima - Semua',
       'diterima - sebagian': 'Diterima - Sebagian',
       batal: 'Batal',
@@ -122,15 +143,18 @@ export default {
   },
   expenses: {
     title: 'Pengeluaran',
-    total: 'Total',
-    periods: {
-      month: 'Bulanan',
-      week: 'Mingguan',
-      today: 'Hari Ini',
-      thisMonth: 'Bulan Ini',
-      thisWeek: 'Minggu Ini',
-    },
+    total: 'Total Pengeluaran',
     breakdown: 'Rincian Pengeluaran',
+    increased: 'Meningkat',
+    decreased: 'Menurun',
+    noExpenses: 'Tidak ada pengeluaran',
+    periods: {
+      today: 'Hari Ini',
+      week: 'Mingguan',
+      month: 'Bulanan',
+      thisWeek: 'Minggu Ini',
+      thisMonth: 'Bulan Ini',
+    },
     categories: {
       fuel: 'Bahan Bakar',
       maintenance: 'Pemeliharaan',
@@ -138,7 +162,7 @@ export default {
       others: 'Lainnya',
     },
     stats: {
-      total: 'Total Pengeluaran',
+      total: 'Total',
       approved: 'Disetujui',
       pending: 'Menunggu',
     },
@@ -148,7 +172,9 @@ export default {
     noVehicles: 'Tidak ada kendaraan.',
     lowFuel: 'Bahan Bakar Rendah',
     driver: 'Pengemudi',
+    noDriver: 'Belum Ada Pengemudi',
     location: 'Lokasi',
+    locationUnknown: 'Lokasi Tidak Diketahui',
     fuel: 'Level Bahan Bakar',
     types: {
       deliveryTruck: 'Truk Pengiriman',
@@ -156,23 +182,28 @@ export default {
       pickup: 'Pickup',
     },
     status: {
+      title: 'Status Kendaraan',
       active: 'Aktif',
       maintenance: 'Pemeliharaan',
       inactive: 'Tidak Aktif',
     },
     stats: {
       total: 'Total Kendaraan',
-      totalVehicles: 'Total Armada',
       active: 'Kendaraan Aktif',
-      activeVehicles: 'Sedang Beroperasi',
       maintenance: 'Dalam Pemeliharaan',
       maintenanceVehicles: 'Sedang Servis',
       lowFuel: 'Bahan Bakar Rendah',
       lowFuelVehicles: 'Perlu Isi Ulang',
+      utilization: 'Tingkat Utilisasi',
+      maintenanceRate: 'Tingkat Pemeliharaan',
+      needRefuel: 'Perlu Pengisian',
     },
     list: {
       title: 'Daftar Kendaraan',
       showing: 'Menampilkan',
+    },
+    warnings: {
+      lowFuel: 'Bahan Bakar Rendah',
     },
   },
   debug: {
@@ -190,51 +221,24 @@ export default {
     mysql: 'MySQL',
     google_sheets: 'Google Sheets',
   },
-  // Add new scope section
-  dataSelector: {
-    title: 'Filter Data',
-    description: 'Pilih cakupan data yang ingin ditampilkan',
-    selectScope: 'Pilih Filter',
-    resetScope: 'Reset Filter',
-    filterBy: 'Pemilah Data :',
-  },
-  scope: {
-    global: 'Global',
-    regions: 'Region',
-    branches: 'Cabang',
-    allData: 'Semua Data',
-    region: 'Region',
-    branch: 'Cabang',
-    personal: 'Personal',
-  },
-
-  // Mobile menu settings
   settings: {
     title: 'Pengaturan',
     language: 'Bahasa',
     notifications: 'Notifikasi',
     profile: 'Profil',
   },
-
-  // Language selection
   language: {
     select: 'Pilih Bahasa',
     en: 'English',
     id: 'Bahasa Indonesia',
   },
-
-  // Notifications
   notifications: {
     title: 'Notifikasi',
     empty: 'Tidak ada notifikasi',
   },
-
-  // Add new roles section
   roles: {
-    admin: 'Admin Global',
-    regional_manager: 'Manajer Regional',
-    branch_manager: 'Manajer Cabang',
-    staff: 'Staff',
-    operational: 'Pengguna Operasional',
+    admin: 'Administrator',
+    manager: 'Manajer',
+    user: 'Pengguna',
   },
 }
