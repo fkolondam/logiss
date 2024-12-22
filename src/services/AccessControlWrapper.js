@@ -11,65 +11,65 @@ export class AccessControlWrapper {
    * @returns {Array} - Filtered data
    */
   static filterByScope(data, scope) {
-    console.log('Filtering data by scope:', scope)
-    console.log('Initial data count:', data.length)
+    if (!data || !Array.isArray(data)) {
+      console.log('Invalid data provided')
+      return []
+    }
 
-    if (!scope) {
-      console.log('No scope provided, returning all data')
+    if (!scope || scope.type === 'global') {
+      console.log('Global scope or no scope - returning all data')
       return data
     }
 
-    let filteredData = []
+    console.log(`Filtering by ${scope.type} scope:`, scope.value)
+    console.log('Initial data count:', data.length)
 
-    switch (scope.type) {
-      case 'global':
-        console.log('Global scope - no filtering')
-        filteredData = data
-        break
-
-      case 'region':
-        console.log('Filtering by region:', scope.value)
-        filteredData = data.filter((item) => {
-          const matchesRegion = item.region === scope.value
-          const matchesBranch = item.branch && item.branch.startsWith(scope.value)
-          console.log('Item:', {
-            item,
-            matchesRegion,
-            matchesBranch,
-          })
-          return matchesRegion || matchesBranch
-        })
-        break
-
-      case 'branch':
-        console.log('Filtering by branch:', scope.value)
-        filteredData = data.filter((item) => {
-          const matches = item.branch === scope.value
-          console.log('Item:', { item, matches })
-          return matches
-        })
-        break
-
-      case 'personal':
-        console.log('Filtering by personal scope:', scope.value)
-        filteredData = data.filter((item) => {
-          const matchesUserId = item.userId === scope.value
-          const matchesAssigned = item.assignedTo === scope.value
-          const matchesDriver = item.driver === scope.value
-          console.log('Item:', {
-            item,
-            matchesUserId,
-            matchesAssigned,
-            matchesDriver,
-          })
-          return matchesUserId || matchesAssigned || matchesDriver
-        })
-        break
-
-      default:
-        console.log('Unknown scope type:', scope.type)
-        return []
+    // Define scope hierarchy and field mappings with validation
+    const scopeConfig = {
+      region: {
+        fields: ['region'],
+        branchField: 'branch',
+        includesBranches: true,
+        validate: (item) => item.region || item.branch, // Must have either region or branch
+      },
+      branch: {
+        fields: ['branch'],
+        includesBranches: false,
+        validate: (item) => item.branch, // Must have branch
+      },
+      personal: {
+        fields: ['userId', 'assignedTo', 'driver', 'driverId', 'assignedDriverId'],
+        includesBranches: false,
+        validate: (item) =>
+          item.userId || item.driverId || item.assignedTo || item.driver || item.assignedDriverId, // Must have at least one identifier
+      },
     }
+
+    const config = scopeConfig[scope.type]
+    if (!config) {
+      console.warn('Unknown scope type:', scope.type)
+      return []
+    }
+
+    const filteredData = data.filter((item) => {
+      // Validate item has required fields
+      if (!config.validate(item)) {
+        console.warn('Item missing required fields for scope:', item)
+        return false
+      }
+
+      // Check direct field matches
+      const fieldMatch = config.fields.some((field) => item[field] === scope.value)
+
+      // For region scope, also check branch prefixes
+      const branchMatch =
+        config.includesBranches &&
+        item[config.branchField] &&
+        (item[config.branchField].startsWith(scope.value) ||
+          item[config.branchField] === scope.value)
+
+      return fieldMatch || branchMatch
+    })
 
     console.log('Filtered data count:', filteredData.length)
     return filteredData

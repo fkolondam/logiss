@@ -142,15 +142,22 @@ const props = defineProps({
     type: Boolean,
     default: false,
   },
+  scope: {
+    type: Object,
+    required: true,
+  },
 })
 
+// Stats are already filtered by scope in useDashboardData composable
+const filteredStats = computed(() => props.stats)
+
 const calculateCompletionRate = () => {
-  if (!props.stats?.total || !props.stats?.completed) return 0
-  return Math.round((props.stats.completed / props.stats.total) * 100)
+  if (!filteredStats.value?.total || !filteredStats.value?.receivedAll) return 0
+  return Math.round((filteredStats.value.receivedAll / filteredStats.value.total) * 100)
 }
 
 const calculatePercentage = (status) => {
-  if (!props.stats?.total || !props.stats?.[status]) return 0
-  return Math.round((props.stats[status] / props.stats.total) * 100)
+  if (!filteredStats.value?.total || !filteredStats.value?.[status]) return 0
+  return Math.round((filteredStats.value[status] / filteredStats.value.total) * 100)
 }
 </script>

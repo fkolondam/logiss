@@ -138,7 +138,7 @@
           <!-- Service Due -->
           <div class="flex items-center gap-3">
             <div class="bg-yellow-50 p-2 rounded-lg">
-              <Tool class="w-5 h-5 text-yellow-600" />
+              <Settings class="w-5 h-5 text-yellow-600" />
             </div>
             <div class="flex-1 min-w-0">
               <div class="flex justify-between items-center mb-1">
@@ -168,7 +168,7 @@
 
 <script setup>
 import { computed } from 'vue'
-import { Truck, Fuel, Wrench, FileText, AlertCircle } from 'lucide-vue-next'
+import { Truck, Fuel, Wrench, FileText, AlertCircle, Settings } from 'lucide-vue-next'
 import { useTranslations } from '../../composables/useTranslations'
 
 const { t } = useTranslations()

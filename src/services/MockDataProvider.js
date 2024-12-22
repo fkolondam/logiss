@@ -13,7 +13,35 @@ export class MockDataProvider extends BaseDataProvider {
       setTimeout(() => {
         let data = mockData[resource] || []
 
-        // Handle filtering
+        // Apply scope-based filters first
+        if (params.region) {
+          data = data.filter((item) => {
+            // Match exact region or branch that starts with region code
+            return (
+              item.region === params.region ||
+              (item.branch && item.branch.startsWith(`RDA ${params.region}`))
+            )
+          })
+        }
+
+        if (params.branch) {
+          data = data.filter((item) => item.branch === params.branch)
+        }
+
+        // Handle personal scope with multiple possible identifiers
+        if (params.userId || params.driverId || params.assignedTo || params.driver) {
+          data = data.filter((item) => {
+            return (
+              item.userId === params.userId ||
+              item.driverId === params.driverId ||
+              item.assignedTo === params.assignedTo ||
+              item.driver === params.driver ||
+              item.assignedDriverId === params.driverId
+            )
+          })
+        }
+
+        // Apply other filters after scope filtering
         if (params.filter) {
           Object.keys(params.filter).forEach((key) => {
             data = data.filter((item) => item[key] === params.filter[key])
@@ -37,7 +65,7 @@ export class MockDataProvider extends BaseDataProvider {
           data = data.slice(start, start + params.limit)
         }
 
-        // Handle search by customer, location, or invoice
+        // Handle search
         if (params.search) {
           const searchLower = params.search.toLowerCase()
           data = data.filter(
@@ -48,7 +76,7 @@ export class MockDataProvider extends BaseDataProvider {
           )
         }
 
-        // Handle date range filtering with proper date parsing
+        // Handle date range
         if (params.dateRange) {
           const { start, end } = params.dateRange
           data = data.filter((item) => {
@@ -63,17 +91,6 @@ export class MockDataProvider extends BaseDataProvider {
           data = data.filter((item) => statuses.includes(item.status))
         }
 
-        // Handle multiple branch filtering
-        if (params.branch) {
-          const branches = Array.isArray(params.branch) ? params.branch : [params.branch]
-          data = data.filter((item) => branches.includes(item.branch))
-        }
-
-        // Handle region filtering
-        if (params.region) {
-          data = data.filter((item) => item.region === params.region)
-        }
-
         // Handle vehicle filtering
         if (params.vehicle) {
           data = data.filter((item) => item.vehicleNumber === params.vehicle)
@@ -83,6 +100,13 @@ export class MockDataProvider extends BaseDataProvider {
         if (params.paymentMethod) {
           data = data.filter((item) => item.paymentMethod === params.paymentMethod)
         }
+
+        // Log filtered results
+        console.log(`MockDataProvider: Filtered ${resource} data`, {
+          total: mockData[resource]?.length || 0,
+          filtered: data.length,
+          params,
+        })
 
         resolve({
           data,
@@ -137,7 +161,8 @@ export class MockDataProvider extends BaseDataProvider {
   }
 
   async getDeliveryStats(params = {}) {
-    const { data: deliveries } = await this.fetch('deliveries', params)
+    // Use provided data if available, otherwise fetch
+    const deliveries = params.data || (await this.fetch('deliveries', params)).data
 
     // Calculate total amount
     const totalAmount = deliveries.reduce((sum, d) => sum + d.amount, 0)
@@ -159,12 +184,11 @@ export class MockDataProvider extends BaseDataProvider {
     }, {})
 
     // Group by branch
-    const branchStats = deliveries.reduce((acc, d) => {
+    const byBranch = deliveries.reduce((acc, d) => {
       if (!acc[d.branch]) {
-        acc[d.branch] = { count: 0, amount: 0 }
+        acc[d.branch] = { total: 0, active: 0, maintenance: 0 }
       }
-      acc[d.branch].count++
-      acc[d.branch].amount += d.amount
+      acc[d.branch].total++
       return acc
     }, {})
 
@@ -173,12 +197,15 @@ export class MockDataProvider extends BaseDataProvider {
       totalAmount,
       byStatus: statusCounts,
       byPaymentMethod: paymentMethodStats,
-      byBranch: branchStats,
+      byBranch,
+      // Include raw data for scope filtering
+      data: deliveries,
     }
   }
 
   async getExpenseStats(params = {}) {
-    const { data: expenses } = await this.fetch('expenses', params)
+    // Use provided data if available, otherwise fetch
+    const expenses = params.data || (await this.fetch('expenses', params)).data
 
     // Calculate totals and group by category
     const stats = expenses.reduce(
@@ -197,11 +224,20 @@ export class MockDataProvider extends BaseDataProvider {
     return {
       total: expenses.length,
       ...stats,
+      // Include raw data for scope filtering
+      data: expenses,
     }
   }
 
   async getVehicleStats(params = {}) {
-    const { data: vehicles } = await this.fetch('vehicles', params)
+    // Use provided data if available, otherwise fetch
+    const vehicles = params.data || (await this.fetch('vehicles', params)).data
+
+    // Count by status
+    const statusCounts = vehicles.reduce((acc, v) => {
+      acc[v.status] = (acc[v.status] || 0) + 1
+      return acc
+    }, {})
 
     // Group by branch
     const byBranch = vehicles.reduce((acc, v) => {
@@ -215,7 +251,11 @@ export class MockDataProvider extends BaseDataProvider {
 
     return {
       total: vehicles.length,
+      active: statusCounts.active || 0,
+      maintenance: statusCounts.maintenance || 0,
       byBranch,
+      // Include raw data for scope filtering
+      data: vehicles,
     }
   }
 }

@@ -9,6 +9,16 @@ import { AccessControlWrapper } from './AccessControlWrapper'
 class DataProviderFactory {
   constructor() {
     this.baseProvider = new MockDataProvider()
+    this.pendingRequests = new Map()
+  }
+
+  /**
+   * Get pending request key
+   * @private
+   */
+  getPendingKey(resource, scope, params) {
+    const scopeKey = scope ? `${scope.type}:${scope.value || 'all'}` : 'global'
+    return `${resource}:${scopeKey}:${JSON.stringify(params)}`
   }
 
   /**
@@ -25,23 +35,64 @@ class DataProviderFactory {
       throw new Error(`Access denied: Invalid scope for resource ${resource}`)
     }
 
-    // First get raw data from mock provider
-    const result = await this.baseProvider.fetch(resource, params)
-
-    // Then apply scope-based filtering
-    const filteredData = AccessControlWrapper.filterByScope(result.data, scope)
-
-    console.log(`Filtered ${resource} data:`, {
-      total: result.data.length,
-      filtered: filteredData.length,
-      scope,
-    })
-
-    return {
-      ...result,
-      data: filteredData,
-      total: filteredData.length,
+    // Check for pending request
+    const requestKey = this.getPendingKey(resource, scope, params)
+    if (this.pendingRequests.has(requestKey)) {
+      console.log(`Reusing pending request for ${requestKey}`)
+      return this.pendingRequests.get(requestKey)
     }
+
+    // Create new request
+    const requestPromise = (async () => {
+      try {
+        // Add scope-based filters to params
+        const scopedParams = { ...params }
+        if (scope && scope.type !== 'global') {
+          switch (scope.type) {
+            case 'region':
+              scopedParams.region = scope.value
+              break
+            case 'branch':
+              scopedParams.branch = scope.value
+              break
+            case 'personal':
+              // Add all possible personal identifiers
+              scopedParams.userId = scope.value
+              scopedParams.driverId = scope.value
+              scopedParams.assignedTo = scope.value
+              scopedParams.driver = scope.value
+              break
+          }
+        }
+
+        // Get data from provider with scoped params
+        const result = await this.baseProvider.fetch(resource, scopedParams)
+
+        // Apply additional scope-based filtering for hierarchical relationships
+        const filteredData = AccessControlWrapper.filterByScope(result.data, scope)
+
+        console.log(`Filtered ${resource} data:`, {
+          total: result.data.length,
+          filtered: filteredData.length,
+          scope,
+          params: scopedParams,
+        })
+
+        return {
+          ...result,
+          data: filteredData,
+          total: filteredData.length,
+        }
+      } finally {
+        // Remove from pending requests when done
+        this.pendingRequests.delete(requestKey)
+      }
+    })()
+
+    // Store the promise
+    this.pendingRequests.set(requestKey, requestPromise)
+
+    return requestPromise
   }
 
   /**
@@ -56,20 +107,100 @@ class DataProviderFactory {
       throw new Error(`Access denied: Invalid scope for resource ${resource}`)
     }
 
-    // Get filtered data first
-    const { data } = await this.getData(resource, scope)
-
-    // Then calculate stats based on filtered data
-    switch (resource) {
-      case 'deliveries':
-        return this.baseProvider.getDeliveryStats({ ...options, data })
-      case 'expenses':
-        return this.baseProvider.getExpenseStats({ ...options, data })
-      case 'vehicles':
-        return this.baseProvider.getVehicleStats({ ...options, data })
-      default:
-        throw new Error(`Stats not implemented for resource: ${resource}`)
+    // Check for pending request
+    const requestKey = `stats:${this.getPendingKey(resource, scope, options)}`
+    if (this.pendingRequests.has(requestKey)) {
+      console.log(`Reusing pending stats request for ${requestKey}`)
+      return this.pendingRequests.get(requestKey)
     }
+
+    // Create new request
+    const requestPromise = (async () => {
+      try {
+        // Get filtered data first
+        const { data } = await this.getData(resource, scope)
+
+        // Calculate stats based on the filtered data
+        const stats = {
+          total: data.length,
+          totalAmount: data.reduce((sum, item) => sum + (item.amount || 0), 0),
+        }
+
+        // Calculate status counts
+        stats.byStatus = data.reduce((acc, item) => {
+          if (item.status) {
+            acc[item.status] = (acc[item.status] || 0) + 1
+          }
+          return acc
+        }, {})
+
+        // Calculate payment method stats for deliveries
+        if (resource === 'deliveries') {
+          stats.byPaymentMethod = data.reduce((acc, item) => {
+            if (item.paymentMethod) {
+              if (!acc[item.paymentMethod]) {
+                acc[item.paymentMethod] = { count: 0, amount: 0 }
+              }
+              acc[item.paymentMethod].count++
+              acc[item.paymentMethod].amount += item.amount || 0
+            }
+            return acc
+          }, {})
+        }
+
+        // Calculate category stats for expenses
+        if (resource === 'expenses') {
+          stats.byCategory = data.reduce((acc, item) => {
+            if (item.category) {
+              if (!acc[item.category]) {
+                acc[item.category] = { count: 0, amount: 0 }
+              }
+              acc[item.category].count++
+              acc[item.category].amount += item.amount || 0
+            }
+            return acc
+          }, {})
+        }
+
+        // Calculate branch stats
+        stats.byBranch = data.reduce((acc, item) => {
+          if (item.branch) {
+            if (!acc[item.branch]) {
+              acc[item.branch] = { total: 0, active: 0, maintenance: 0 }
+            }
+            acc[item.branch].total++
+            if (item.status) {
+              acc[item.branch][item.status] = (acc[item.branch][item.status] || 0) + 1
+            }
+          }
+          return acc
+        }, {})
+
+        // Add specific stats for vehicles
+        if (resource === 'vehicles') {
+          stats.active = stats.byStatus?.active || 0
+          stats.maintenance = stats.byStatus?.maintenance || 0
+          stats.lowFuel = data.filter((v) => v.fuelLevel && v.fuelLevel < 30).length
+        }
+
+        console.log(`Generated stats for ${resource}:`, {
+          scope,
+          options,
+          total: data.length,
+          filtered: data.length,
+        })
+
+        return stats
+      } finally {
+        // Remove from pending requests when done
+        this.pendingRequests.delete(requestKey)
+      }
+    })()
+
+    // Store the promise
+    this.pendingRequests.set(requestKey, requestPromise)
+
+    return requestPromise
   }
 
   /**

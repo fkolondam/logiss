@@ -88,6 +88,7 @@
                 :key="`deliveries-${selectedPeriod}-${scopeKey}`"
                 :stats="deliveryStats"
                 :loading="loadingStates.deliveries"
+                :scope="currentScope"
               />
             </template>
             <template #fallback>
@@ -104,6 +105,7 @@
                 v-model="selectedPeriod"
                 :stats="expenseStats"
                 :loading="loadingStates.expenses"
+                :scope="currentScope"
               />
             </template>
             <template #fallback>
@@ -119,6 +121,7 @@
                 :key="`vehicles-${selectedPeriod}-${scopeKey}`"
                 :stats="vehicleStats"
                 :loading="loadingStates.vehicles"
+                :scope="currentScope"
               />
             </template>
             <template #fallback>
