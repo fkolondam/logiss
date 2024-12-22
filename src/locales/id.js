@@ -4,6 +4,17 @@ export default {
     loading: 'Memuat...',
     error: 'Terjadi kesalahan',
   },
+  common: {
+    viewAll: 'Lihat Semua',
+    details: 'Detail',
+    viewDetails: 'Lihat Detail',
+    close: 'Tutup',
+    openInNewTab: 'Buka di Tab Baru',
+    share: 'Bagikan',
+    done: 'Selesai',
+    'toggle-sidebar': 'Buka/Tutup Sidebar',
+    close: 'Tutup',
+  },
   menu: {
     home: 'Beranda',
     deliveries: 'Pengiriman',
@@ -27,12 +38,19 @@ export default {
     error: 'Gagal memuat sumber data',
     select: 'Pilih sumber data',
     noData: 'Tidak ada data tersedia',
+    noResults: 'Tidak ada hasil',
+    description: 'Pilih sumber data dan cakupan',
+    resetScope: 'Reset cakupan',
+    selectScope: 'Pilih cakupan',
+    searchPlaceholder: 'Cari...',
   },
   scope: {
     global: 'Akses Global',
     region: 'Region',
     branch: 'Cabang',
     personal: 'Personal',
+    regions: 'Region',
+    branches: 'Cabang',
     select: 'Pilih Cakupan',
     all: 'Semua',
     allData: 'Semua Data',
@@ -205,6 +223,7 @@ export default {
     warnings: {
       lowFuel: 'Bahan Bakar Rendah',
     },
+    nextService: 'Servis Berikutnya',
   },
   debug: {
     title: 'Debug Tools',
@@ -240,5 +259,31 @@ export default {
     admin: 'Administrator',
     manager: 'Manajer',
     user: 'Pengguna',
+  },
+  errors: {
+    fetchDeliveries: 'Gagal mengambil data pengiriman',
+    fetchExpenses: 'Gagal mengambil data pengeluaran',
+    fetchVehicles: 'Gagal mengambil data kendaraan',
+    fetchDashboard: 'Gagal mengambil data dashboard',
+    invalidDateRange: 'Rentang tanggal tidak valid',
+    fetchFailed: 'Gagal mengambil data',
+    allSectionsFailed: 'Semua bagian gagal dimuat',
+    someSectionsFailed: 'Beberapa bagian gagal dimuat',
+    unexpectedError: 'Terjadi kesalahan tidak terduga',
+    refreshError: 'Gagal menyegarkan data',
+    initError: 'Gagal menginisialisasi',
+    code: 'Kode kesalahan',
+  },
+
+  userSelector: {
+    searchPlaceholder: 'Cari pengguna...',
+    accessLevel: 'Level Akses',
+    permissions: 'Izin',
+    permissionsCount: '{count} izin',
+    selectUser: 'Pilih Pengguna',
+  },
+  profile: {
+    title: 'Profile', // 'Profil'
+    comingSoon: 'Segera Hadir',
   },
 }

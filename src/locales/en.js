@@ -4,6 +4,17 @@ export default {
     loading: 'Loading...',
     error: 'An error occurred',
   },
+  common: {
+    viewAll: 'View All',
+    details: 'Details',
+    viewDetails: 'View Details',
+    close: 'Close',
+    openInNewTab: 'Open in New Tab',
+    share: 'Share',
+    done: 'Done',
+    'toggle-sidebar': 'Toggle Sidebar',
+    close: 'Close',
+  },
   menu: {
     home: 'Home',
     deliveries: 'Deliveries',
@@ -27,12 +38,19 @@ export default {
     error: 'Failed to load data sources',
     select: 'Select data source',
     noData: 'No data available',
+    searchPlaceholder: 'Search...', // 'Cari...'
+    noResults: 'No results found', // 'Tidak ada hasil'
+    description: 'Select data source and scope', // 'Pilih sumber data dan cakupan'
+    resetScope: 'Reset scope', // 'Reset cakupan'
+    selectScope: 'Select scope', // 'Pilih cakupan'
   },
   scope: {
     global: 'Global Access',
     region: 'Region',
     branch: 'Branch',
     personal: 'Personal',
+    regions: 'Regions',
+    branches: 'Branches',
     select: 'Select Scope',
     all: 'All',
     allData: 'All Data',
@@ -118,14 +136,14 @@ export default {
       in_transit: 'In Transit',
       pending: 'Pending',
       cancelled: 'Cancelled',
-      'received - all': 'Received - All',
-      'received - partial': 'Received - Partial',
-      cancel: 'Cancel',
-      'cancel - store closed': 'Cancel - Store Closed',
-      'cancel - store inaccessible': 'Cancel - Store Inaccessible',
-      'cancel - no money': 'Cancel - No Money',
-      'cancel - wrong order': 'Cancel - Wrong Order',
-      resend: 'Resend',
+      'diterima - semua': 'Received - All',
+      'diterima - sebagian': 'Received - Partial',
+      batal: 'Cancel',
+      'batal - toko tutup': 'Cancel - Store Closed',
+      'batal - toko tidak dapat diakses': 'Cancel - Store Inaccessible',
+      'batal - tidak ada uang': 'Cancel - No Money',
+      'batal - salah order': 'Cancel - Wrong Order',
+      'kirim ulang': 'Resend',
     },
     tabs: {
       delivery: 'Delivery',
@@ -205,6 +223,7 @@ export default {
     warnings: {
       lowFuel: 'Low Fuel',
     },
+    nextService: 'Next Service', // 'Servis Berikutnya'
   },
   debug: {
     title: 'Debug Tools',
@@ -240,5 +259,31 @@ export default {
     admin: 'Administrator',
     manager: 'Manager',
     user: 'User',
+  },
+  errors: {
+    fetchDeliveries: 'Failed to fetch deliveries', // 'Gagal mengambil data pengiriman'
+    fetchExpenses: 'Failed to fetch expenses', // 'Gagal mengambil data pengeluaran'
+    fetchVehicles: 'Failed to fetch vehicles', // 'Gagal mengambil data kendaraan'
+    fetchDashboard: 'Failed to fetch dashboard', // 'Gagal mengambil data dashboard'
+    invalidDateRange: 'Invalid date range', // 'Rentang tanggal tidak valid'
+    fetchFailed: 'Failed to fetch data', // 'Gagal mengambil data'
+    allSectionsFailed: 'All sections failed to load', // 'Semua bagian gagal dimuat'
+    someSectionsFailed: 'Some sections failed to load', // 'Beberapa bagian gagal dimuat'
+    unexpectedError: 'An unexpected error occurred', // 'Terjadi kesalahan tidak terduga'
+    refreshError: 'Failed to refresh data', // 'Gagal menyegarkan data'
+    initError: 'Failed to initialize', // 'Gagal menginisialisasi'
+    code: 'Error code', // 'Kode kesalahan'
+  },
+
+  userSelector: {
+    searchPlaceholder: 'Search users...', // 'Cari pengguna...'
+    accessLevel: 'Access Level', // 'Level Akses'
+    permissions: 'Permissions', // 'Izin'
+    permissionsCount: '{count} permissions', // '{count} izin'
+    selectUser: 'Select User', // 'Pilih Pengguna'
+  },
+  profile: {
+    title: 'Profile', // 'Profil'
+    comingSoon: 'Coming Soon', // 'Segera Hadir'
   },
 }
