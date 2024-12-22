@@ -107,7 +107,7 @@
           <Suspense>
             <template #default>
               <VehicleStatus
-                :key="`vehicles-${currentPeriod}-${scopeKey}`"
+                :key="`vehicles-${scopeKey}`"
                 :stats="vehicleStats"
                 :loading="loadingStates.vehicles"
                 :scope="currentScope"

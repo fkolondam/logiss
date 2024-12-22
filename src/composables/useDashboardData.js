@@ -218,14 +218,9 @@ export function useDashboardData() {
     if (!fieldsToCheck) return data
 
     return data.filter((item) => {
-      // For region scope, check both region match and branch prefix
+      // For region scope, check region match
       if (scope.type === 'region') {
-        return fieldsToCheck.some((field) => {
-          if (field.includes('branch')) {
-            return item[field] && item[field].startsWith(scope.value)
-          }
-          return item[field] === scope.value
-        })
+        return fieldsToCheck.some((field) => item[field] === scope.value)
       }
 
       // For other scopes, exact match on the primary field
@@ -304,22 +299,23 @@ export function useDashboardData() {
     error.value = null
 
     try {
-      // Get date range based on current period or use provided range
-      const dateRange = params.dateRange
-        ? {
-            start: new Date(params.dateRange.start),
-            end: new Date(params.dateRange.end),
-          }
-        : getDateRange(currentPeriod.value)
-
-      const dateParams = {
-        ...params,
-        dateRange: {
-          start: dateRange.start.toISOString().split('T')[0],
-          end: dateRange.end.toISOString().split('T')[0],
-        },
-        period: currentPeriod.value,
-      }
+      // Get date range and params based on section type
+      const dateParams =
+        section === 'vehicles'
+          ? { ...params } // Vehicles don't use timeline filtering
+          : {
+              ...params,
+              dateRange: params.dateRange
+                ? {
+                    start: new Date(params.dateRange.start).toISOString().split('T')[0],
+                    end: new Date(params.dateRange.end).toISOString().split('T')[0],
+                  }
+                : {
+                    start: getDateRange(currentPeriod.value).start.toISOString().split('T')[0],
+                    end: getDateRange(currentPeriod.value).end.toISOString().split('T')[0],
+                  },
+              period: currentPeriod.value,
+            }
 
       // Check cache first
       const cacheKey = getCacheKey(section, currentScope.value, dateParams)
@@ -416,7 +412,9 @@ export function useDashboardData() {
     loadingStates.value.vehicles = true
 
     try {
-      // Get date range based on current period
+      const loadPromises = []
+
+      // Get date range for timeline-based sections
       const { start, end } = getDateRange(currentPeriod.value)
       const dateParams = {
         dateRange: {
@@ -425,18 +423,17 @@ export function useDashboardData() {
         },
       }
 
-      const loadPromises = []
-
+      // Load timeline-based sections
       if (canAccessDeliveries.value) {
         loadPromises.push(loadSectionData('deliveries', dateParams))
       }
-
       if (canAccessExpenses.value) {
         loadPromises.push(loadSectionData('expenses', dateParams))
       }
 
+      // Load vehicles without timeline filtering
       if (canAccessVehicles.value) {
-        loadPromises.push(loadSectionData('vehicles', dateParams))
+        loadPromises.push(loadSectionData('vehicles', {}))
       }
 
       await Promise.all(loadPromises)

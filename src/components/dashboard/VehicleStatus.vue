@@ -4,8 +4,7 @@
     <div class="flex items-center justify-between mb-6">
       <h2 class="text-lg font-semibold text-gray-900">{{ t('vehicles.title') }}</h2>
       <div class="text-sm text-gray-500">
-        {{ t(`vehicles.periods.${props.stats?.period || PERIODS.TODAY}`) }}
-        ({{ t('vehicles.stats.total') }}: {{ stats?.total || 0 }})
+        {{ t('vehicles.stats.total') }}: {{ stats?.total || 0 }}
       </div>
     </div>
 
@@ -22,7 +21,7 @@
             {{ stats.utilizationTrend > 0 ? '+' : '' }}{{ stats.utilizationTrend }}%
           </div>
         </div>
-        <div class="text-xs text-green-600 mt-1">{{ t('vehicles.stats.thisWeek') }}</div>
+        <div class="text-xs text-green-600 mt-1">{{ t('vehicles.stats.utilization') }}</div>
       </div>
       <div class="bg-orange-50 rounded-lg p-4">
         <div class="text-sm text-orange-700 mb-1">{{ t('vehicles.stats.maintenanceRate') }}</div>
@@ -34,7 +33,7 @@
             {{ stats.maintenanceTrend > 0 ? '+' : '' }}{{ stats.maintenanceTrend }}%
           </div>
         </div>
-        <div class="text-xs text-orange-600 mt-1">{{ t('vehicles.stats.thisMonth') }}</div>
+        <div class="text-xs text-orange-600 mt-1">{{ t('vehicles.stats.maintenanceRate') }}</div>
       </div>
     </div>
 
@@ -66,7 +65,7 @@
                   ></div>
                 </div>
                 <div v-if="stats?.activeTrend" class="text-xs text-green-600">
-                  {{ stats.activeTrend > 0 ? '+' : '' }}{{ stats.activeTrend }}% from last period
+                  {{ stats.activeTrend > 0 ? '+' : '' }}{{ stats.activeTrend }}%
                 </div>
               </div>
             </div>
@@ -94,8 +93,7 @@
                   ></div>
                 </div>
                 <div v-if="stats?.maintenanceTrend" class="text-xs text-orange-600">
-                  {{ stats.maintenanceTrend > 0 ? '+' : '' }}{{ stats.maintenanceTrend }}% from last
-                  period
+                  {{ stats.maintenanceTrend > 0 ? '+' : '' }}{{ stats.maintenanceTrend }}%
                 </div>
               </div>
             </div>
@@ -129,7 +127,7 @@
                   ></div>
                 </div>
                 <div v-if="stats?.fuelTrend" class="text-xs text-blue-600">
-                  {{ stats.fuelTrend > 0 ? '+' : '' }}{{ stats.fuelTrend }}% from last period
+                  {{ stats.fuelTrend > 0 ? '+' : '' }}{{ stats.fuelTrend }}%
                 </div>
               </div>
             </div>
@@ -199,7 +197,6 @@
 import { computed, watch } from 'vue'
 import { Truck, Fuel, Wrench, FileText, AlertCircle, Settings } from 'lucide-vue-next'
 import { useTranslations } from '../../composables/useTranslations'
-import { PERIODS } from '../../constants/periods'
 
 const { t } = useTranslations()
 
@@ -223,19 +220,22 @@ const props = defineProps({
   },
 })
 
+// Make stats reactive to ensure updates trigger re-renders
+const stats = computed(() => props.stats || {})
+
 const calculateUtilizationRate = () => {
-  if (!props.stats?.total || !props.stats?.active) return 0
-  return Math.round((props.stats.active / props.stats.total) * 100)
+  if (!stats.value.total || !stats.value.active) return 0
+  return Math.round((stats.value.active / stats.value.total) * 100)
 }
 
 const calculateMaintenanceRate = () => {
-  if (!props.stats?.total || !props.stats?.maintenance) return 0
-  return Math.round((props.stats.maintenance / props.stats.total) * 100)
+  if (!stats.value.total || !stats.value.maintenance) return 0
+  return Math.round((stats.value.maintenance / stats.value.total) * 100)
 }
 
 const calculatePercentage = (status) => {
-  if (!props.stats?.total || !props.stats?.[status]) return 0
-  return Math.round((props.stats[status] / props.stats.total) * 100)
+  if (!stats.value.total || !stats.value[status]) return 0
+  return Math.round((stats.value[status] / stats.value.total) * 100)
 }
 
 // Add debug logging

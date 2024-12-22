@@ -165,11 +165,11 @@ export default {
     },
     periods: {
       today: 'Today',
-      yesterday: 'Yesterday',
-      thisWeek: 'This Week',
-      lastWeek: 'Last Week',
-      thisMonth: 'This Month',
-      lastMonth: 'Last Month',
+      yesterday: 'Day Before',
+      this_week: 'This Week',
+      last_week: 'Last Week',
+      this_month: 'This Month',
+      last_month: 'Last Month',
     },
   },
   expenses: {
@@ -179,13 +179,6 @@ export default {
     increased: 'Increased',
     decreased: 'Decreased',
     noExpenses: 'No expenses',
-    periods: {
-      today: 'Today',
-      week: 'Weekly',
-      month: 'Monthly',
-      thisWeek: 'This Week',
-      thisMonth: 'This Month',
-    },
     categories: {
       fuel: 'Fuel',
       maintenance: 'Maintenance',
@@ -199,6 +192,14 @@ export default {
       total: 'Total',
       approved: 'Approved',
       pending: 'Pending',
+    },
+    periods: {
+      today: 'Today',
+      yesterday: 'Day Before',
+      this_week: 'This Week',
+      last_week: 'Last Week',
+      this_month: 'This Month',
+      last_month: 'Last Month',
     },
   },
   vehicles: {
@@ -231,6 +232,8 @@ export default {
       utilization: 'Utilization Rate',
       maintenanceRate: 'Maintenance Rate',
       needRefuel: 'Need Refuel',
+      thisWeek: 'This Week',
+      thisMonth: 'This Month',
     },
     list: {
       title: 'Vehicle List',
@@ -252,11 +255,11 @@ export default {
     nextService: 'Next Service',
     periods: {
       today: 'Today',
-      yesterday: 'Yesterday',
-      thisWeek: 'This Week',
-      lastWeek: 'Last Week',
-      thisMonth: 'This Month',
-      lastMonth: 'Last Month',
+      yesterday: 'Day Before',
+      this_week: 'This Week',
+      last_week: 'Last Week',
+      this_month: 'This Month',
+      last_month: 'Last Month',
     },
   },
   debug: {

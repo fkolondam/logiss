@@ -98,7 +98,7 @@ const props = defineProps({
 })
 
 // Categories configuration - matching expenseCategoryConfig from branchData.js
-const categories = [
+const categories = computed(() => [
   {
     id: 'Fuel',
     label: t('expenses.categories.fuel'),
@@ -139,7 +139,7 @@ const categories = [
     barClass: 'bg-indigo-500',
     textClass: 'text-indigo-600',
   },
-]
+])
 
 // Helper functions
 const formatCurrency = (amount) => {

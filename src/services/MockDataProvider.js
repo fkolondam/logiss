@@ -14,31 +14,26 @@ export class MockDataProvider extends BaseDataProvider {
         let data = mockData[resource] || []
 
         // Apply scope-based filters first
-        if (params.region) {
-          data = data.filter((item) => {
-            // Match exact region or branch that starts with region code
-            return (
-              item.region === params.region ||
-              (item.branch && item.branch.startsWith(`RDA ${params.region}`))
-            )
-          })
-        }
-
-        if (params.branch) {
-          data = data.filter((item) => item.branch === params.branch)
-        }
-
-        // Handle personal scope with multiple possible identifiers
-        if (params.userId || params.driverId || params.assignedTo || params.driver) {
-          data = data.filter((item) => {
-            return (
-              item.userId === params.userId ||
-              item.driverId === params.driverId ||
-              item.assignedTo === params.assignedTo ||
-              item.driver === params.driver ||
-              item.assignedDriverId === params.driverId
-            )
-          })
+        if (params.scope) {
+          switch (params.scope.type) {
+            case 'region':
+              data = data.filter((item) => item.region === params.scope.value)
+              break
+            case 'branch':
+              data = data.filter((item) => item.branch === params.scope.value)
+              break
+            case 'personal':
+              data = data.filter((item) => {
+                return (
+                  item.userId === params.scope.value ||
+                  item.driverId === params.scope.value ||
+                  item.assignedTo === params.scope.value ||
+                  item.driver === params.scope.value ||
+                  item.assignedDriverId === params.scope.value
+                )
+              })
+              break
+          }
         }
 
         // Apply other filters after scope filtering
@@ -269,6 +264,9 @@ export class MockDataProvider extends BaseDataProvider {
       return acc
     }, {})
 
+    // Count vehicles with low fuel
+    const lowFuelCount = vehicles.filter((v) => v.fuelLevel <= 30).length
+
     // Group by branch
     const byBranch = vehicles.reduce((acc, v) => {
       if (!acc[v.branch]) {
@@ -279,10 +277,52 @@ export class MockDataProvider extends BaseDataProvider {
       return acc
     }, {})
 
+    // Calculate trends (simulate with random values for now)
+    const utilizationTrend = Math.round(Math.random() * 20 - 10) // -10 to +10
+    const maintenanceTrend = Math.round(Math.random() * 20 - 10) // -10 to +10
+    const activeTrend = Math.round(Math.random() * 20 - 10) // -10 to +10
+    const fuelTrend = Math.round(Math.random() * 20 - 10) // -10 to +10
+
+    // Count expiring documents and service due
+    const today = new Date()
+    const thirtyDaysFromNow = new Date(today.setDate(today.getDate() + 30))
+    const expiringDocs = vehicles.filter((v) => {
+      const insuranceExpiry = new Date(v.documents.insurance.expiry)
+      const registrationExpiry = new Date(v.documents.registration.expiry)
+      return insuranceExpiry <= thirtyDaysFromNow || registrationExpiry <= thirtyDaysFromNow
+    }).length
+
+    const serviceDue = vehicles.filter((v) => {
+      const nextService = new Date(v.nextServiceDue)
+      return nextService <= thirtyDaysFromNow
+    }).length
+
+    // Get next expiry dates
+    const nextDocExpiry = vehicles.reduce((earliest, v) => {
+      const insuranceExpiry = new Date(v.documents.insurance.expiry)
+      const registrationExpiry = new Date(v.documents.registration.expiry)
+      const nextExpiry = insuranceExpiry < registrationExpiry ? insuranceExpiry : registrationExpiry
+      return !earliest || nextExpiry < earliest ? nextExpiry : earliest
+    }, null)
+
+    const nextServiceDue = vehicles.reduce((earliest, v) => {
+      const serviceDate = new Date(v.nextServiceDue)
+      return !earliest || serviceDate < earliest ? serviceDate : earliest
+    }, null)
+
     return {
       total: vehicles.length,
       active: statusCounts.active || 0,
       maintenance: statusCounts.maintenance || 0,
+      lowFuel: lowFuelCount,
+      expiringDocs,
+      serviceDue,
+      nextDocExpiry: nextDocExpiry?.toISOString().split('T')[0],
+      nextServiceDue: nextServiceDue?.toISOString().split('T')[0],
+      utilizationTrend,
+      maintenanceTrend,
+      activeTrend,
+      fuelTrend,
       byBranch,
       // Include raw data for scope filtering
       data: vehicles,

@@ -45,6 +45,7 @@ const generateExpenseData = (startDate, endDate) => {
             const expense = {
               id: expenseIndex++,
               branch: branchName,
+              region: branchData.region,
               date: formatDate(date),
               category,
               amount: getRandomAmount(range.min, range.max),

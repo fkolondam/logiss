@@ -72,14 +72,18 @@ const generateBaseVehicle = (plateNumber, branch, driver, coordinates) => {
     id: parseInt(plateNumber.replace(/\D/g, '').slice(-4)),
     plateNumber,
     branch,
+    region: branchConfig[branch].region,
     type,
     model,
     capacity: capacity + ' kg',
-    status: 'active',
-    fuelLevel: getRandomNumber(
-      vehicleStatusConfig.fuelLevel.startDay.min,
-      vehicleStatusConfig.fuelLevel.startDay.max,
-    ),
+    status: Math.random() < 0.8 ? 'active' : 'maintenance', // 80% active, 20% maintenance
+    fuelLevel:
+      Math.random() < 0.2 // 20% chance of low fuel
+        ? getRandomNumber(0, vehicleStatusConfig.fuelLevel.refillTrigger)
+        : getRandomNumber(
+            vehicleStatusConfig.fuelLevel.startDay.min,
+            vehicleStatusConfig.fuelLevel.startDay.max,
+          ),
     lastServiceDate: formatDate(new Date()),
     nextServiceDue: formatDate(new Date(new Date().setDate(new Date().getDate() + 30))),
     fuelEfficiency: fuelEfficiency + ' km/l',
