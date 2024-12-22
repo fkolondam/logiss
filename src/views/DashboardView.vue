@@ -15,16 +15,6 @@
 
       <!-- Period Selector with Enhanced UI -->
       <div class="w-full sm:w-auto flex items-center gap-4">
-        <!-- Refresh Button -->
-        <button
-          @click="refreshData"
-          class="p-2 text-gray-500 hover:text-gray-700 rounded-lg hover:bg-gray-100 transition-colors duration-200"
-          :class="{ 'animate-spin': isLoading }"
-          :disabled="isLoading"
-        >
-          <RefreshCw class="w-5 h-5" />
-        </button>
-
         <!-- Period Selector -->
         <div class="flex-1 sm:flex-none">
           <div
@@ -36,12 +26,12 @@
               @click="handlePeriodChange(period.value)"
               class="px-4 py-2 font-medium text-center transition-all duration-200 relative"
               :class="[
-                selectedPeriod === period.value
+                currentPeriod === period.value
                   ? 'bg-blue-500 text-white'
                   : 'text-gray-600 hover:bg-gray-50',
               ]"
             >
-              {{ t(`expenses.periods.${period.value}`) }}
+              {{ period.label }}
               <div
                 v-if="loadingStates[period.value]"
                 class="absolute inset-0 bg-black/5 flex items-center justify-center"
@@ -85,7 +75,7 @@
           <Suspense>
             <template #default>
               <RecentDeliveries
-                :key="`deliveries-${selectedPeriod}-${scopeKey}`"
+                :key="`deliveries-${currentPeriod}-${scopeKey}`"
                 :stats="deliveryStats"
                 :loading="loadingStates.deliveries"
                 :scope="currentScope"
@@ -101,8 +91,7 @@
           <Suspense>
             <template #default>
               <ExpensesOverview
-                :key="`expenses-${selectedPeriod}-${scopeKey}`"
-                v-model="selectedPeriod"
+                :key="`expenses-${currentPeriod}-${scopeKey}`"
                 :stats="expenseStats"
                 :loading="loadingStates.expenses"
                 :scope="currentScope"
@@ -118,7 +107,7 @@
           <Suspense>
             <template #default>
               <VehicleStatus
-                :key="`vehicles-${selectedPeriod}-${scopeKey}`"
+                :key="`vehicles-${currentPeriod}-${scopeKey}`"
                 :stats="vehicleStats"
                 :loading="loadingStates.vehicles"
                 :scope="currentScope"
@@ -154,6 +143,7 @@ import { useDashboardData } from '../composables/useDashboardData'
 import RecentDeliveries from '../components/dashboard/RecentDeliveries.vue'
 import ExpensesOverview from '../components/dashboard/ExpensesOverview.vue'
 import VehicleStatus from '../components/dashboard/VehicleStatus.vue'
+import { PERIODS } from '../constants/periods'
 
 // Skeleton component for loading state
 const DashboardSkeleton = {
@@ -170,24 +160,7 @@ const DashboardSkeleton = {
 
 const { t } = useTranslations()
 const userStore = useUserStore()
-const selectedPeriod = ref('today')
 const hasLoadedInitialData = ref(false)
-
-// Available periods
-const periods = [
-  { value: 'today', label: t('expenses.periods.today') },
-  { value: 'week', label: t('expenses.periods.week') },
-  { value: 'month', label: t('expenses.periods.month') },
-]
-
-// Check if user has any dashboard permissions
-const hasAnyPermissions = computed(() => {
-  return (
-    userStore.hasPermission('read_deliveries') ||
-    userStore.hasPermission('read_expenses') ||
-    userStore.hasPermission('read_vehicles')
-  )
-})
 
 // Get dashboard data using the composable
 const {
@@ -199,7 +172,24 @@ const {
   vehicleStats,
   loadDashboardData,
   refreshSection,
+  currentPeriod,
 } = useDashboardData()
+
+// Available periods
+const periods = [
+  { value: PERIODS.TODAY, label: t('common.periods.today') },
+  { value: PERIODS.THIS_WEEK, label: t('common.periods.this_week') },
+  { value: PERIODS.THIS_MONTH, label: t('common.periods.this_month') },
+]
+
+// Check if user has any dashboard permissions
+const hasAnyPermissions = computed(() => {
+  return (
+    userStore.hasPermission('read_deliveries') ||
+    userStore.hasPermission('read_expenses') ||
+    userStore.hasPermission('read_vehicles')
+  )
+})
 
 // Get current user's scope
 const currentScope = computed(() => userStore.scope)
@@ -245,14 +235,14 @@ const getScopeLabel = (scope) => {
 
 // Handle period change with loading state
 const handlePeriodChange = async (period) => {
-  if (selectedPeriod.value === period || isLoading.value) return
+  if (currentPeriod.value === period || isLoading.value) return
 
-  selectedPeriod.value = period
-  await Promise.all([
-    refreshSection('deliveries', { period }),
-    refreshSection('expenses', { period }),
-    refreshSection('vehicles', { period }),
-  ])
+  try {
+    currentPeriod.value = period
+    await loadDashboardData()
+  } catch (e) {
+    console.error('Error changing period:', e)
+  }
 }
 
 // Refresh all data

@@ -4,10 +4,12 @@
     <div class="flex items-center justify-between mb-6">
       <h2 class="text-lg font-semibold text-gray-900">{{ t('vehicles.title') }}</h2>
       <div class="text-sm text-gray-500">
-        {{ t('vehicles.stats.total') }}: {{ stats?.total || 0 }}
+        {{ t(`vehicles.periods.${props.stats?.period || PERIODS.TODAY}`) }}
+        ({{ t('vehicles.stats.total') }}: {{ stats?.total || 0 }})
       </div>
     </div>
 
+    <!-- Rest of the template remains unchanged -->
     <!-- Status Overview -->
     <div class="grid grid-cols-2 gap-4 mb-6">
       <div class="bg-green-50 rounded-lg p-4">
@@ -20,7 +22,7 @@
             {{ stats.utilizationTrend > 0 ? '+' : '' }}{{ stats.utilizationTrend }}%
           </div>
         </div>
-        <div class="text-xs text-green-600 mt-1">{{ t('deliveries.stats.thisWeek') }}</div>
+        <div class="text-xs text-green-600 mt-1">{{ t('vehicles.stats.thisWeek') }}</div>
       </div>
       <div class="bg-orange-50 rounded-lg p-4">
         <div class="text-sm text-orange-700 mb-1">{{ t('vehicles.stats.maintenanceRate') }}</div>
@@ -32,7 +34,7 @@
             {{ stats.maintenanceTrend > 0 ? '+' : '' }}{{ stats.maintenanceTrend }}%
           </div>
         </div>
-        <div class="text-xs text-orange-600 mt-1">{{ t('deliveries.stats.thisMonth') }}</div>
+        <div class="text-xs text-orange-600 mt-1">{{ t('vehicles.stats.thisMonth') }}</div>
       </div>
     </div>
 
@@ -52,13 +54,20 @@
                 <div class="text-sm font-medium text-gray-700">
                   {{ t('vehicles.status.active') }}
                 </div>
-                <div class="text-sm text-gray-900 font-medium">{{ stats?.active || 0 }}</div>
+                <div class="text-sm text-gray-900 font-medium">
+                  {{ stats?.active || 0 }}
+                </div>
               </div>
-              <div class="w-full bg-gray-100 rounded-full h-1.5">
-                <div
-                  class="h-1.5 rounded-full bg-green-500 transition-all duration-500"
-                  :style="{ width: `${calculatePercentage('active')}%` }"
-                ></div>
+              <div class="flex flex-col gap-1">
+                <div class="w-full bg-gray-100 rounded-full h-1.5">
+                  <div
+                    class="h-1.5 rounded-full bg-green-500 transition-all duration-500"
+                    :style="{ width: `${calculatePercentage('active')}%` }"
+                  ></div>
+                </div>
+                <div v-if="stats?.activeTrend" class="text-xs text-green-600">
+                  {{ stats.activeTrend > 0 ? '+' : '' }}{{ stats.activeTrend }}% from last period
+                </div>
               </div>
             </div>
           </div>
@@ -73,13 +82,21 @@
                 <div class="text-sm font-medium text-gray-700">
                   {{ t('vehicles.stats.maintenanceVehicles') }}
                 </div>
-                <div class="text-sm text-gray-900 font-medium">{{ stats?.maintenance || 0 }}</div>
+                <div class="text-sm text-gray-900 font-medium">
+                  {{ stats?.maintenance || 0 }}
+                </div>
               </div>
-              <div class="w-full bg-gray-100 rounded-full h-1.5">
-                <div
-                  class="h-1.5 rounded-full bg-orange-500 transition-all duration-500"
-                  :style="{ width: `${calculatePercentage('maintenance')}%` }"
-                ></div>
+              <div class="flex flex-col gap-1">
+                <div class="w-full bg-gray-100 rounded-full h-1.5">
+                  <div
+                    class="h-1.5 rounded-full bg-orange-500 transition-all duration-500"
+                    :style="{ width: `${calculatePercentage('maintenance')}%` }"
+                  ></div>
+                </div>
+                <div v-if="stats?.maintenanceTrend" class="text-xs text-orange-600">
+                  {{ stats.maintenanceTrend > 0 ? '+' : '' }}{{ stats.maintenanceTrend }}% from last
+                  period
+                </div>
               </div>
             </div>
           </div>
@@ -90,7 +107,7 @@
       <div>
         <h3 class="text-sm font-medium text-gray-700 mb-4">{{ t('vehicles.fuel') }}</h3>
         <div class="space-y-4">
-          <!-- Normal Fuel Level -->
+          <!-- Low Fuel Level -->
           <div class="flex items-center gap-3">
             <div class="bg-blue-50 p-2 rounded-lg">
               <Fuel class="w-5 h-5 text-blue-600" />
@@ -100,13 +117,20 @@
                 <div class="text-sm font-medium text-gray-700">
                   {{ t('vehicles.stats.needRefuel') }}
                 </div>
-                <div class="text-sm text-gray-900 font-medium">{{ stats?.lowFuel || 0 }}</div>
+                <div class="text-sm text-gray-900 font-medium">
+                  {{ stats?.lowFuel || 0 }}
+                </div>
               </div>
-              <div class="w-full bg-gray-100 rounded-full h-1.5">
-                <div
-                  class="h-1.5 rounded-full bg-blue-500 transition-all duration-500"
-                  :style="{ width: `${calculatePercentage('lowFuel')}%` }"
-                ></div>
+              <div class="flex flex-col gap-1">
+                <div class="w-full bg-gray-100 rounded-full h-1.5">
+                  <div
+                    class="h-1.5 rounded-full bg-blue-500 transition-all duration-500"
+                    :style="{ width: `${calculatePercentage('lowFuel')}%` }"
+                  ></div>
+                </div>
+                <div v-if="stats?.fuelTrend" class="text-xs text-blue-600">
+                  {{ stats.fuelTrend > 0 ? '+' : '' }}{{ stats.fuelTrend }}% from last period
+                </div>
               </div>
             </div>
           </div>
@@ -127,10 +151,13 @@
                 <div class="text-sm font-medium text-gray-700">
                   {{ t('vehicles.documents.expiring') }}
                 </div>
-                <div class="text-sm text-gray-900 font-medium">{{ stats?.expiringDocs || 0 }}</div>
+                <div class="text-sm text-gray-900 font-medium">
+                  {{ stats?.expiringDocs || 0 }}
+                </div>
               </div>
               <div class="text-xs text-gray-500">
-                {{ t('vehicles.documents.nextExpiry') }}: {{ formatDate(stats?.nextDocExpiry) }}
+                {{ t('vehicles.documents.nextExpiry') }}:
+                {{ formatDate(stats?.nextDocExpiry) }}
               </div>
             </div>
           </div>
@@ -145,7 +172,9 @@
                 <div class="text-sm font-medium text-gray-700">
                   {{ t('vehicles.service.due') }}
                 </div>
-                <div class="text-sm text-gray-900 font-medium">{{ stats?.serviceDue || 0 }}</div>
+                <div class="text-sm text-gray-900 font-medium">
+                  {{ stats?.serviceDue || 0 }}
+                </div>
               </div>
               <div class="text-xs text-gray-500">
                 {{ t('vehicles.service.nextDue') }}: {{ formatDate(stats?.nextServiceDue) }}
@@ -167,9 +196,10 @@
 </template>
 
 <script setup>
-import { computed } from 'vue'
+import { computed, watch } from 'vue'
 import { Truck, Fuel, Wrench, FileText, AlertCircle, Settings } from 'lucide-vue-next'
 import { useTranslations } from '../../composables/useTranslations'
+import { PERIODS } from '../../constants/periods'
 
 const { t } = useTranslations()
 
@@ -207,4 +237,28 @@ const calculatePercentage = (status) => {
   if (!props.stats?.total || !props.stats?.[status]) return 0
   return Math.round((props.stats[status] / props.stats.total) * 100)
 }
+
+// Add debug logging
+watch(
+  () => props.stats,
+  (newStats) => {
+    console.log('Vehicle stats:', {
+      total: newStats?.total,
+      active: newStats?.active,
+      maintenance: newStats?.maintenance,
+      lowFuel: newStats?.lowFuel,
+      expiringDocs: newStats?.expiringDocs,
+      serviceDue: newStats?.serviceDue,
+      nextDocExpiry: newStats?.nextDocExpiry,
+      nextServiceDue: newStats?.nextServiceDue,
+      utilizationTrend: newStats?.utilizationTrend,
+      maintenanceTrend: newStats?.maintenanceTrend,
+      activeTrend: newStats?.activeTrend,
+      fuelTrend: newStats?.fuelTrend,
+      byBranch: newStats?.byBranch,
+      period: newStats?.period,
+    })
+  },
+  { immediate: true },
+)
 </script>

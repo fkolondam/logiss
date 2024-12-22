@@ -2,6 +2,7 @@ import { ref, computed, watch } from 'vue'
 import { storeToRefs } from 'pinia'
 import { dataProviderFactory } from '../services/DataProviderFactory'
 import { useUserStore } from '../stores/user'
+import { PERIODS } from '../constants/periods'
 
 // Cache implementation
 const CACHE_DURATION = 5 * 60 * 1000 // 5 minutes
@@ -94,7 +95,13 @@ export function useDashboardData() {
     deliveries: false,
     expenses: false,
     vehicles: false,
+    [PERIODS.TODAY]: false,
+    [PERIODS.THIS_WEEK]: false,
+    [PERIODS.THIS_MONTH]: false,
   })
+
+  // Timeline state
+  const currentPeriod = ref(PERIODS.TODAY)
 
   // Permission checks
   const canAccessDeliveries = computed(() => userStore.hasPermission('read_deliveries'))
@@ -127,8 +134,9 @@ export function useDashboardData() {
     categories: {
       fuel: 0,
       maintenance: 0,
-      insurance: 0,
-      others: 0,
+      vehicleLicense: 0,
+      labour: 0,
+      parkingToll: 0,
     },
   })
 
@@ -261,6 +269,34 @@ export function useDashboardData() {
   }
 
   /**
+   * Get date range for current period
+   */
+  function getDateRange(period = currentPeriod.value) {
+    const now = new Date()
+    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate())
+
+    switch (period) {
+      case PERIODS.TODAY:
+        return {
+          start: today,
+          end: new Date(today.getTime() + 24 * 60 * 60 * 1000 - 1), // End of today
+        }
+      case PERIODS.THIS_WEEK:
+        const monday = new Date(today)
+        monday.setDate(today.getDate() - today.getDay() + 1) // Monday
+        const sunday = new Date(monday)
+        sunday.setDate(monday.getDate() + 6) // Sunday
+        return { start: monday, end: sunday }
+      case PERIODS.THIS_MONTH:
+        const firstDay = new Date(today.getFullYear(), today.getMonth(), 1)
+        const lastDay = new Date(today.getFullYear(), today.getMonth() + 1, 0)
+        return { start: firstDay, end: lastDay }
+      default:
+        return { start: today, end: new Date(today.getTime() + 24 * 60 * 60 * 1000 - 1) }
+    }
+  }
+
+  /**
    * Load data for a specific section with caching
    */
   async function loadSectionData(section, params = {}) {
@@ -268,14 +304,31 @@ export function useDashboardData() {
     error.value = null
 
     try {
+      // Get date range based on current period or use provided range
+      const dateRange = params.dateRange
+        ? {
+            start: new Date(params.dateRange.start),
+            end: new Date(params.dateRange.end),
+          }
+        : getDateRange(currentPeriod.value)
+
+      const dateParams = {
+        ...params,
+        dateRange: {
+          start: dateRange.start.toISOString().split('T')[0],
+          end: dateRange.end.toISOString().split('T')[0],
+        },
+        period: currentPeriod.value,
+      }
+
       // Check cache first
-      const cacheKey = getCacheKey(section, currentScope.value, params)
+      const cacheKey = getCacheKey(section, currentScope.value, dateParams)
       let data = getCachedData(cacheKey)
 
       if (!data) {
         // Fetch fresh data with trends and detailed stats
         const result = await dataProviderFactory.getData(section, currentScope.value, {
-          ...params,
+          ...dateParams,
           includeTrends: true,
           includeDetailedStats: true,
           sort: 'date,desc',
@@ -293,8 +346,9 @@ export function useDashboardData() {
             'deliveries',
             currentScope.value,
             {
-              ...params,
+              ...dateParams,
               includeTrends: true,
+              period: currentPeriod.value,
             },
           )
           deliveryStats.value = {
@@ -304,8 +358,9 @@ export function useDashboardData() {
           break
         case 'expenses':
           expenseStats.value = await dataProviderFactory.getStats('expenses', currentScope.value, {
-            ...params,
+            ...dateParams,
             includeTrends: true,
+            period: currentPeriod.value,
           })
           break
         case 'vehicles':
@@ -313,8 +368,9 @@ export function useDashboardData() {
             'vehicles',
             currentScope.value,
             {
-              ...params,
+              ...dateParams,
               includeTrends: true,
+              period: currentPeriod.value,
             },
           )
           vehicleStats.value = {
@@ -353,19 +409,34 @@ export function useDashboardData() {
     isLoading.value = true
     error.value = null
 
+    // Set loading states
+    loadingStates.value[currentPeriod.value] = true
+    loadingStates.value.deliveries = true
+    loadingStates.value.expenses = true
+    loadingStates.value.vehicles = true
+
     try {
+      // Get date range based on current period
+      const { start, end } = getDateRange(currentPeriod.value)
+      const dateParams = {
+        dateRange: {
+          start: start.toISOString().split('T')[0],
+          end: end.toISOString().split('T')[0],
+        },
+      }
+
       const loadPromises = []
 
       if (canAccessDeliveries.value) {
-        loadPromises.push(loadSectionData('deliveries'))
+        loadPromises.push(loadSectionData('deliveries', dateParams))
       }
 
       if (canAccessExpenses.value) {
-        loadPromises.push(loadSectionData('expenses'))
+        loadPromises.push(loadSectionData('expenses', dateParams))
       }
 
       if (canAccessVehicles.value) {
-        loadPromises.push(loadSectionData('vehicles'))
+        loadPromises.push(loadSectionData('vehicles', dateParams))
       }
 
       await Promise.all(loadPromises)
@@ -373,6 +444,11 @@ export function useDashboardData() {
       error.value = e.message
       console.error('Error loading dashboard data:', e)
     } finally {
+      // Clear loading states
+      loadingStates.value[currentPeriod.value] = false
+      loadingStates.value.deliveries = false
+      loadingStates.value.expenses = false
+      loadingStates.value.vehicles = false
       isLoading.value = false
     }
   }
@@ -444,6 +520,17 @@ export function useDashboardData() {
     },
   )
 
+  // Watch for period changes and reload data
+  watch(currentPeriod, (newPeriod, oldPeriod) => {
+    if (newPeriod !== oldPeriod) {
+      // Clear cache when period changes
+      cache.clear()
+      // Reload dashboard data with new period
+      loadDashboardData()
+      console.log(`Period changed from ${oldPeriod} to ${newPeriod}`)
+    }
+  })
+
   return {
     // States
     isLoading,
@@ -455,8 +542,13 @@ export function useDashboardData() {
     expenseStats,
     vehicleStats,
 
+    // Timeline
+    currentPeriod,
+    PERIODS,
+
     // Methods
     loadDashboardData,
     refreshSection,
+    getDateRange,
   }
 }

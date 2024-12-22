@@ -79,9 +79,21 @@ export class MockDataProvider extends BaseDataProvider {
         // Handle date range
         if (params.dateRange) {
           const { start, end } = params.dateRange
+          const startDate = new Date(start)
+          const endDate = new Date(end)
+          startDate.setHours(0, 0, 0, 0)
+          endDate.setHours(23, 59, 59, 999)
+
           data = data.filter((item) => {
             const itemDate = new Date(item.date)
-            return itemDate >= new Date(start) && itemDate <= new Date(end)
+            itemDate.setHours(0, 0, 0, 0)
+            return itemDate >= startDate && itemDate <= endDate
+          })
+
+          console.log('Date filtering:', {
+            start: startDate.toISOString(),
+            end: endDate.toISOString(),
+            filtered: data.length,
           })
         }
 
@@ -207,19 +219,37 @@ export class MockDataProvider extends BaseDataProvider {
     // Use provided data if available, otherwise fetch
     const expenses = params.data || (await this.fetch('expenses', params)).data
 
-    // Calculate totals and group by category
-    const stats = expenses.reduce(
-      (acc, exp) => {
-        if (!acc.byCategory[exp.category]) {
-          acc.byCategory[exp.category] = { count: 0, amount: 0 }
-        }
-        acc.byCategory[exp.category].count++
-        acc.byCategory[exp.category].amount += exp.amount
-        acc.totalAmount += exp.amount
-        return acc
+    // Initialize all expense categories with 0 values
+    const stats = {
+      totalAmount: 0,
+      byCategory: {
+        Fuel: { count: 0, amount: 0 },
+        Maintenance: { count: 0, amount: 0 },
+        'Vehicle License': { count: 0, amount: 0 },
+        Labour: { count: 0, amount: 0 },
+        'Parking-Tol-Retribution': { count: 0, amount: 0 },
       },
-      { totalAmount: 0, byCategory: {} },
-    )
+    }
+
+    // Calculate totals and group by category
+    expenses.forEach((exp) => {
+      if (exp.category && stats.byCategory[exp.category]) {
+        stats.byCategory[exp.category].count++
+        stats.byCategory[exp.category].amount += exp.amount || 0
+        stats.totalAmount += exp.amount || 0
+      }
+    })
+
+    // Calculate trends for each category
+    Object.entries(stats.byCategory).forEach(([category, data]) => {
+      const previousAmount = Math.round(data.amount * 1.1) // Previous period had 10% more expenses
+      const trend = Math.round(((data.amount - previousAmount) / previousAmount) * 100)
+      stats.byCategory[category].trend = trend
+    })
+
+    // Calculate overall trend
+    const previousTotal = Math.round(stats.totalAmount * 1.1) // Previous period had 10% more total expenses
+    stats.trend = Math.round(((stats.totalAmount - previousTotal) / previousTotal) * 100)
 
     return {
       total: expenses.length,

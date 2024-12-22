@@ -3,14 +3,16 @@
     <!-- Header -->
     <div class="flex items-center justify-between mb-6">
       <h2 class="text-lg font-semibold text-gray-900">{{ t('expenses.title') }}</h2>
-      <div class="text-sm text-gray-500">{{ t(`expenses.periods.${modelValue}`) }}</div>
+      <div class="text-sm text-gray-500">
+        {{ t(`expenses.periods.${props.stats?.period || PERIODS.TODAY}`) }}
+      </div>
     </div>
 
     <!-- Total Amount -->
     <div class="bg-green-50 rounded-lg p-4 mb-6">
       <div class="text-sm text-green-700 mb-1">{{ t('expenses.total') }}</div>
       <div class="text-2xl font-bold text-green-900">
-        {{ loading ? '...' : formatCurrency(stats?.total || 0) }}
+        {{ loading ? '...' : formatCurrency(stats?.totalAmount || 0) }}
       </div>
       <div v-if="stats?.trend" class="flex items-center gap-1 mt-1 text-sm">
         <TrendingUp v-if="stats.trend > 0" class="w-4 h-4 text-green-600" />
@@ -35,18 +37,28 @@
           <div class="flex-1 min-w-0">
             <div class="flex justify-between items-center mb-1">
               <div class="text-sm font-medium text-gray-700">
-                {{ t(`expenses.categories.${category.id}`) }}
+                {{ category.label }}
               </div>
               <div class="text-sm text-gray-900 font-medium">
                 {{ loading ? '...' : formatCurrency(getCategoryAmount(category.id)) }}
               </div>
             </div>
-            <div class="w-full bg-gray-100 rounded-full h-1.5">
+            <div class="flex flex-col gap-1">
+              <div class="w-full bg-gray-100 rounded-full h-1.5">
+                <div
+                  class="h-1.5 rounded-full transition-all duration-500"
+                  :class="category.barClass"
+                  :style="{ width: `${getCategoryPercentage(category.id)}%` }"
+                ></div>
+              </div>
               <div
-                class="h-1.5 rounded-full transition-all duration-500"
-                :class="category.barClass"
-                :style="{ width: `${getCategoryPercentage(category.id)}%` }"
-              ></div>
+                v-if="stats?.byCategory?.[category.id]?.trend"
+                class="text-xs"
+                :class="category.textClass"
+              >
+                {{ stats.byCategory[category.id].trend > 0 ? '+' : ''
+                }}{{ stats.byCategory[category.id].trend }}% from last period
+              </div>
             </div>
           </div>
         </div>
@@ -72,15 +84,9 @@ import { useTranslations } from '../../composables/useTranslations'
 
 const { t } = useTranslations()
 
+import { PERIODS } from '../../constants/periods'
+
 const props = defineProps({
-  modelValue: {
-    type: String,
-    required: true,
-  },
-  expenses: {
-    type: Array,
-    default: () => [],
-  },
   stats: {
     type: Object,
     default: null,
@@ -91,58 +97,47 @@ const props = defineProps({
   },
 })
 
-const emit = defineEmits(['update:modelValue'])
-
-// Categories configuration
+// Categories configuration - matching expenseCategoryConfig from branchData.js
 const categories = [
   {
-    id: 'fuel',
+    id: 'Fuel',
+    label: t('expenses.categories.fuel'),
     icon: Fuel,
     iconClass: 'bg-blue-50 text-blue-600',
     barClass: 'bg-blue-500',
+    textClass: 'text-blue-600',
   },
   {
-    id: 'maintenance',
+    id: 'Maintenance',
+    label: t('expenses.categories.maintenance'),
     icon: Wrench,
     iconClass: 'bg-orange-50 text-orange-600',
     barClass: 'bg-orange-500',
-  },
-
-  {
-    id: 'parking',
-    icon: ParkingSquare,
-    iconClass: 'bg-cyan-50 text-cyan-600',
-    barClass: 'bg-cyan-500',
+    textClass: 'text-orange-600',
   },
   {
-    id: 'toll',
-    icon: ParkingSquare, // Changed from Road to ParkingSquare
-    iconClass: 'bg-indigo-50 text-indigo-600',
-    barClass: 'bg-indigo-500',
-  },
-  {
-    id: 'retribution',
-    icon: Receipt,
-    iconClass: 'bg-teal-50 text-teal-600',
-    barClass: 'bg-teal-500',
-  },
-  {
-    id: 'labour',
-    icon: Users,
-    iconClass: 'bg-pink-50 text-pink-600',
-    barClass: 'bg-pink-500',
-  },
-  {
-    id: 'insurance',
+    id: 'Vehicle License',
+    label: t('expenses.categories.vehicleLicense'),
     icon: ShieldCheck,
     iconClass: 'bg-green-50 text-green-600',
     barClass: 'bg-green-500',
+    textClass: 'text-green-600',
   },
   {
-    id: 'others',
-    icon: Package,
-    iconClass: 'bg-purple-50 text-purple-600',
-    barClass: 'bg-purple-500',
+    id: 'Labour',
+    label: t('expenses.categories.labour'),
+    icon: Users,
+    iconClass: 'bg-pink-50 text-pink-600',
+    barClass: 'bg-pink-500',
+    textClass: 'text-pink-600',
+  },
+  {
+    id: 'Parking-Tol-Retribution',
+    label: t('expenses.categories.parkingToll'),
+    icon: ParkingSquare,
+    iconClass: 'bg-indigo-50 text-indigo-600',
+    barClass: 'bg-indigo-500',
+    textClass: 'text-indigo-600',
   },
 ]
 
@@ -157,13 +152,12 @@ const formatCurrency = (amount) => {
 }
 
 const getCategoryAmount = (categoryId) => {
-  if (!props.stats?.categories) return 0
-  return props.stats.categories[categoryId] || 0
+  if (!props.stats?.byCategory?.[categoryId]) return 0
+  return props.stats.byCategory[categoryId].amount || 0
 }
 
 const getCategoryPercentage = (categoryId) => {
-  if (!props.stats?.total || !props.stats?.categories) return 0
-  const amount = props.stats.categories[categoryId] || 0
-  return Math.round((amount / props.stats.total) * 100)
+  if (!props.stats?.totalAmount || !props.stats?.byCategory?.[categoryId]?.amount) return 0
+  return Math.round((props.stats.byCategory[categoryId].amount / props.stats.totalAmount) * 100)
 }
 </script>

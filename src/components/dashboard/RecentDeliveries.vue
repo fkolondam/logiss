@@ -3,7 +3,9 @@
     <!-- Header -->
     <div class="flex items-center justify-between mb-6">
       <h2 class="text-lg font-semibold text-gray-900">{{ t('deliveries.title') }}</h2>
-      <div class="text-sm text-gray-500">{{ t('deliveries.today') }}</div>
+      <div class="text-sm text-gray-500">
+        {{ t(`deliveries.periods.${props.stats?.period || PERIODS.TODAY}`) }}
+      </div>
     </div>
 
     <!-- Stats Overview -->
@@ -48,13 +50,20 @@
               <div class="text-sm font-medium text-gray-700">
                 {{ t('deliveries.status.diterima - semua') }}
               </div>
-              <div class="text-sm text-gray-900 font-medium">{{ stats?.receivedAll || 0 }}</div>
+              <div class="text-sm text-gray-900 font-medium">
+                {{ stats?.receivedAll || 0 }}
+              </div>
             </div>
-            <div class="w-full bg-gray-100 rounded-full h-1.5">
-              <div
-                class="h-1.5 rounded-full bg-green-500 transition-all duration-500"
-                :style="{ width: `${calculatePercentage('receivedAll')}%` }"
-              ></div>
+            <div class="flex flex-col gap-1">
+              <div class="w-full bg-gray-100 rounded-full h-1.5">
+                <div
+                  class="h-1.5 rounded-full bg-green-500 transition-all duration-500"
+                  :style="{ width: `${calculatePercentage('receivedAll')}%` }"
+                ></div>
+              </div>
+              <div v-if="stats?.receivedTrend" class="text-xs text-green-600">
+                {{ stats.receivedTrend > 0 ? '+' : '' }}{{ stats.receivedTrend }}% from last period
+              </div>
             </div>
           </div>
         </div>
@@ -71,11 +80,16 @@
               </div>
               <div class="text-sm text-gray-900 font-medium">{{ stats?.partial || 0 }}</div>
             </div>
-            <div class="w-full bg-gray-100 rounded-full h-1.5">
-              <div
-                class="h-1.5 rounded-full bg-yellow-500 transition-all duration-500"
-                :style="{ width: `${calculatePercentage('partial')}%` }"
-              ></div>
+            <div class="flex flex-col gap-1">
+              <div class="w-full bg-gray-100 rounded-full h-1.5">
+                <div
+                  class="h-1.5 rounded-full bg-yellow-500 transition-all duration-500"
+                  :style="{ width: `${calculatePercentage('partial')}%` }"
+                ></div>
+              </div>
+              <div v-if="stats?.partialTrend" class="text-xs text-yellow-600">
+                {{ stats.partialTrend > 0 ? '+' : '' }}{{ stats.partialTrend }}% from last period
+              </div>
             </div>
           </div>
         </div>
@@ -92,11 +106,16 @@
               </div>
               <div class="text-sm text-gray-900 font-medium">{{ stats?.resend || 0 }}</div>
             </div>
-            <div class="w-full bg-gray-100 rounded-full h-1.5">
-              <div
-                class="h-1.5 rounded-full bg-blue-500 transition-all duration-500"
-                :style="{ width: `${calculatePercentage('resend')}%` }"
-              ></div>
+            <div class="flex flex-col gap-1">
+              <div class="w-full bg-gray-100 rounded-full h-1.5">
+                <div
+                  class="h-1.5 rounded-full bg-blue-500 transition-all duration-500"
+                  :style="{ width: `${calculatePercentage('resend')}%` }"
+                ></div>
+              </div>
+              <div v-if="stats?.resendTrend" class="text-xs text-blue-600">
+                {{ stats.resendTrend > 0 ? '+' : '' }}{{ stats.resendTrend }}% from last period
+              </div>
             </div>
           </div>
         </div>
@@ -111,13 +130,21 @@
               <div class="text-sm font-medium text-gray-700">
                 {{ t('deliveries.status.batal') }}
               </div>
-              <div class="text-sm text-gray-900 font-medium">{{ stats?.cancelled || 0 }}</div>
+              <div class="text-sm text-gray-900 font-medium">
+                {{ stats?.cancelled || 0 }}
+              </div>
             </div>
-            <div class="w-full bg-gray-100 rounded-full h-1.5">
-              <div
-                class="h-1.5 rounded-full bg-red-500 transition-all duration-500"
-                :style="{ width: `${calculatePercentage('cancelled')}%` }"
-              ></div>
+            <div class="flex flex-col gap-1">
+              <div class="w-full bg-gray-100 rounded-full h-1.5">
+                <div
+                  class="h-1.5 rounded-full bg-red-500 transition-all duration-500"
+                  :style="{ width: `${calculatePercentage('cancelled')}%` }"
+                ></div>
+              </div>
+              <div v-if="stats?.cancelledTrend" class="text-xs text-red-600">
+                {{ stats.cancelledTrend > 0 ? '+' : '' }}{{ stats.cancelledTrend }}% from last
+                period
+              </div>
             </div>
           </div>
         </div>
@@ -127,9 +154,10 @@
 </template>
 
 <script setup>
-import { computed } from 'vue'
+import { computed, watch } from 'vue'
 import { PackageCheck, PackageX, PackageMinus, RefreshCw } from 'lucide-vue-next'
 import { useTranslations } from '../../composables/useTranslations'
+import { PERIODS } from '../../constants/periods'
 
 const { t } = useTranslations()
 
@@ -148,16 +176,38 @@ const props = defineProps({
   },
 })
 
-// Stats are already filtered by scope in useDashboardData composable
-const filteredStats = computed(() => props.stats)
-
 const calculateCompletionRate = () => {
-  if (!filteredStats.value?.total || !filteredStats.value?.receivedAll) return 0
-  return Math.round((filteredStats.value.receivedAll / filteredStats.value.total) * 100)
+  if (!props.stats?.total || !props.stats?.receivedAll) return 0
+  return Math.round((props.stats.receivedAll / props.stats.total) * 100)
 }
 
 const calculatePercentage = (status) => {
-  if (!filteredStats.value?.total || !filteredStats.value?.[status]) return 0
-  return Math.round((filteredStats.value[status] / filteredStats.value.total) * 100)
+  if (!props.stats?.total || !props.stats?.[status]) return 0
+  return Math.round((props.stats[status] / props.stats.total) * 100)
 }
+
+// Add debug logging
+watch(
+  () => props.stats,
+  (newStats) => {
+    console.log('RecentDeliveries stats:', {
+      total: newStats?.total,
+      receivedAll: newStats?.receivedAll,
+      partial: newStats?.partial,
+      resend: newStats?.resend,
+      cancelled: newStats?.cancelled,
+      trend: newStats?.trend,
+      completionTrend: newStats?.completionTrend,
+      receivedTrend: newStats?.receivedTrend,
+      partialTrend: newStats?.partialTrend,
+      resendTrend: newStats?.resendTrend,
+      cancelledTrend: newStats?.cancelledTrend,
+      byPaymentMethod: newStats?.byPaymentMethod,
+      byBranch: newStats?.byBranch,
+      scope: props.scope,
+      period: newStats?.period,
+    })
+  },
+  { immediate: true },
+)
 </script>

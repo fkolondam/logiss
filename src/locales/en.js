@@ -13,6 +13,12 @@ export default {
     share: 'Share',
     done: 'Done',
     'toggle-sidebar': 'Toggle Sidebar',
+    periods: {
+      today: 'Today',
+      this_week: 'This Week',
+      this_month: 'This Month',
+      custom: 'Custom',
+    },
   },
   menu: {
     home: 'Home',
@@ -157,6 +163,14 @@ export default {
       thisMonth: 'This Month',
       monthlyTarget: 'Monthly Target',
     },
+    periods: {
+      today: 'Today',
+      yesterday: 'Yesterday',
+      thisWeek: 'This Week',
+      lastWeek: 'Last Week',
+      thisMonth: 'This Month',
+      lastMonth: 'Last Month',
+    },
   },
   expenses: {
     title: 'Expenses',
@@ -175,11 +189,10 @@ export default {
     categories: {
       fuel: 'Fuel',
       maintenance: 'Maintenance',
-      toll: 'Toll',
-      parking: 'Parking',
-      retribution: 'Retribution',
+      vehicleLicense: 'Vehicle License',
       labour: 'Labour/Manpower',
-      insurance: 'Insurance',
+      parkingToll: 'Parking, Toll & Retribution',
+      insurance: 'Insurances',
       others: 'Others',
     },
     stats: {
@@ -237,6 +250,14 @@ export default {
       nextDue: 'Next Service Due',
     },
     nextService: 'Next Service',
+    periods: {
+      today: 'Today',
+      yesterday: 'Yesterday',
+      thisWeek: 'This Week',
+      lastWeek: 'Last Week',
+      thisMonth: 'This Month',
+      lastMonth: 'Last Month',
+    },
   },
   debug: {
     title: 'Debug Tools',
