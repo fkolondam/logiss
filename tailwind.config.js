@@ -1,10 +1,15 @@
 /** @type {import('tailwindcss').Config} */
 export default {
-  content: [
-    "./index.html",
-    "./src/**/*.{vue,js,jsx,tsx}",
-  ],
+  content: ['./index.html', './src/**/*.{vue,js,jsx,tsx}'],
   theme: {
+    screens: {
+      xs: '475px',
+      sm: '640px',
+      md: '768px',
+      lg: '1024px',
+      xl: '1280px',
+      '2xl': '1536px',
+    },
     extend: {
       fontFamily: {
         sans: ['Inter', 'system-ui', 'sans-serif'],
@@ -24,19 +29,19 @@ export default {
           900: '#0c4a6e',
         },
         menu: {
-          home: '#00008B',      // Blue
-          delivery: '#f97316',  // Orange
-          expenses: '#22c55e',  // Green
-          vehicles: '#a855f7',  // Purple
-          profile: '#171717'    // Black
-        }
+          home: '#00008B', // Blue
+          delivery: '#f97316', // Orange
+          expenses: '#22c55e', // Green
+          vehicles: '#a855f7', // Purple
+          profile: '#171717', // Black
+        },
       },
       fontSize: {
-        'xs': ['0.75rem', { lineHeight: '1rem', letterSpacing: '0.025em' }],
-        'sm': ['0.875rem', { lineHeight: '1.25rem', letterSpacing: '0.0125em' }],
-        'base': ['1rem', { lineHeight: '1.5rem', letterSpacing: '0' }],
-        'lg': ['1.125rem', { lineHeight: '1.75rem', letterSpacing: '-0.0125em' }],
-        'xl': ['1.25rem', { lineHeight: '1.75rem', letterSpacing: '-0.025em' }],
+        xs: ['0.75rem', { lineHeight: '1rem', letterSpacing: '0.025em' }],
+        sm: ['0.875rem', { lineHeight: '1.25rem', letterSpacing: '0.0125em' }],
+        base: ['1rem', { lineHeight: '1.5rem', letterSpacing: '0' }],
+        lg: ['1.125rem', { lineHeight: '1.75rem', letterSpacing: '-0.0125em' }],
+        xl: ['1.25rem', { lineHeight: '1.75rem', letterSpacing: '-0.025em' }],
         '2xl': ['1.5rem', { lineHeight: '2rem', letterSpacing: '-0.025em' }],
       },
       animation: {
@@ -69,9 +74,9 @@ export default {
       },
       boxShadow: {
         'inner-sm': 'inset 0 1px 2px 0 rgb(0 0 0 / 0.05)',
-        'subtle': '0 1px 2px 0 rgb(0 0 0 / 0.02)',
+        subtle: '0 1px 2px 0 rgb(0 0 0 / 0.02)',
         'subtle-lg': '0 4px 6px -1px rgb(0 0 0 / 0.02), 0 2px 4px -2px rgb(0 0 0 / 0.02)',
-        'float': '0 4px 12px -2px rgb(0 0 0 / 0.08), 0 2px 6px -2px rgb(0 0 0 / 0.04)',
+        float: '0 4px 12px -2px rgb(0 0 0 / 0.08), 0 2px 6px -2px rgb(0 0 0 / 0.04)',
       },
     },
   },

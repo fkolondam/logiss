@@ -184,7 +184,7 @@ export default {
     description: 'Select the scope of data you want to view',
     selectScope: 'Select Filter',
     resetScope: 'Reset Filter',
-    filterBy: 'Show Data:',
+    filterBy: 'Data Selector :',
   },
   scope: {
     global: 'Global',
@@ -194,6 +194,27 @@ export default {
     region: 'Region',
     branch: 'Branch',
     personal: 'Personal',
+  },
+
+  // Mobile menu settings
+  settings: {
+    title: 'Settings',
+    language: 'Language',
+    notifications: 'Notifications',
+    profile: 'Profile',
+  },
+
+  // Language selection
+  language: {
+    select: 'Select Language',
+    en: 'English',
+    id: 'Bahasa Indonesia',
+  },
+
+  // Notifications
+  notifications: {
+    title: 'Notifications',
+    empty: 'No notifications',
   },
 
   // Add new roles section

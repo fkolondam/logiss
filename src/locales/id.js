@@ -195,7 +195,7 @@ export default {
     description: 'Pilih cakupan data yang ingin ditampilkan',
     selectScope: 'Pilih Filter',
     resetScope: 'Reset Filter',
-    filterBy: 'Tampilkan Data:',
+    filterBy: 'Pemilah Data :',
   },
   scope: {
     global: 'Global',
@@ -205,6 +205,27 @@ export default {
     region: 'Region',
     branch: 'Cabang',
     personal: 'Personal',
+  },
+
+  // Mobile menu settings
+  settings: {
+    title: 'Pengaturan',
+    language: 'Bahasa',
+    notifications: 'Notifikasi',
+    profile: 'Profil',
+  },
+
+  // Language selection
+  language: {
+    select: 'Pilih Bahasa',
+    en: 'English',
+    id: 'Bahasa Indonesia',
+  },
+
+  // Notifications
+  notifications: {
+    title: 'Notifikasi',
+    empty: 'Tidak ada notifikasi',
   },
 
   // Add new roles section
