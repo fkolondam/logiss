@@ -112,16 +112,75 @@
           </div>
         </div>
       </div>
+
+      <!-- Document & Service Status -->
+      <div>
+        <h3 class="text-sm font-medium text-gray-700 mb-4">{{ t('vehicles.documents.title') }}</h3>
+        <div class="space-y-4">
+          <!-- Vehicle Documents -->
+          <div class="flex items-center gap-3">
+            <div class="bg-purple-50 p-2 rounded-lg">
+              <FileText class="w-5 h-5 text-purple-600" />
+            </div>
+            <div class="flex-1 min-w-0">
+              <div class="flex justify-between items-center mb-1">
+                <div class="text-sm font-medium text-gray-700">
+                  {{ t('vehicles.documents.expiring') }}
+                </div>
+                <div class="text-sm text-gray-900 font-medium">{{ stats?.expiringDocs || 0 }}</div>
+              </div>
+              <div class="text-xs text-gray-500">
+                {{ t('vehicles.documents.nextExpiry') }}: {{ formatDate(stats?.nextDocExpiry) }}
+              </div>
+            </div>
+          </div>
+
+          <!-- Service Due -->
+          <div class="flex items-center gap-3">
+            <div class="bg-yellow-50 p-2 rounded-lg">
+              <Tool class="w-5 h-5 text-yellow-600" />
+            </div>
+            <div class="flex-1 min-w-0">
+              <div class="flex justify-between items-center mb-1">
+                <div class="text-sm font-medium text-gray-700">
+                  {{ t('vehicles.service.due') }}
+                </div>
+                <div class="text-sm text-gray-900 font-medium">{{ stats?.serviceDue || 0 }}</div>
+              </div>
+              <div class="text-xs text-gray-500">
+                {{ t('vehicles.service.nextDue') }}: {{ formatDate(stats?.nextServiceDue) }}
+              </div>
+            </div>
+          </div>
+
+          <!-- Document Warnings -->
+          <div v-if="stats?.expiringDocs || stats?.serviceDue" class="mt-2">
+            <div class="flex items-center gap-2 text-red-600 text-xs">
+              <AlertCircle class="w-4 h-4" />
+              <span>{{ t('vehicles.documents.warning') }}</span>
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
   </div>
 </template>
 
 <script setup>
 import { computed } from 'vue'
-import { Truck, Fuel, Wrench } from 'lucide-vue-next'
+import { Truck, Fuel, Wrench, FileText, AlertCircle } from 'lucide-vue-next'
 import { useTranslations } from '../../composables/useTranslations'
 
 const { t } = useTranslations()
+
+const formatDate = (date) => {
+  if (!date) return '-'
+  return new Date(date).toLocaleDateString('id-ID', {
+    year: 'numeric',
+    month: 'short',
+    day: 'numeric',
+  })
+}
 
 const props = defineProps({
   stats: {

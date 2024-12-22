@@ -38,7 +38,7 @@
     <div>
       <h3 class="text-sm font-medium text-gray-700 mb-4">{{ t('deliveries.deliveryStatus') }}</h3>
       <div class="space-y-4">
-        <!-- Completed -->
+        <!-- Diterima - Semua -->
         <div class="flex items-center gap-3">
           <div class="bg-green-50 p-2 rounded-lg">
             <PackageCheck class="w-5 h-5 text-green-600" />
@@ -46,62 +46,62 @@
           <div class="flex-1 min-w-0">
             <div class="flex justify-between items-center mb-1">
               <div class="text-sm font-medium text-gray-700">
-                {{ t('deliveries.status.completed') }}
+                {{ t('deliveries.status.diterima - semua') }}
               </div>
-              <div class="text-sm text-gray-900 font-medium">{{ stats?.completed || 0 }}</div>
+              <div class="text-sm text-gray-900 font-medium">{{ stats?.receivedAll || 0 }}</div>
             </div>
             <div class="w-full bg-gray-100 rounded-full h-1.5">
               <div
                 class="h-1.5 rounded-full bg-green-500 transition-all duration-500"
-                :style="{ width: `${calculatePercentage('completed')}%` }"
+                :style="{ width: `${calculatePercentage('receivedAll')}%` }"
               ></div>
             </div>
           </div>
         </div>
 
-        <!-- In Transit -->
+        <!-- Parsial -->
         <div class="flex items-center gap-3">
-          <div class="bg-blue-50 p-2 rounded-lg">
-            <Truck class="w-5 h-5 text-blue-600" />
+          <div class="bg-yellow-50 p-2 rounded-lg">
+            <PackageMinus class="w-5 h-5 text-yellow-600" />
           </div>
           <div class="flex-1 min-w-0">
             <div class="flex justify-between items-center mb-1">
               <div class="text-sm font-medium text-gray-700">
-                {{ t('deliveries.status.in_transit') }}
+                {{ t('deliveries.status.diterima - sebagian') }}
               </div>
-              <div class="text-sm text-gray-900 font-medium">{{ stats?.inTransit || 0 }}</div>
+              <div class="text-sm text-gray-900 font-medium">{{ stats?.partial || 0 }}</div>
+            </div>
+            <div class="w-full bg-gray-100 rounded-full h-1.5">
+              <div
+                class="h-1.5 rounded-full bg-yellow-500 transition-all duration-500"
+                :style="{ width: `${calculatePercentage('partial')}%` }"
+              ></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Kirim Ulang -->
+        <div class="flex items-center gap-3">
+          <div class="bg-blue-50 p-2 rounded-lg">
+            <RefreshCw class="w-5 h-5 text-blue-600" />
+          </div>
+          <div class="flex-1 min-w-0">
+            <div class="flex justify-between items-center mb-1">
+              <div class="text-sm font-medium text-gray-700">
+                {{ t('deliveries.status.kirim ulang') }}
+              </div>
+              <div class="text-sm text-gray-900 font-medium">{{ stats?.resend || 0 }}</div>
             </div>
             <div class="w-full bg-gray-100 rounded-full h-1.5">
               <div
                 class="h-1.5 rounded-full bg-blue-500 transition-all duration-500"
-                :style="{ width: `${calculatePercentage('inTransit')}%` }"
+                :style="{ width: `${calculatePercentage('resend')}%` }"
               ></div>
             </div>
           </div>
         </div>
 
-        <!-- Pending -->
-        <div class="flex items-center gap-3">
-          <div class="bg-orange-50 p-2 rounded-lg">
-            <Clock class="w-5 h-5 text-orange-600" />
-          </div>
-          <div class="flex-1 min-w-0">
-            <div class="flex justify-between items-center mb-1">
-              <div class="text-sm font-medium text-gray-700">
-                {{ t('deliveries.status.pending') }}
-              </div>
-              <div class="text-sm text-gray-900 font-medium">{{ stats?.pending || 0 }}</div>
-            </div>
-            <div class="w-full bg-gray-100 rounded-full h-1.5">
-              <div
-                class="h-1.5 rounded-full bg-orange-500 transition-all duration-500"
-                :style="{ width: `${calculatePercentage('pending')}%` }"
-              ></div>
-            </div>
-          </div>
-        </div>
-
-        <!-- Cancelled -->
+        <!-- Batal -->
         <div class="flex items-center gap-3">
           <div class="bg-red-50 p-2 rounded-lg">
             <PackageX class="w-5 h-5 text-red-600" />
@@ -109,7 +109,7 @@
           <div class="flex-1 min-w-0">
             <div class="flex justify-between items-center mb-1">
               <div class="text-sm font-medium text-gray-700">
-                {{ t('deliveries.status.cancelled') }}
+                {{ t('deliveries.status.batal') }}
               </div>
               <div class="text-sm text-gray-900 font-medium">{{ stats?.cancelled || 0 }}</div>
             </div>
@@ -128,7 +128,7 @@
 
 <script setup>
 import { computed } from 'vue'
-import { PackageCheck, PackageX, Truck, Clock } from 'lucide-vue-next'
+import { PackageCheck, PackageX, PackageMinus, RefreshCw } from 'lucide-vue-next'
 import { useTranslations } from '../../composables/useTranslations'
 
 const { t } = useTranslations()

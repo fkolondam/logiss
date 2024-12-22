@@ -13,7 +13,6 @@ export default {
     share: 'Share',
     done: 'Done',
     'toggle-sidebar': 'Toggle Sidebar',
-    close: 'Close',
   },
   menu: {
     home: 'Home',
@@ -176,6 +175,10 @@ export default {
     categories: {
       fuel: 'Fuel',
       maintenance: 'Maintenance',
+      toll: 'Toll',
+      parking: 'Parking',
+      retribution: 'Retribution',
+      labour: 'Labour/Manpower',
       insurance: 'Insurance',
       others: 'Others',
     },
@@ -223,7 +226,17 @@ export default {
     warnings: {
       lowFuel: 'Low Fuel',
     },
-    nextService: 'Next Service', // 'Servis Berikutnya'
+    documents: {
+      title: 'Documents & Service',
+      expiring: 'Documents Expiring',
+      nextExpiry: 'Next Document Expiry',
+      warning: 'Some vehicles require immediate attention',
+    },
+    service: {
+      due: 'Service Due',
+      nextDue: 'Next Service Due',
+    },
+    nextService: 'Next Service',
   },
   debug: {
     title: 'Debug Tools',

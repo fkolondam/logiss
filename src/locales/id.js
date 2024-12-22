@@ -13,7 +13,6 @@ export default {
     share: 'Bagikan',
     done: 'Selesai',
     'toggle-sidebar': 'Buka/Tutup Sidebar',
-    close: 'Tutup',
   },
   menu: {
     home: 'Beranda',
@@ -176,6 +175,10 @@ export default {
     categories: {
       fuel: 'Bahan Bakar',
       maintenance: 'Pemeliharaan',
+      toll: 'Tol',
+      parking: 'Parkir',
+      retribution: 'Retribusi',
+      labour: 'Kuli/Tenaga Kerja',
       insurance: 'Asuransi',
       others: 'Lainnya',
     },
@@ -222,6 +225,16 @@ export default {
     },
     warnings: {
       lowFuel: 'Bahan Bakar Rendah',
+    },
+    documents: {
+      title: 'Dokumen & Servis',
+      expiring: 'Dokumen Akan Kadaluarsa',
+      nextExpiry: 'Kadaluarsa Dokumen Berikutnya',
+      warning: 'Beberapa kendaraan memerlukan perhatian segera',
+    },
+    service: {
+      due: 'Jatuh Tempo Servis',
+      nextDue: 'Jatuh Tempo Servis Berikutnya',
     },
     nextService: 'Servis Berikutnya',
   },

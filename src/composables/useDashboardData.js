@@ -110,6 +110,7 @@ export function useDashboardData() {
    * Filter data based on current scope
    */
   function filterDataByScope(data, type) {
+    // Ensure the filtering logic is correctly applied based on the current scope
     if (!currentScope.value || currentScope.value.type === 'global') {
       return data
     }

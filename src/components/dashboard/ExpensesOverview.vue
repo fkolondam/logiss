@@ -59,11 +59,14 @@
 import { computed } from 'vue'
 import {
   Fuel,
-  Wrench, // Changed from Tool to Wrench
-  ShieldCheck, // Changed from Shield to ShieldCheck
+  Wrench,
+  ShieldCheck,
   Package,
   TrendingUp,
   TrendingDown,
+  ParkingSquare,
+  Receipt,
+  Users,
 } from 'lucide-vue-next'
 import { useTranslations } from '../../composables/useTranslations'
 
@@ -100,13 +103,38 @@ const categories = [
   },
   {
     id: 'maintenance',
-    icon: Wrench, // Updated icon
+    icon: Wrench,
     iconClass: 'bg-orange-50 text-orange-600',
     barClass: 'bg-orange-500',
   },
+
+  {
+    id: 'parking',
+    icon: ParkingSquare,
+    iconClass: 'bg-cyan-50 text-cyan-600',
+    barClass: 'bg-cyan-500',
+  },
+  {
+    id: 'toll',
+    icon: ParkingSquare, // Changed from Road to ParkingSquare
+    iconClass: 'bg-indigo-50 text-indigo-600',
+    barClass: 'bg-indigo-500',
+  },
+  {
+    id: 'retribution',
+    icon: Receipt,
+    iconClass: 'bg-teal-50 text-teal-600',
+    barClass: 'bg-teal-500',
+  },
+  {
+    id: 'labour',
+    icon: Users,
+    iconClass: 'bg-pink-50 text-pink-600',
+    barClass: 'bg-pink-500',
+  },
   {
     id: 'insurance',
-    icon: ShieldCheck, // Updated icon
+    icon: ShieldCheck,
     iconClass: 'bg-green-50 text-green-600',
     barClass: 'bg-green-500',
   },
