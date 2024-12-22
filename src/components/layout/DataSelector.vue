@@ -3,26 +3,30 @@
     <!-- Data Selector Button -->
     <button
       @click="isOpen = !isOpen"
-      class="flex items-center gap-2 px-4 py-2 text-sm font-medium text-gray-700 bg-white rounded-lg border border-gray-200 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 shadow-sm min-w-[200px]"
+      class="flex items-center text-sm font-medium text-gray-700 bg-white rounded-lg border border-gray-200 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 shadow-sm min-w-[140px] sm:min-w-[180px] md:min-w-[200px]"
     >
-      <Database class="w-4 h-4 text-gray-500" />
-      <span>{{ currentScopeLabel }}</span>
-      <ChevronDown class="w-4 h-4 text-gray-500" :class="{ 'rotate-180': isOpen }" />
+      <div class="flex items-center gap-2 px-3 py-2 flex-1">
+        <Database class="w-4 h-4 text-gray-500 shrink-0" />
+        <span class="truncate">{{ currentScopeLabel }}</span>
+      </div>
+      <div class="px-2 py-2">
+        <ChevronDown class="w-4 h-4 text-gray-500" :class="{ 'rotate-180': isOpen }" />
+      </div>
     </button>
 
     <!-- Dropdown Menu -->
     <div
       v-if="isOpen"
-      class="absolute right-0 mt-2 w-72 bg-white rounded-lg shadow-lg border border-gray-200 z-50"
+      class="fixed inset-x-0 top-16 bottom-16 md:absolute md:inset-x-auto md:left-0 md:top-full md:bottom-auto md:w-[320px] bg-white md:rounded-lg shadow-lg border-x md:border border-gray-200 z-50 flex flex-col"
     >
       <!-- Current Scope Info -->
-      <div class="p-4 border-b bg-gray-50">
+      <div class="sticky top-0 p-4 border-b bg-gray-50/90 backdrop-blur-sm">
         <div class="text-sm font-medium text-gray-900">{{ t('dataSelector.title') }}</div>
         <div class="text-xs text-gray-500 mt-1">{{ t('dataSelector.description') }}</div>
       </div>
 
       <!-- Scope Groups -->
-      <div class="p-2 space-y-1 max-h-[calc(100vh-200px)] overflow-y-auto">
+      <div class="flex-1 p-2 space-y-1 overflow-y-auto">
         <!-- Global -->
         <div>
           <div class="px-2 py-1.5 text-xs font-medium text-gray-500 uppercase">
@@ -86,7 +90,7 @@
       </div>
 
       <!-- Footer -->
-      <div class="p-2 border-t bg-gray-50">
+      <div class="sticky bottom-0 p-2 border-t bg-gray-50/90 backdrop-blur-sm">
         <button
           @click="clearScope"
           class="w-full flex items-center justify-center gap-2 px-3 py-2 text-sm text-gray-600 hover:bg-gray-100 rounded-md"

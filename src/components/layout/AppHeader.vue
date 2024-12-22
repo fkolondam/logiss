@@ -1,34 +1,39 @@
 <template>
   <header class="h-16 bg-white shadow-sm fixed top-0 right-0 left-0 md:left-64 z-[60]">
     <div class="h-full flex items-center">
-      <!-- Left Section (Menu) -->
-      <div class="flex-none px-2">
-        <button
-          class="md:hidden p-2 rounded-lg text-gray-600 hover:bg-gray-100"
-          @click="$emit('toggle-sidebar')"
-        >
-          <Menu class="w-6 h-6" />
-        </button>
-      </div>
+      <!-- Left Section -->
+      <div class="flex items-center">
+        <!-- Mobile Menu Button -->
+        <div class="flex-none px-2 md:hidden">
+          <button
+            class="p-2 rounded-lg text-gray-600 hover:bg-gray-100"
+            @click="$emit('toggle-sidebar')"
+          >
+            <Menu class="w-6 h-6" />
+          </button>
+        </div>
 
-      <!-- Center Section (Data Selector) -->
-      <div class="flex-1 flex items-center justify-center px-2">
-        <div class="flex items-center gap-2">
-          <span class="hidden md:inline-block text-sm font-medium text-gray-600">
+        <!-- Data Selector (Desktop) -->
+        <div class="hidden md:flex items-center gap-2 px-4">
+          <span class="text-sm text-gray-600 whitespace-nowrap">
             {{ t('dataSelector.filterBy') }}
           </span>
-          <div class="hidden md:block h-8 w-px bg-gray-200"></div>
           <DataSelector />
         </div>
       </div>
 
+      <!-- Center Section (Mobile Data Selector) -->
+      <div class="flex-1 md:hidden flex items-center justify-center">
+        <DataSelector />
+      </div>
+
       <!-- Right Section -->
-      <div class="flex-none px-2 flex items-center gap-2">
+      <div class="flex-none px-2 flex items-center gap-1 sm:gap-2 ml-auto">
         <!-- Language Toggle (Desktop) -->
         <div class="hidden md:flex items-center">
           <div class="flex text-xs border border-gray-200 rounded-lg overflow-hidden">
             <button
-              class="px-3 py-1.5"
+              class="px-2 sm:px-3 py-1.5"
               :class="currentLanguage === 'en' ? 'bg-blue-500 text-white' : 'hover:bg-gray-50'"
               @click="setLanguage('en')"
             >
@@ -36,7 +41,7 @@
             </button>
             <div class="w-px bg-gray-200"></div>
             <button
-              class="px-3 py-1.5"
+              class="px-2 sm:px-3 py-1.5"
               :class="currentLanguage === 'id' ? 'bg-blue-500 text-white' : 'hover:bg-gray-50'"
               @click="setLanguage('id')"
             >
@@ -47,11 +52,9 @@
 
         <!-- Language Toggle (Mobile) -->
         <button
-          class="md:hidden px-3 py-1.5 text-xs border border-gray-200 rounded-lg"
-          :class="
-            currentLanguage === 'en' ? 'bg-blue-500 text-white border-blue-500' : 'hover:bg-gray-50'
-          "
-          @click="setLanguage(currentLanguage === 'en' ? 'id' : 'en')"
+          class="md:hidden px-3 py-1.5 text-xs font-medium border border-gray-200 rounded-lg bg-white hover:bg-gray-50"
+          :class="{ 'bg-blue-500 text-white border-blue-500 hover:bg-blue-600': true }"
+          @click="toggleLanguage"
         >
           {{ currentLanguage.toUpperCase() }}
         </button>
@@ -62,25 +65,19 @@
           <span class="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full"></span>
         </button>
 
-        <!-- User Profile (Desktop) -->
-        <div class="hidden md:flex items-center gap-2">
-          <div class="w-8 h-8 rounded-full bg-gray-200 flex items-center justify-center">
-            <User class="w-4 h-4 text-gray-500" />
-          </div>
-          <div class="hidden lg:block">
-            <div class="text-sm font-medium text-gray-700">
-              {{ currentUser?.name || t('menu.profile') }}
-            </div>
-            <div class="text-xs text-gray-500">{{ getScopeLabel(currentUser?.scope) }}</div>
-          </div>
-        </div>
-
-        <!-- Mobile Menu Button -->
+        <!-- User Profile -->
         <button
-          class="md:hidden p-2 rounded-lg text-gray-600 hover:bg-gray-100"
+          class="flex items-center gap-2 p-1 hover:bg-gray-50 rounded-lg"
           @click="isMobileMenuOpen = !isMobileMenuOpen"
         >
-          <User class="w-5 h-5" />
+          <div class="w-8 h-8 rounded-full bg-gray-200 flex items-center justify-center shrink-0">
+            <User class="w-4 h-4 text-gray-500" />
+          </div>
+          <div class="hidden md:block text-left">
+            <div class="text-sm text-gray-700">
+              {{ currentUser?.name || 'Profil' }}
+            </div>
+          </div>
         </button>
       </div>
     </div>
@@ -129,7 +126,10 @@
     class="fixed inset-0 bg-gray-900/20 backdrop-blur-sm z-40 md:hidden"
     @click="isMobileMenuOpen = false"
   ></div>
-  <div v-if="isMobileMenuOpen" class="fixed inset-x-0 top-16 bg-white z-50 md:hidden border-b">
+  <div
+    v-if="isMobileMenuOpen"
+    class="fixed inset-x-0 top-16 bg-white z-50 md:hidden border-b shadow-lg"
+  >
     <!-- Profile Section -->
     <div class="p-4">
       <div class="flex items-center gap-3">
@@ -138,7 +138,7 @@
         </div>
         <div>
           <div class="text-sm font-medium text-gray-900">
-            {{ currentUser?.name || t('menu.profile') }}
+            {{ currentUser?.name || 'Profil' }}
           </div>
           <div class="text-xs text-gray-500">{{ getScopeLabel(currentUser?.scope) }}</div>
         </div>
@@ -162,6 +162,11 @@ const userStore = useUserStore()
 
 // Get current user from store
 const currentUser = computed(() => userStore.currentUser)
+
+// Toggle language on mobile
+const toggleLanguage = () => {
+  setLanguage(currentLanguage.value === 'en' ? 'id' : 'en')
+}
 
 // Get readable scope label
 const getScopeLabel = (scope) => {
