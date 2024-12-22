@@ -176,11 +176,11 @@ const {
 } = useDashboardData()
 
 // Available periods
-const periods = [
+const periods = computed(() => [
   { value: PERIODS.TODAY, label: t('common.periods.today') },
   { value: PERIODS.THIS_WEEK, label: t('common.periods.this_week') },
   { value: PERIODS.THIS_MONTH, label: t('common.periods.this_month') },
-]
+])
 
 // Check if user has any dashboard permissions
 const hasAnyPermissions = computed(() => {
