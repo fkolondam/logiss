@@ -30,18 +30,34 @@
     </div>
 
     <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-      <RecentDeliveries
-        :deliveries="recentDeliveries"
-        :stats="deliveryStats"
-        :loading="isLoading"
-      />
-      <ExpensesOverview
-        v-model="selectedPeriod"
-        :expenses="recentExpenses"
-        :stats="expenseStats"
-        :loading="isLoading"
-      />
-      <VehicleStatus :vehicles="vehicles" :stats="vehicleStats" :loading="isLoading" />
+      <template v-if="userStore.hasPermission('read_deliveries')">
+        <RecentDeliveries
+          :deliveries="recentDeliveries"
+          :stats="deliveryStats"
+          :loading="isLoading"
+        />
+      </template>
+      <template v-if="userStore.hasPermission('read_expenses')">
+        <ExpensesOverview
+          v-model="selectedPeriod"
+          :expenses="recentExpenses"
+          :stats="expenseStats"
+          :loading="isLoading"
+        />
+      </template>
+      <template v-if="userStore.hasPermission('read_vehicles')">
+        <VehicleStatus :vehicles="vehicles" :stats="vehicleStats" :loading="isLoading" />
+      </template>
+      <!-- Show message if no permissions -->
+      <div
+        v-if="!hasAnyPermissions"
+        class="col-span-full flex items-center justify-center p-8 bg-gray-50 rounded-lg"
+      >
+        <div class="text-center">
+          <AlertCircle class="w-8 h-8 text-gray-400 mx-auto mb-2" />
+          <p class="text-gray-600">{{ t('dashboard.noAccess') }}</p>
+        </div>
+      </div>
     </div>
   </div>
 </template>
@@ -59,6 +75,15 @@ import VehicleStatus from '../components/dashboard/VehicleStatus.vue'
 const { t } = useTranslations()
 const userStore = useUserStore()
 const selectedPeriod = ref('today')
+
+// Check if user has any dashboard permissions
+const hasAnyPermissions = computed(() => {
+  return (
+    userStore.hasPermission('read_deliveries') ||
+    userStore.hasPermission('read_expenses') ||
+    userStore.hasPermission('read_vehicles')
+  )
+})
 
 // Get dashboard data using the composable
 const {

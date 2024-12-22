@@ -34,6 +34,7 @@ export default {
     recentDeliveries: 'Recent Deliveries',
     noDeliveries: 'No deliveries found.',
     refresh: 'Refresh Data',
+    noAccess: 'You do not have permission to view any dashboard data.',
     deliveryStats: {
       total: 'Total Deliveries',
       succesRate: 'Success Rate',

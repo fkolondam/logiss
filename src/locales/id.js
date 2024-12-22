@@ -34,6 +34,7 @@ export default {
     recentDeliveries: 'Pengiriman Terkini',
     noDeliveries: 'Tidak ada pengiriman.',
     refresh: 'Segarkan Data',
+    noAccess: 'Anda tidak memiliki izin untuk melihat data dashboard.',
     deliveryStats: {
       total: 'Total Pengiriman',
       succesRate: 'Tingkat Keberhasilan',

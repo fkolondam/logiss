@@ -11,14 +11,21 @@
 import { ref, onMounted } from 'vue'
 import { RouterView } from 'vue-router'
 import { useTranslationsStore } from './stores/translations'
+import { useUserStore } from './stores/user'
 import AppLayout from './layouts/AppLayout.vue'
 
 const isReady = ref(false)
 const translationsStore = useTranslationsStore()
+const userStore = useUserStore()
 
 onMounted(async () => {
   try {
+    // Initialize translations
     await translationsStore.init()
+
+    // Initialize user (default to admin for testing)
+    await userStore.switchUser('admin1')
+
     isReady.value = true
   } catch (error) {
     console.error('Error initializing app:', error)

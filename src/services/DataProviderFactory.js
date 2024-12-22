@@ -6,7 +6,7 @@ import { AccessControlWrapper } from './AccessControlWrapper'
  * @typedef {import('./interfaces/DataProvider').QueryParams} QueryParams
  */
 
-export class DataProviderFactory {
+class DataProviderFactory {
   constructor() {
     this.baseProvider = new MockDataProvider()
   }
@@ -18,11 +18,24 @@ export class DataProviderFactory {
    * @param {QueryParams} [params] - Query parameters
    */
   async getData(resource, scope, params = {}) {
+    console.log(`Fetching ${resource} with scope:`, scope)
+
+    // Validate scope access
+    if (!this.validateScopeAccess(resource, scope)) {
+      throw new Error(`Access denied: Invalid scope for resource ${resource}`)
+    }
+
     // First get raw data from mock provider
     const result = await this.baseProvider.fetch(resource, params)
 
     // Then apply scope-based filtering
     const filteredData = AccessControlWrapper.filterByScope(result.data, scope)
+
+    console.log(`Filtered ${resource} data:`, {
+      total: result.data.length,
+      filtered: filteredData.length,
+      scope,
+    })
 
     return {
       ...result,
@@ -38,6 +51,11 @@ export class DataProviderFactory {
    * @param {Object} [options] - Additional options
    */
   async getStats(resource, scope, options = {}) {
+    // Validate scope access
+    if (!this.validateScopeAccess(resource, scope)) {
+      throw new Error(`Access denied: Invalid scope for resource ${resource}`)
+    }
+
     // Get filtered data first
     const { data } = await this.getData(resource, scope)
 
@@ -148,4 +166,25 @@ export class DataProviderFactory {
         return data
     }
   }
+
+  /**
+   * Validate if the scope has access to the resource
+   * @private
+   */
+  validateScopeAccess(resource, scope) {
+    if (!scope) return false
+
+    // Define resource access rules
+    const accessRules = {
+      deliveries: ['global', 'region', 'branch', 'personal'],
+      expenses: ['global', 'region', 'branch'],
+      vehicles: ['global', 'region', 'branch'],
+    }
+
+    // Check if resource exists and scope type is allowed
+    return accessRules[resource]?.includes(scope.type) || false
+  }
 }
+
+// Export a singleton instance
+export const dataProviderFactory = new DataProviderFactory()

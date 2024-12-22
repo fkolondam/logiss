@@ -11,38 +11,68 @@ export class AccessControlWrapper {
    * @returns {Array} - Filtered data
    */
   static filterByScope(data, scope) {
-    if (!scope) return data
+    console.log('Filtering data by scope:', scope)
+    console.log('Initial data count:', data.length)
+
+    if (!scope) {
+      console.log('No scope provided, returning all data')
+      return data
+    }
+
+    let filteredData = []
 
     switch (scope.type) {
       case 'global':
-        return data // No filtering for global scope
+        console.log('Global scope - no filtering')
+        filteredData = data
+        break
 
       case 'region':
-        return data.filter(
-          (item) =>
-            // Filter by region if item has region property
-            item.region === scope.value ||
-            // Or if item has branch that belongs to the region (using branch prefix)
-            (item.branch && item.branch.startsWith(scope.value)),
-        )
+        console.log('Filtering by region:', scope.value)
+        filteredData = data.filter((item) => {
+          const matchesRegion = item.region === scope.value
+          const matchesBranch = item.branch && item.branch.startsWith(scope.value)
+          console.log('Item:', {
+            item,
+            matchesRegion,
+            matchesBranch,
+          })
+          return matchesRegion || matchesBranch
+        })
+        break
 
       case 'branch':
-        return data.filter((item) => item.branch === scope.value)
+        console.log('Filtering by branch:', scope.value)
+        filteredData = data.filter((item) => {
+          const matches = item.branch === scope.value
+          console.log('Item:', { item, matches })
+          return matches
+        })
+        break
 
       case 'personal':
-        return data.filter(
-          (item) =>
-            // Filter personal deliveries/expenses
-            item.userId === scope.value ||
-            // Or assigned vehicles
-            item.assignedTo === scope.value ||
-            // Or if the user is the driver
-            item.driver === scope.value,
-        )
+        console.log('Filtering by personal scope:', scope.value)
+        filteredData = data.filter((item) => {
+          const matchesUserId = item.userId === scope.value
+          const matchesAssigned = item.assignedTo === scope.value
+          const matchesDriver = item.driver === scope.value
+          console.log('Item:', {
+            item,
+            matchesUserId,
+            matchesAssigned,
+            matchesDriver,
+          })
+          return matchesUserId || matchesAssigned || matchesDriver
+        })
+        break
 
       default:
+        console.log('Unknown scope type:', scope.type)
         return []
     }
+
+    console.log('Filtered data count:', filteredData.length)
+    return filteredData
   }
 
   /**

@@ -1,14 +1,20 @@
-import { ref, computed } from 'vue'
-import { DataProviderFactory } from '../services/DataProviderFactory'
+import { ref, computed, watch } from 'vue'
+import { storeToRefs } from 'pinia'
+import { dataProviderFactory } from '../services/DataProviderFactory'
 import { useUserStore } from '../stores/user'
 
 export function useDashboardData() {
   const userStore = useUserStore()
-  const dataProvider = new DataProviderFactory()
+  const { scope: currentScope } = storeToRefs(userStore)
 
   // Reactive states
   const isLoading = ref(false)
   const error = ref(null)
+
+  // Permission checks
+  const canAccessDeliveries = computed(() => userStore.hasPermission('read_deliveries'))
+  const canAccessExpenses = computed(() => userStore.hasPermission('read_expenses'))
+  const canAccessVehicles = computed(() => userStore.hasPermission('read_vehicles'))
 
   // Stats
   const deliveryStats = ref(null)
@@ -20,40 +26,74 @@ export function useDashboardData() {
   const recentExpenses = ref([])
   const vehicles = ref([])
 
-  // Get current scope from user store
-  const currentScope = computed(() => userStore.scope)
-
   /**
    * Load all dashboard data
    */
   async function loadDashboardData() {
+    console.log('Loading dashboard data for scope:', currentScope.value)
     isLoading.value = true
     error.value = null
 
     try {
-      // Load stats
-      const [deliveryData, expenseData, vehicleData] = await Promise.all([
-        dataProvider.getStats('deliveries', currentScope.value),
-        dataProvider.getStats('expenses', currentScope.value),
-        dataProvider.getStats('vehicles', currentScope.value),
-      ])
+      // Load stats based on permissions
+      const statsPromises = []
+
+      if (canAccessDeliveries.value) {
+        statsPromises.push(dataProviderFactory.getStats('deliveries', currentScope.value))
+      } else {
+        statsPromises.push(Promise.resolve(null))
+      }
+
+      if (canAccessExpenses.value) {
+        statsPromises.push(dataProviderFactory.getStats('expenses', currentScope.value))
+      } else {
+        statsPromises.push(Promise.resolve(null))
+      }
+
+      if (canAccessVehicles.value) {
+        statsPromises.push(dataProviderFactory.getStats('vehicles', currentScope.value))
+      } else {
+        statsPromises.push(Promise.resolve(null))
+      }
+
+      const [deliveryData, expenseData, vehicleData] = await Promise.all(statsPromises)
 
       deliveryStats.value = deliveryData
       expenseStats.value = expenseData
       vehicleStats.value = vehicleData
 
-      // Load recent items
-      const [deliveries, expenses, vehicleList] = await Promise.all([
-        dataProvider.getData('deliveries', currentScope.value, {
-          sort: 'date,desc',
-          limit: 5,
-        }),
-        dataProvider.getData('expenses', currentScope.value, {
-          sort: 'date,desc',
-          limit: 5,
-        }),
-        dataProvider.getData('vehicles', currentScope.value),
-      ])
+      // Load recent items based on permissions
+      const dataPromises = []
+
+      if (canAccessDeliveries.value) {
+        dataPromises.push(
+          dataProviderFactory.getData('deliveries', currentScope.value, {
+            sort: 'date,desc',
+            limit: 5,
+          }),
+        )
+      } else {
+        dataPromises.push(Promise.resolve({ data: [] }))
+      }
+
+      if (canAccessExpenses.value) {
+        dataPromises.push(
+          dataProviderFactory.getData('expenses', currentScope.value, {
+            sort: 'date,desc',
+            limit: 5,
+          }),
+        )
+      } else {
+        dataPromises.push(Promise.resolve({ data: [] }))
+      }
+
+      if (canAccessVehicles.value) {
+        dataPromises.push(dataProviderFactory.getData('vehicles', currentScope.value))
+      } else {
+        dataPromises.push(Promise.resolve({ data: [] }))
+      }
+
+      const [deliveries, expenses, vehicleList] = await Promise.all(dataPromises)
 
       recentDeliveries.value = deliveries.data
       recentExpenses.value = expenses.data
@@ -76,8 +116,8 @@ export function useDashboardData() {
     try {
       switch (section) {
         case 'deliveries':
-          deliveryStats.value = await dataProvider.getStats('deliveries', currentScope.value)
-          const deliveries = await dataProvider.getData('deliveries', currentScope.value, {
+          deliveryStats.value = await dataProviderFactory.getStats('deliveries', currentScope.value)
+          const deliveries = await dataProviderFactory.getData('deliveries', currentScope.value, {
             sort: 'date,desc',
             limit: 5,
           })
@@ -85,8 +125,8 @@ export function useDashboardData() {
           break
 
         case 'expenses':
-          expenseStats.value = await dataProvider.getStats('expenses', currentScope.value)
-          const expenses = await dataProvider.getData('expenses', currentScope.value, {
+          expenseStats.value = await dataProviderFactory.getStats('expenses', currentScope.value)
+          const expenses = await dataProviderFactory.getData('expenses', currentScope.value, {
             sort: 'date,desc',
             limit: 5,
           })
@@ -94,8 +134,8 @@ export function useDashboardData() {
           break
 
         case 'vehicles':
-          vehicleStats.value = await dataProvider.getStats('vehicles', currentScope.value)
-          const vehicleList = await dataProvider.getData('vehicles', currentScope.value)
+          vehicleStats.value = await dataProviderFactory.getStats('vehicles', currentScope.value)
+          const vehicleList = await dataProviderFactory.getData('vehicles', currentScope.value)
           vehicles.value = vehicleList.data
           break
 
@@ -109,6 +149,18 @@ export function useDashboardData() {
       isLoading.value = false
     }
   }
+
+  // Watch for scope changes and reload data
+  watch(
+    currentScope,
+    (newScope) => {
+      console.log('Scope changed to:', newScope)
+      if (newScope) {
+        loadDashboardData()
+      }
+    },
+    { immediate: true },
+  )
 
   return {
     // States
