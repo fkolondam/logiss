@@ -179,8 +179,18 @@ export default {
     google_sheets: 'Google Sheets',
   },
   // Add new scope section
+  dataSelector: {
+    title: 'Filter Data',
+    description: 'Select the scope of data you want to view',
+    selectScope: 'Select Filter',
+    resetScope: 'Reset Filter',
+    filterBy: 'Show Data:',
+  },
   scope: {
-    global: 'Global Access',
+    global: 'Global',
+    regions: 'Regions',
+    branches: 'Branches',
+    allData: 'All Data',
     region: 'Region',
     branch: 'Branch',
     personal: 'Personal',

@@ -1,8 +1,8 @@
 <template>
   <header class="h-16 bg-white shadow-sm fixed top-0 right-0 left-0 md:left-64 z-[60]">
-    <div class="h-full flex">
-      <!-- Left Section (Logo/Menu) -->
-      <div class="flex-none px-4 flex items-center">
+    <div class="h-full px-4 flex items-center justify-between">
+      <!-- Left Side -->
+      <div class="flex items-center">
         <button
           class="md:hidden p-2 rounded-lg text-gray-600 hover:bg-gray-100"
           @click="$emit('toggle-sidebar')"
@@ -11,17 +11,8 @@
         </button>
       </div>
 
-      <!-- Center Section (Title and Data Selector) -->
-      <div class="flex-1 flex items-center px-4">
-        <div class="flex items-center gap-6">
-          <span class="text-sm font-medium text-gray-600">{{ t('dataSelector.filterBy') }}</span>
-          <div class="h-8 w-px bg-gray-200"></div>
-          <DataSelector />
-        </div>
-      </div>
-
-      <!-- Right Section (Language, Notifications, User) -->
-      <div class="flex-none px-4 flex items-center gap-6">
+      <!-- Right Side Menu -->
+      <div class="flex items-center h-full gap-6 ml-auto">
         <!-- Language Toggle -->
         <div class="flex items-center gap-2 h-full">
           <button
@@ -41,10 +32,10 @@
         </div>
 
         <!-- Divider -->
-        <div class="h-8 w-px bg-gray-200"></div>
+        <div class="h-8 w-px bg-gray-200 self-center"></div>
 
         <!-- Notifications -->
-        <div class="flex items-center">
+        <div class="flex items-center h-full">
           <button class="p-2 rounded-lg text-gray-600 hover:bg-gray-100 relative">
             <Bell class="w-5 h-5" />
             <span class="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full"></span>
@@ -52,20 +43,10 @@
         </div>
 
         <!-- Divider -->
-        <div class="h-8 w-px bg-gray-200"></div>
+        <div class="h-8 w-px bg-gray-200 self-center"></div>
 
-        <!-- User Profile Badge -->
-        <div class="flex items-center gap-3">
-          <div class="w-8 h-8 rounded-full bg-gray-200 flex items-center justify-center">
-            <User class="w-4 h-4 text-gray-500" />
-          </div>
-          <div class="hidden md:block">
-            <div class="text-sm font-medium text-gray-700">
-              {{ currentUser?.name || t('menu.profile') }}
-            </div>
-            <div class="text-xs text-gray-500">{{ getScopeLabel(currentUser?.scope) }}</div>
-          </div>
-        </div>
+        <!-- User Selector -->
+        <UserSelector />
       </div>
     </div>
 
@@ -112,34 +93,11 @@
 import { computed } from 'vue'
 import { useRoute } from 'vue-router'
 import { Menu, Bell, User } from 'lucide-vue-next'
-import { useTranslations } from '../../composables/useTranslations'
-import { useUserStore } from '../../stores/user'
-import DataSelector from './DataSelector.vue'
+import { useTranslations } from '@/composables/useTranslations'
+import { useAppStore } from '@/stores/app'
 
 const route = useRoute()
-const { t, currentLanguage, setLanguage } = useTranslations()
-const userStore = useUserStore()
-
-// Get current user from store
-const currentUser = computed(() => userStore.currentUser)
-
-// Get readable scope label
-const getScopeLabel = (scope) => {
-  if (!scope) return ''
-
-  switch (scope.type) {
-    case 'global':
-      return t('scope.global')
-    case 'region':
-      return `${t('scope.region')}: ${scope.value}`
-    case 'branch':
-      return `${t('scope.branch')}: ${scope.value}`
-    case 'personal':
-      return `${t('scope.personal')}: ${scope.value}`
-    default:
-      return ''
-  }
-}
+const { currentLanguage, setLanguage } = useTranslations()
 
 defineEmits(['toggle-sidebar'])
 

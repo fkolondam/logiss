@@ -10,18 +10,16 @@ export const useUserStore = defineStore('user', {
   state: () => ({
     /** @type {User|null} */
     currentUser: null,
-    /** @type {Scope|null} */
-    selectedScope: null,
     /** @type {string|null} */
     error: null,
   }),
 
   getters: {
     /**
-     * Get current scope (selected or user's default)
+     * Get current user's scope
      * @returns {Scope|null}
      */
-    scope: (state) => state.selectedScope || state.currentUser?.scope || null,
+    scope: (state) => state.currentUser?.scope || null,
 
     /**
      * Get current user's role configuration
@@ -83,32 +81,6 @@ export const useUserStore = defineStore('user', {
 
       return false
     },
-
-    /**
-     * Check if user can select a specific scope
-     * @returns {function(Scope): boolean}
-     */
-    canSelectScope: (state) => (scope) => {
-      if (!state.currentUser) return false
-      const userRole = roles[state.currentUser.role]
-
-      switch (userRole.level) {
-        case 'global':
-          return true
-        case 'region':
-          return (
-            scope.type === 'global' ||
-            (scope.type === 'region' && scope.value === state.currentUser.scope.value) ||
-            (scope.type === 'branch' && scope.value.startsWith(state.currentUser.scope.value))
-          )
-        case 'branch':
-          return scope.type === 'branch' && scope.value === state.currentUser.scope.value
-        case 'personal':
-          return scope.type === 'personal' && scope.value === state.currentUser.scope.value
-        default:
-          return false
-      }
-    },
   },
 
   actions: {
@@ -125,25 +97,7 @@ export const useUserStore = defineStore('user', {
       }
 
       this.currentUser = user
-      this.selectedScope = null // Reset scope when switching users
       this.error = null
-    },
-
-    /**
-     * Set selected scope
-     * @param {Scope} scope
-     */
-    setScope(scope) {
-      if (this.canSelectScope(scope)) {
-        this.selectedScope = scope
-      }
-    },
-
-    /**
-     * Clear selected scope (revert to user's default scope)
-     */
-    clearScope() {
-      this.selectedScope = null
     },
 
     /**
@@ -151,7 +105,6 @@ export const useUserStore = defineStore('user', {
      */
     clearUser() {
       this.currentUser = null
-      this.selectedScope = null
       this.error = null
     },
 
@@ -163,17 +116,17 @@ export const useUserStore = defineStore('user', {
     canAccessBranch(branchId) {
       if (!this.currentUser) return false
 
-      switch (this.scope.type) {
+      switch (this.currentUser.scope.type) {
         case 'global':
           return true
         case 'region':
           // TODO: Check if branch is in user's region
           return true
         case 'branch':
-          return this.scope.value === branchId
+          return this.currentUser.scope.value === branchId
         case 'personal':
           // Operational users can only access their assigned branch
-          return this.scope.value === branchId
+          return this.currentUser.scope.value === branchId
         default:
           return false
       }
@@ -187,7 +140,7 @@ export const useUserStore = defineStore('user', {
     canAccessVehicle(vehicleId) {
       if (!this.currentUser) return false
 
-      switch (this.scope.type) {
+      switch (this.currentUser.scope.type) {
         case 'global':
         case 'region':
         case 'branch':

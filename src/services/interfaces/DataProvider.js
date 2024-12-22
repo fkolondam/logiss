@@ -62,4 +62,4 @@ class DataProviderInterface {
   }
 }
 
-export { DataProviderInterface }
+export { DataProviderInterface as DataProvider }

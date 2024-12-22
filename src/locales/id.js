@@ -190,8 +190,18 @@ export default {
     google_sheets: 'Google Sheets',
   },
   // Add new scope section
+  dataSelector: {
+    title: 'Filter Data',
+    description: 'Pilih cakupan data yang ingin ditampilkan',
+    selectScope: 'Pilih Filter',
+    resetScope: 'Reset Filter',
+    filterBy: 'Tampilkan Data:',
+  },
   scope: {
-    global: 'Akses Global',
+    global: 'Global',
+    regions: 'Region',
+    branches: 'Cabang',
+    allData: 'Semua Data',
     region: 'Region',
     branch: 'Cabang',
     personal: 'Personal',
