@@ -2,7 +2,7 @@ export default {
   app: {
     title: 'Manajemen Armada',
     loading: 'Memuat...',
-    error: 'Error'
+    error: 'Error',
   },
   common: {
     close: 'Tutup',
@@ -17,7 +17,7 @@ export default {
     details: 'Detail',
     refresh: 'Segarkan',
     of: 'dari',
-    viewAllVehicles: 'Lihat Semua Kendaraan'
+    viewAllVehicles: 'Lihat Semua Kendaraan',
   },
   menu: {
     home: 'Beranda',
@@ -26,7 +26,8 @@ export default {
     vehicles: 'Kendaraan',
     profile: 'Profil',
     logout: 'Keluar',
-    debug: 'Debug Tools'
+    debug: 'Debug Tools',
+    selectUser: 'Pilih Pengguna',
   },
   dashboard: {
     title: 'Dashboard',
@@ -40,8 +41,8 @@ export default {
       pending: 'Dalam Proses',
       cancelled: 'Dibatalkan',
       deliveryStatus: 'Status Pengiriman',
-      todayDeliveries: 'Pengiriman Hari Ini'
-    }
+      todayDeliveries: 'Pengiriman Hari Ini',
+    },
   },
   deliveries: {
     title: 'Pengiriman',
@@ -62,13 +63,13 @@ export default {
       status: {
         delivered: 'Pengiriman selesai',
         partial: 'Pengiriman sebagian',
-        cancelled: 'Pengiriman dibatalkan'
-      }
+        cancelled: 'Pengiriman dibatalkan',
+      },
     },
     noProofAvailable: 'Tidak ada bukti pengiriman',
     paymentMethod: {
       cash: 'Tunai',
-      kredit: 'Kredit'
+      kredit: 'Kredit',
     },
     table: {
       invoice: 'Faktur',
@@ -83,7 +84,7 @@ export default {
       shipment: 'Pengiriman',
       paymentMethod: 'Metode Pembayaran',
       details: 'Detail',
-      actions: 'Aksi'
+      actions: 'Aksi',
     },
     pagination: {
       showing: 'Menampilkan',
@@ -92,22 +93,22 @@ export default {
       items: 'data',
       loadMore: 'Muat Lebih Banyak',
       page: 'Halaman',
-      perPage: 'Per Halaman'
+      perPage: 'Per Halaman',
     },
     status: {
       'diterima - semua': 'Diterima - Semua',
       'diterima - sebagian': 'Diterima - Sebagian',
-      'batal': 'Batal',
+      batal: 'Batal',
       'batal - toko tutup': 'Batal - Toko Tutup',
       'batal - toko tidak dapat diakses': 'Batal - Toko Tidak Dapat Diakses',
       'batal - tidak ada uang': 'Batal - Tidak Ada Uang',
       'batal - salah order': 'Batal - Salah Order',
-      'kirim ulang': 'Kirim Ulang'
+      'kirim ulang': 'Kirim Ulang',
     },
     tabs: {
       delivery: 'Pengiriman',
       customer: 'Pelanggan',
-      proof: 'Bukti'
+      proof: 'Bukti',
     },
     stats: {
       todayDeliveries: 'Pengiriman Hari Ini',
@@ -115,8 +116,8 @@ export default {
       thisWeek: 'Minggu Ini',
       fromLastWeek: 'dari minggu lalu',
       thisMonth: 'Bulan Ini',
-      monthlyTarget: 'Target Bulanan'
-    }
+      monthlyTarget: 'Target Bulanan',
+    },
   },
   expenses: {
     title: 'Pengeluaran',
@@ -126,20 +127,20 @@ export default {
       week: 'Mingguan',
       today: 'Hari Ini',
       thisMonth: 'Bulan Ini',
-      thisWeek: 'Minggu Ini'
+      thisWeek: 'Minggu Ini',
     },
     breakdown: 'Rincian Pengeluaran',
     categories: {
       fuel: 'Bahan Bakar',
       maintenance: 'Pemeliharaan',
       insurance: 'Asuransi',
-      others: 'Lainnya'
+      others: 'Lainnya',
     },
     stats: {
       total: 'Total Pengeluaran',
       approved: 'Disetujui',
-      pending: 'Menunggu'
-    }
+      pending: 'Menunggu',
+    },
   },
   vehicles: {
     title: 'Kendaraan',
@@ -151,12 +152,12 @@ export default {
     types: {
       deliveryTruck: 'Truk Pengiriman',
       van: 'Van',
-      pickup: 'Pickup'
+      pickup: 'Pickup',
     },
     status: {
       active: 'Aktif',
       maintenance: 'Pemeliharaan',
-      inactive: 'Tidak Aktif'
+      inactive: 'Tidak Aktif',
     },
     stats: {
       total: 'Total Kendaraan',
@@ -166,12 +167,12 @@ export default {
       maintenance: 'Dalam Pemeliharaan',
       maintenanceVehicles: 'Sedang Servis',
       lowFuel: 'Bahan Bakar Rendah',
-      lowFuelVehicles: 'Perlu Isi Ulang'
+      lowFuelVehicles: 'Perlu Isi Ulang',
     },
     list: {
       title: 'Daftar Kendaraan',
-      showing: 'Menampilkan'
-    }
+      showing: 'Menampilkan',
+    },
   },
   debug: {
     title: 'Debug Tools',
@@ -181,11 +182,27 @@ export default {
     vehiclesTest: 'Test Data Kendaraan',
     recordsFound: 'Ditemukan {count} data',
     loading: 'Memuat...',
-    error: 'Error: {message}'
+    error: 'Error: {message}',
   },
   dataSources: {
     mock: 'Data Simulasi',
     mysql: 'MySQL',
-    google_sheets: 'Google Sheets'
-  }
+    google_sheets: 'Google Sheets',
+  },
+  // Add new scope section
+  scope: {
+    global: 'Akses Global',
+    region: 'Region',
+    branch: 'Cabang',
+    personal: 'Personal',
+  },
+
+  // Add new roles section
+  roles: {
+    admin: 'Admin Global',
+    regional_manager: 'Manajer Regional',
+    branch_manager: 'Manajer Cabang',
+    staff: 'Staff',
+    operational: 'Pengguna Operasional',
+  },
 }

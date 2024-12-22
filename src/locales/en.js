@@ -2,7 +2,7 @@ export default {
   app: {
     title: 'Fleet Management',
     loading: 'Loading...',
-    error: 'Error'
+    error: 'Error',
   },
   common: {
     close: 'Close',
@@ -17,7 +17,7 @@ export default {
     details: 'Details',
     refresh: 'Refresh',
     of: 'from',
-    viewAllVehicles: 'View all Vehicles'
+    viewAllVehicles: 'View all Vehicles',
   },
   menu: {
     home: 'Home',
@@ -26,7 +26,8 @@ export default {
     vehicles: 'Vehicles',
     profile: 'Profile',
     logout: 'Logout',
-    debug: 'Debug Tools'
+    debug: 'Debug Tools',
+    selectUser: 'Select User',
   },
   dashboard: {
     title: 'Dashboard',
@@ -39,8 +40,8 @@ export default {
       completed: 'Completed',
       pending: 'Pending',
       cancelled: 'Cancelled',
-      deliveryStatus: 'Delivery Status'
-    }
+      deliveryStatus: 'Delivery Status',
+    },
   },
   deliveries: {
     title: 'Deliveries',
@@ -61,13 +62,13 @@ export default {
       status: {
         delivered: 'Delivery completed successfully',
         partial: 'Delivery partially completed',
-        cancelled: 'Delivery was cancelled'
-      }
+        cancelled: 'Delivery was cancelled',
+      },
     },
     noProofAvailable: 'No proof image available',
     paymentMethod: {
       cash: 'Cash',
-      kredit: 'Credit'
+      kredit: 'Credit',
     },
     table: {
       invoice: 'Invoice',
@@ -81,31 +82,31 @@ export default {
       licensePlate: 'License Plate',
       paymentMethod: 'Payment Method',
       details: 'Details',
-      actions: 'Actions'
+      actions: 'Actions',
     },
     status: {
       'diterima - semua': 'Delivered',
       'diterima - sebagian': 'Partially Delivered',
-      'batal': 'Cancelled',
+      batal: 'Cancelled',
       'batal - toko tutup': 'Cancelled - Store Closed',
       'batal - toko tidak dapat diakses': 'Cancelled - Store Inaccessible',
       'batal - tidak ada uang': 'Cancelled - No Payment',
       'batal - salah order': 'Cancelled - Wrong Order',
-      'kirim ulang': 'Resend'
+      'kirim ulang': 'Resend',
     },
     tabs: {
       delivery: 'Delivery',
       customer: 'Customer',
-      proof: 'Proof'
+      proof: 'Proof',
     },
     stats: {
       todayDeliveries: 'Today Deliveries',
       completionRate: 'Completion Rate',
-      thisWeek: 'This Week', 
+      thisWeek: 'This Week',
       fromLastWeek: 'from last week',
       thisMonth: 'This Month',
-      monthlyTarget: 'Monthly Target'
-    }
+      monthlyTarget: 'Monthly Target',
+    },
   },
   expenses: {
     title: 'Expenses',
@@ -115,20 +116,20 @@ export default {
       week: 'Weekly',
       today: 'Today',
       thisMonth: 'This Month',
-      thisWeek: 'This Week'
+      thisWeek: 'This Week',
     },
     breakdown: 'Expense Breakdown',
     categories: {
       fuel: 'Fuel',
       maintenance: 'Maintenance',
       insurance: 'Insurance',
-      others: 'Others'
+      others: 'Others',
     },
     stats: {
       total: 'Total Expenses',
       approved: 'Approved',
-      pending: 'Pending'
-    }
+      pending: 'Pending',
+    },
   },
   vehicles: {
     title: 'Vehicles',
@@ -140,12 +141,12 @@ export default {
     types: {
       deliveryTruck: 'Delivery Truck',
       van: 'Van',
-      pickup: 'Pickup'
+      pickup: 'Pickup',
     },
     status: {
       active: 'Active',
       maintenance: 'Maintenance',
-      inactive: 'Inactive'
+      inactive: 'Inactive',
     },
     stats: {
       total: 'Total Vehicles',
@@ -155,12 +156,12 @@ export default {
       maintenance: 'In Maintenance',
       maintenanceVehicles: 'Under Service',
       lowFuel: 'Low Fuel',
-      lowFuelVehicles: 'Need Refuel'
+      lowFuelVehicles: 'Need Refuel',
     },
     list: {
       title: 'Vehicle List',
-      showing: 'Showing'
-    }
+      showing: 'Showing',
+    },
   },
   debug: {
     title: 'Debug Tools',
@@ -170,11 +171,27 @@ export default {
     vehiclesTest: 'Vehicles Data Test',
     recordsFound: 'Found {count} records',
     loading: 'Loading...',
-    error: 'Error: {message}'
+    error: 'Error: {message}',
   },
   dataSources: {
     mock: 'Mock Data',
     mysql: 'MySQL',
-    google_sheets: 'Google Sheets'
-  }
+    google_sheets: 'Google Sheets',
+  },
+  // Add new scope section
+  scope: {
+    global: 'Global Access',
+    region: 'Region',
+    branch: 'Branch',
+    personal: 'Personal',
+  },
+
+  // Add new roles section
+  roles: {
+    admin: 'Global Admin',
+    regional_manager: 'Regional Manager',
+    branch_manager: 'Branch Manager',
+    staff: 'Staff',
+    operational: 'Operational User',
+  },
 }
