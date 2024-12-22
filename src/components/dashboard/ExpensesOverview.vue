@@ -9,18 +9,31 @@
     </div>
 
     <!-- Total Amount -->
-    <div class="bg-green-50 rounded-lg p-4 mb-6">
-      <div class="text-sm text-green-700 mb-1">{{ t('expenses.total') }}</div>
-      <div class="text-2xl font-bold text-green-900">
-        {{ loading ? '...' : formatCurrency(stats?.totalAmount || 0) }}
+    <div class="bg-green-50 rounded-lg p-4 mb-6 grid grid-rows-5 h-40">
+      <!-- Label (2 rows) -->
+      <div class="text-sm text-green-700 row-span-2 leading-tight">
+        {{ t('expenses.total') }}
       </div>
-      <div v-if="stats?.trend" class="flex items-center gap-1 mt-1 text-sm">
-        <TrendingUp v-if="stats.trend > 0" class="w-4 h-4 text-green-600" />
-        <TrendingDown v-if="stats.trend < 0" class="w-4 h-4 text-red-600" />
-        <span :class="stats.trend > 0 ? 'text-green-600' : 'text-red-600'">
-          {{ Math.abs(stats.trend) }}%
-          {{ stats.trend > 0 ? t('expenses.increased') : t('expenses.decreased') }}
-        </span>
+      <!-- Metric (1 row) -->
+      <div class="flex items-center gap-2">
+        <div class="text-2xl font-bold text-green-900">
+          {{ loading ? '...' : formatCurrency(stats?.totalAmount || 0) }}
+        </div>
+        <div v-if="stats?.trend" class="flex items-center gap-1">
+          <TrendingUp v-if="stats.trend > 0" class="w-4 h-4 text-green-600" />
+          <TrendingDown v-if="stats.trend < 0" class="w-4 h-4 text-red-600" />
+          <span :class="stats.trend > 0 ? 'text-green-600' : 'text-red-600'">
+            {{ Math.abs(stats.trend) }}%
+          </span>
+        </div>
+      </div>
+      <!-- Stats Label (1 row) -->
+      <div class="text-xs text-green-600">
+        {{ stats?.trend > 0 ? t('expenses.increased') : t('expenses.decreased') }}
+      </div>
+      <!-- Drilldown (1 row) -->
+      <div class="text-xs text-right text-green-600 hover:underline cursor-pointer">
+        {{ t('common.viewDetails') }} →
       </div>
     </div>
 

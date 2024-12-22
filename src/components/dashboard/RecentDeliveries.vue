@@ -10,29 +10,50 @@
 
     <!-- Stats Overview -->
     <div class="grid grid-cols-2 gap-4 mb-6">
-      <div class="bg-blue-50 rounded-lg p-4">
-        <div class="text-sm text-blue-700 mb-1">{{ t('deliveries.stats.todayDeliveries') }}</div>
-        <div class="flex items-end gap-2">
+      <!-- Today's Deliveries Card -->
+      <div class="bg-blue-50 rounded-lg p-4 grid grid-rows-5 h-40">
+        <!-- Label (2 rows) -->
+        <div class="text-sm text-blue-700 row-span-2 leading-tight">
+          {{ t('deliveries.stats.todayDeliveries') }}
+        </div>
+        <!-- Metric (1 row) -->
+        <div class="flex items-center gap-2">
           <div class="text-2xl font-bold text-blue-900">
             {{ loading ? '...' : stats?.total || 0 }}
           </div>
-          <div v-if="stats?.trend" class="text-sm text-blue-600 mb-1">
+          <div v-if="stats?.trend" class="text-sm text-blue-600">
             {{ stats.trend > 0 ? '+' : '' }}{{ stats.trend }}%
           </div>
         </div>
-        <div class="text-xs text-blue-600 mt-1">{{ t('deliveries.stats.fromLastWeek') }}</div>
+        <!-- Stats Label (1 row) -->
+        <div class="text-xs text-blue-600">{{ t('deliveries.stats.fromLastWeek') }}</div>
+        <!-- Drilldown (1 row) -->
+        <div class="text-xs text-right text-blue-600 hover:underline cursor-pointer">
+          {{ t('common.viewDetails') }} →
+        </div>
       </div>
-      <div class="bg-green-50 rounded-lg p-4">
-        <div class="text-sm text-green-700 mb-1">{{ t('deliveries.stats.completionRate') }}</div>
-        <div class="flex items-end gap-2">
+
+      <!-- Completion Rate Card -->
+      <div class="bg-green-50 rounded-lg p-4 grid grid-rows-5 h-40">
+        <!-- Label (2 rows) -->
+        <div class="text-sm text-green-700 row-span-2 leading-tight">
+          {{ t('deliveries.stats.completionRate') }}
+        </div>
+        <!-- Metric (1 row) -->
+        <div class="flex items-center gap-2">
           <div class="text-2xl font-bold text-green-900">
             {{ loading ? '...' : calculateCompletionRate() }}%
           </div>
-          <div v-if="stats?.completionTrend" class="text-sm text-green-600 mb-1">
+          <div v-if="stats?.completionTrend" class="text-sm text-green-600">
             {{ stats.completionTrend > 0 ? '+' : '' }}{{ stats.completionTrend }}%
           </div>
         </div>
-        <div class="text-xs text-green-600 mt-1">{{ t('deliveries.stats.thisWeek') }}</div>
+        <!-- Stats Label (1 row) -->
+        <div class="text-xs text-green-600">{{ t('deliveries.stats.thisWeek') }}</div>
+        <!-- Drilldown (1 row) -->
+        <div class="text-xs text-right text-green-600 hover:underline cursor-pointer">
+          {{ t('common.viewDetails') }} →
+        </div>
       </div>
     </div>
 
