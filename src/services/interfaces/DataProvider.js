@@ -1,52 +1,65 @@
 /**
- * Interface for data providers
- * All data providers must implement these methods
+ * @typedef {'global' | 'region' | 'branch' | 'personal'} AccessLevel
+ *
+ * @typedef {Object} Scope
+ * @property {AccessLevel} type - Access level type
+ * @property {string} [value] - Scope value (e.g., branch name, region name)
  */
-export class DataProvider {
-  constructor() {
-    if (this.constructor === DataProvider) {
-      throw new Error('Interface cannot be instantiated')
-    }
+
+/**
+ * @typedef {Object} QueryParams
+ * @property {Object} [filter] - Filter criteria
+ * @property {string} [sort] - Sort criteria (field,direction)
+ * @property {number} [page] - Page number
+ * @property {number} [limit] - Items per page
+ * @property {string} [search] - Search term
+ * @property {Object} [dateRange] - Date range filter
+ */
+
+/**
+ * @typedef {Object} QueryResult
+ * @property {Array} data - Result data
+ * @property {number} total - Total count
+ * @property {number} [page] - Current page
+ * @property {number} [limit] - Items per page
+ */
+
+/**
+ * Data Provider Interface
+ * @interface
+ */
+class DataProviderInterface {
+  /**
+   * Fetch data with scope-based filtering
+   * @param {string} resource - Resource name (e.g., 'deliveries', 'expenses')
+   * @param {Scope} scope - Access scope
+   * @param {QueryParams} [params] - Query parameters
+   * @returns {Promise<QueryResult>}
+   */
+  async fetchWithScope(resource, scope, params = {}) {
+    throw new Error('Not implemented')
   }
 
   /**
-   * Fetch data from the source
-   * @param {string} resource - The resource to fetch (deliveries, expenses, vehicles)
-   * @param {Object} params - Query parameters (filter, sort, pagination)
-   * @returns {Promise<Array>}
+   * Get aggregated stats with scope
+   * @param {string} resource - Resource name
+   * @param {Scope} scope - Access scope
+   * @param {Object} [options] - Aggregation options
+   * @returns {Promise<Object>}
+   */
+  async getStats(resource, scope, options = {}) {
+    throw new Error('Not implemented')
+  }
+
+  /**
+   * Legacy fetch method for backward compatibility
+   * @param {string} resource - Resource name
+   * @param {QueryParams} [params] - Query parameters
+   * @returns {Promise<QueryResult>}
    */
   async fetch(resource, params = {}) {
-    throw new Error('Method "fetch" must be implemented')
-  }
-
-  /**
-   * Create new data
-   * @param {string} resource - The resource type
-   * @param {Object} data - The data to create
-   * @returns {Promise<Object>}
-   */
-  async create(resource, data) {
-    throw new Error('Method "create" must be implemented')
-  }
-
-  /**
-   * Update existing data
-   * @param {string} resource - The resource type
-   * @param {number|string} id - The resource ID
-   * @param {Object} data - The data to update
-   * @returns {Promise<Object>}
-   */
-  async update(resource, id, data) {
-    throw new Error('Method "update" must be implemented')
-  }
-
-  /**
-   * Delete data
-   * @param {string} resource - The resource type
-   * @param {number|string} id - The resource ID
-   * @returns {Promise<boolean>}
-   */
-  async delete(resource, id) {
-    throw new Error('Method "delete" must be implemented')
+    throw new Error('Not implemented')
   }
 }
+
+export { DataProviderInterface }
