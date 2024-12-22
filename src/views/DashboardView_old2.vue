@@ -144,7 +144,7 @@ const fetchDashboardData = async () => {
     const scopeParams = getScopeParams()
 
     // Fetch all data concurrently
-    const [deliveriesResponse, expensesData, vehiclesResponse] = await Promise.all([
+    const [deliveriesData, expensesData, vehiclesData] = await Promise.all([
       // Deliveries
       provider
         .fetch('deliveries', {
@@ -155,7 +155,7 @@ const fetchDashboardData = async () => {
         .catch((err) => {
           componentErrors.value.deliveries = t('errors.fetchDeliveries')
           console.error('Error fetching deliveries:', err)
-          return { data: [] }
+          return []
         }),
 
       // Get initial expenses data for selected period
@@ -174,17 +174,17 @@ const fetchDashboardData = async () => {
       provider.fetch('vehicles', scopeParams).catch((err) => {
         componentErrors.value.vehicles = t('errors.fetchVehicles')
         console.error('Error fetching vehicles:', err)
-        return { data: [] }
+        return []
       }),
     ])
 
     // Update refs with fetched data
-    recentDeliveries.value = deliveriesResponse.data
+    recentDeliveries.value = deliveriesData
     recentExpenses.value = {
       ...(expensesData || { total: 0, count: 0, byCategory: {} }),
       loading: false,
     }
-    vehicles.value = vehiclesResponse.data
+    vehicles.value = vehiclesData
 
     // Set general error if all components failed
     if (Object.values(componentErrors.value).every((err) => err !== null)) {
