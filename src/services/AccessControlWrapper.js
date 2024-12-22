@@ -1,80 +1,101 @@
 /**
- * Wrapper to add scope-based filtering to any data provider
+ * @typedef {import('./interfaces/DataProvider').Scope} Scope
+ * @typedef {import('./interfaces/DataProvider').QueryParams} QueryParams
  */
-export class AccessControlWrapper {
-  constructor(provider, userStore) {
-    this.provider = provider
-    this.userStore = userStore
-  }
 
+export class AccessControlWrapper {
   /**
-   * Get params based on current user's scope
-   * @returns {Object} Scope-based params for provider
+   * Filter data based on scope
+   * @param {Array} data - Raw data array
+   * @param {Scope} scope - Access scope
+   * @returns {Array} - Filtered data
    */
-  getScopeParams() {
-    const scope = this.userStore.scope
-    if (!scope) return {}
+  static filterByScope(data, scope) {
+    if (!scope) return data
 
     switch (scope.type) {
       case 'global':
-        return {}
+        return data // No filtering for global scope
+
       case 'region':
-        return { region: scope.value }
+        return data.filter(
+          (item) =>
+            // Filter by region if item has region property
+            item.region === scope.value ||
+            // Or if item has branch that belongs to the region (using branch prefix)
+            (item.branch && item.branch.startsWith(scope.value)),
+        )
+
       case 'branch':
-        return { branch: scope.value }
+        return data.filter((item) => item.branch === scope.value)
+
       case 'personal':
-        return {
-          filter: {
-            driver: this.userStore.currentUser?.name,
-          },
-        }
+        return data.filter(
+          (item) =>
+            // Filter personal deliveries/expenses
+            item.userId === scope.value ||
+            // Or assigned vehicles
+            item.assignedTo === scope.value ||
+            // Or if the user is the driver
+            item.driver === scope.value,
+        )
+
       default:
-        return {}
+        return []
     }
   }
 
   /**
-   * Fetch data with automatic scope filtering
-   * @param {string} resource - Resource name
-   * @param {Object} params - Additional query parameters
+   * Wrap a data provider to add scope-based filtering
+   * @param {Object} provider - Data provider instance
+   * @returns {Object} - Wrapped provider with scope filtering
    */
-  async fetch(resource, params = {}) {
-    const scopeParams = this.getScopeParams()
-    return this.provider.fetch(resource, {
-      ...params,
-      ...scopeParams,
-    })
-  }
+  static wrapProvider(provider) {
+    return {
+      ...provider,
 
-  /**
-   * Get stats with automatic scope filtering
-   * @param {string} resource - Resource name
-   * @param {Object} params - Additional parameters
-   */
-  async getStats(resource, params = {}) {
-    const scopeParams = this.getScopeParams()
+      /**
+       * Fetch data with scope-based filtering
+       * @param {string} resource
+       * @param {Scope} scope
+       * @param {QueryParams} params
+       */
+      async fetchWithScope(resource, scope, params = {}) {
+        // First get data using original fetch
+        const result = await provider.fetch(resource, params)
 
-    switch (resource) {
-      case 'deliveries':
-        return this.provider.getDeliveryStats({
-          ...params,
-          ...scopeParams,
-        })
-      case 'expenses':
-        return this.provider.getExpenseStats({
-          ...params,
-          ...scopeParams,
-        })
-      case 'vehicles':
-        return this.provider.getVehicleStats({
-          ...params,
-          ...scopeParams,
-        })
-      default:
-        return this.provider.getStats(resource, {
-          ...params,
-          ...scopeParams,
-        })
+        // Then filter the data based on scope
+        const filteredData = this.filterByScope(result.data, scope)
+
+        return {
+          ...result,
+          data: filteredData,
+          total: filteredData.length,
+        }
+      },
+
+      /**
+       * Get stats with scope-based filtering
+       * @param {string} resource
+       * @param {Scope} scope
+       * @param {Object} options
+       */
+      async getStats(resource, scope, options = {}) {
+        // Get filtered data first
+        const { data } = await this.fetchWithScope(resource, scope)
+
+        // Then calculate stats based on the resource type
+        switch (resource) {
+          case 'deliveries':
+            return provider.getDeliveryStats({ ...options, data })
+          case 'expenses':
+            return provider.getExpenseStats({ ...options, data })
+          case 'vehicles':
+            return provider.getVehicleStats({ ...options, data })
+          default:
+            throw new Error(`Stats not implemented for resource: ${resource}`)
+        }
+      },
     }
   }
 }
