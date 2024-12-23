@@ -183,7 +183,7 @@ export default {
       fuel: 'Fuel',
       maintenance: 'Maintenance',
       vehicleLicense: 'Vehicle License',
-      labour: 'Labour/Manpower',
+      labour: 'Unloading Labour',
       parkingToll: 'Parking, Toll & Retribution',
       insurance: 'Insurances',
       others: 'Others',

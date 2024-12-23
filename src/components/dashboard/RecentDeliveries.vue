@@ -18,7 +18,7 @@
         </div>
         <!-- Metric (1 row) -->
         <div class="flex items-center gap-2">
-          <div class="text-2xl font-bold text-blue-900">
+          <div class="text-3xl font-bold text-blue-900">
             {{ loading ? '...' : stats?.total || 0 }}
           </div>
           <div v-if="stats?.trend" class="text-sm text-blue-600">
@@ -26,9 +26,9 @@
           </div>
         </div>
         <!-- Stats Label (1 row) -->
-        <div class="text-xs text-blue-600">{{ t('deliveries.stats.fromLastWeek') }}</div>
+        <div class="text-xs mt-1 text-blue-600">{{ t('deliveries.stats.fromLastWeek') }}</div>
         <!-- Drilldown (1 row) -->
-        <div class="text-xs text-right text-blue-600 hover:underline cursor-pointer">
+        <div class="text-xs mt-3 text-right text-blue-600 hover:underline cursor-pointer">
           {{ t('common.viewDetails') }} →
         </div>
       </div>
@@ -41,7 +41,7 @@
         </div>
         <!-- Metric (1 row) -->
         <div class="flex items-center gap-2">
-          <div class="text-2xl font-bold text-green-900">
+          <div class="text-3xl font-bold text-green-900">
             {{ loading ? '...' : calculateCompletionRate() }}%
           </div>
           <div v-if="stats?.completionTrend" class="text-sm text-green-600">
@@ -49,9 +49,9 @@
           </div>
         </div>
         <!-- Stats Label (1 row) -->
-        <div class="text-xs text-green-600">{{ t('deliveries.stats.thisWeek') }}</div>
+        <div class="text-xs mt-1 text-green-600">{{ t('deliveries.stats.thisWeek') }}</div>
         <!-- Drilldown (1 row) -->
-        <div class="text-xs text-right text-green-600 hover:underline cursor-pointer">
+        <div class="text-xs mt-3 text-right text-green-600 hover:underline cursor-pointer">
           {{ t('common.viewDetails') }} →
         </div>
       </div>

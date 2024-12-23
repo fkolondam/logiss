@@ -194,7 +194,7 @@ export default {
       fuel: 'Bahan Bakar',
       maintenance: 'Pemeliharaan',
       vehicleLicense: 'Surat Kendaraan',
-      labour: 'Kuli/Tenaga Kerja',
+      labour: 'Kuli Bongkar',
       parkingToll: 'Parkir, Tol & Retribusi',
       insurance: 'Asuransi',
       others: 'Lainnya',

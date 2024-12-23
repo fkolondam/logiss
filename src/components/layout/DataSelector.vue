@@ -26,7 +26,7 @@
       </div>
 
       <!-- Scope Groups -->
-      <div class="flex-1 p-2 space-y-1 overflow-y-auto">
+      <div class="flex-1 p-2 space-y-1 overflow-y-auto max-h-40">
         <!-- Global -->
         <div>
           <div class="px-2 py-1.5 text-xs font-medium text-gray-500 uppercase">

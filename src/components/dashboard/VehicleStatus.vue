@@ -19,7 +19,7 @@
         </div>
         <!-- Metric (1 row) -->
         <div class="flex items-center gap-2">
-          <div class="text-2xl font-bold text-green-900">
+          <div class="text-3xl font-bold text-green-900">
             {{ loading ? '...' : calculateUtilizationRate() }}%
           </div>
           <div v-if="stats?.utilizationTrend" class="text-sm text-green-600">
@@ -27,9 +27,9 @@
           </div>
         </div>
         <!-- Stats Label (1 row) -->
-        <div class="text-xs text-green-600">{{ t('vehicles.stats.utilization') }}</div>
+        <div class="text-xs mt-1 text-green-600">{{ t('vehicles.stats.utilization') }}</div>
         <!-- Drilldown (1 row) -->
-        <div class="text-xs text-right text-green-600 hover:underline cursor-pointer">
+        <div class="text-xs mt-3 text-right text-green-600 hover:underline cursor-pointer">
           {{ t('common.viewDetails') }} →
         </div>
       </div>
@@ -42,7 +42,7 @@
         </div>
         <!-- Metric (1 row) -->
         <div class="flex items-center gap-2">
-          <div class="text-2xl font-bold text-orange-900">
+          <div class="text-3xl font-bold text-orange-900">
             {{ loading ? '...' : calculateMaintenanceRate() }}%
           </div>
           <div v-if="stats?.maintenanceTrend" class="text-sm text-orange-600">
@@ -50,9 +50,9 @@
           </div>
         </div>
         <!-- Stats Label (1 row) -->
-        <div class="text-xs text-orange-600">{{ t('vehicles.stats.maintenanceRate') }}</div>
+        <div class="text-xs mt-1 text-orange-600">{{ t('vehicles.stats.maintenanceRate') }}</div>
         <!-- Drilldown (1 row) -->
-        <div class="text-xs text-right text-orange-600 hover:underline cursor-pointer">
+        <div class="text-xs mt-3 text-right text-orange-600 hover:underline cursor-pointer">
           {{ t('common.viewDetails') }} →
         </div>
       </div>

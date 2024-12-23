@@ -16,7 +16,7 @@
       </div>
       <!-- Metric (1 row) -->
       <div class="flex items-center gap-2">
-        <div class="text-2xl font-bold text-green-900">
+        <div class="text-3xl font-bold text-green-900">
           {{ loading ? '...' : formatCurrency(stats?.totalAmount || 0) }}
         </div>
         <div v-if="stats?.trend" class="flex items-center gap-1">
@@ -28,11 +28,11 @@
         </div>
       </div>
       <!-- Stats Label (1 row) -->
-      <div class="text-xs text-green-600">
+      <div class="text-xs mt-1 text-green-600">
         {{ stats?.trend > 0 ? t('expenses.increased') : t('expenses.decreased') }}
       </div>
       <!-- Drilldown (1 row) -->
-      <div class="text-xs text-right text-green-600 hover:underline cursor-pointer">
+      <div class="text-xs text-right text-green-600 mt-3 hover:underline cursor-pointer">
         {{ t('common.viewDetails') }} →
       </div>
     </div>

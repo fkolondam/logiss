@@ -17,7 +17,7 @@
     <!-- Enhanced Dropdown Menu -->
     <div
       v-if="isOpen"
-      class="fixed inset-x-0 top-16 bottom-16 md:absolute md:inset-x-auto md:left-0 md:top-full md:bottom-auto md:w-[320px] bg-white md:rounded-lg shadow-lg border-x md:border border-gray-200 z-50 flex flex-col"
+      class="fixed inset-x-0 top-16 bottom-16 md:absolute md:inset-x-auto md:left-0 md:top-full md:bottom-auto md:w-[320px] md:max-h-[400px] bg-white md:rounded-lg shadow-lg border-x md:border border-gray-200 z-50 flex flex-col"
     >
       <!-- Header with Search -->
       <div class="sticky top-0 p-4 border-b bg-white">
