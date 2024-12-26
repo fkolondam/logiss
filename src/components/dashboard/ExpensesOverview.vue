@@ -28,7 +28,7 @@
         </div>
       </div>
       <!-- Stats Label (1 row) -->
-      <div class="text-xs mt-1 text-green-600">
+      <div class="text-xs mt-1.5 text-green-600">
         {{ stats?.trend > 0 ? t('expenses.increased') : t('expenses.decreased') }}
       </div>
       <!-- Drilldown (1 row) -->

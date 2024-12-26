@@ -28,7 +28,10 @@
         <!-- Stats Label (1 row) -->
         <div class="text-xs mt-1 text-blue-600">{{ t('deliveries.stats.fromLastWeek') }}</div>
         <!-- Drilldown (1 row) -->
-        <div class="text-xs mt-3 text-right text-blue-600 hover:underline cursor-pointer">
+        <div
+          class="text-xs mt-3 text-right text-blue-600 hover:underline cursor-pointer"
+          @click="navigateToDetails('todayDeliveries')"
+        >
           {{ t('common.viewDetails') }} →
         </div>
       </div>
