@@ -1,29 +1,61 @@
 <template>
+  <!-- Deliveries View Component -->
   <div>
-    <div class="flex items-center justify-between mb-6">
-      <h1 class="text-2xl font-heading font-bold text-gray-900">{{ t('deliveries.title') }}</h1>
-    </div>
-    
-    <!-- Stats Section -->
-    <DeliveryStats :stats="stats" :loading="loadingStats" />
+    <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
+      <div class="flex items-center gap-4">
+        <h1 class="text-2xl font-heading font-bold text-gray-900">{{ t('deliveries.title') }}</h1>
+      </div>
 
-    <!-- Table with Search and Filters -->
-    <div class="relative transition-all duration-300 ease-out-cubic"
-         :class="{ 'mr-96': !isMobile && showSidebar }">
-      <div v-if="loading" 
-           class="absolute inset-0 bg-white/80 backdrop-blur-sm z-10 flex items-center justify-center">
-        <div class="flex flex-col items-center gap-3">
-          <Loader2 class="w-8 h-8 text-primary-500 animate-spin" />
-          <span class="text-sm text-gray-600">{{ t('deliveries.loading') }}</span>
+      <!-- Period Selector -->
+      <div class="w-full sm:w-auto">
+        <div
+          class="grid grid-cols-3 w-full text-sm border border-gray-200 rounded-lg overflow-hidden bg-white"
+        >
+          <button
+            v-for="period in periods"
+            :key="period.value"
+            @click="handlePeriodChange(period.value)"
+            class="px-4 py-2 font-medium text-center transition-all duration-200 relative"
+            :class="[
+              currentPeriod === period.value
+                ? 'bg-blue-500 text-white'
+                : 'text-gray-600 hover:bg-gray-50',
+            ]"
+            :disabled="isLoading"
+          >
+            {{ period.label }}
+            <div
+              v-if="loadingStates[period.value]"
+              class="absolute inset-0 bg-black/5 flex items-center justify-center"
+            >
+              <Loader2 class="w-4 h-4 animate-spin text-current" />
+            </div>
+          </button>
         </div>
       </div>
+    </div>
 
-      <div class="overflow-x-auto" :class="{ 'scroll-smooth': !isMobile && showSidebar }">
-        <DeliveriesTable 
-          :deliveries="deliveries"
-          @show-detail="viewDelivery"
-        />
+    <!-- Error Alert -->
+    <div v-if="error" class="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg animate-fadeIn">
+      <div class="flex items-center gap-2 text-red-700">
+        <AlertCircle class="w-5 h-5" />
+        <span class="font-medium">{{ error }}</span>
       </div>
+    </div>
+
+    <!-- Stats Section -->
+    <DeliveryStats :stats="stats" :loading="loadingStates.stats" />
+
+    <!-- Table with Search and Filters -->
+    <div
+      class="relative transition-all duration-300 ease-out-cubic"
+      :class="{ 'mr-96': !isMobile && showSidebar }"
+    >
+      <DeliveriesTable
+        :deliveries="deliveries"
+        :loading="loadingStates.deliveries"
+        @show-detail="viewDelivery"
+      />
     </div>
 
     <!-- Detail Sidebar -->
@@ -35,13 +67,8 @@
       leave-from-class="translate-x-0"
       leave-to-class="translate-x-full"
     >
-      <div v-if="selectedDelivery && showSidebar" 
-           class="fixed inset-y-0 right-0 w-96">
-        <DeliveryDetail
-          :delivery="selectedDelivery"
-          :is-mobile="isMobile"
-          @close="closeDetail"
-        />
+      <div v-if="selectedDelivery && showSidebar" class="fixed inset-y-0 right-0 w-96">
+        <DeliveryDetail :delivery="selectedDelivery" :is-mobile="isMobile" @close="closeDetail" />
       </div>
     </Transition>
   </div>
@@ -52,60 +79,54 @@ import { ref, computed, onMounted, inject, onBeforeUnmount, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useAppStore } from '../stores/app'
 import { useTranslations } from '../composables/useTranslations'
-import { dataProviderFactory } from '../services/DataProviderFactory'
-import { Loader2 } from 'lucide-vue-next'
+import { useDeliveriesData } from '../composables/useDeliveriesData'
+import { Loader2, AlertCircle } from 'lucide-vue-next'
 import DeliveryStats from '../components/deliveries/DeliveryStats.vue'
 import DeliveryDetail from '../components/deliveries/DeliveryDetail.vue'
 import DeliveriesTable from '../components/deliveries/DeliveriesTable.vue'
+import { PERIODS } from '../constants/periods'
 
 const { t } = useTranslations()
 const appStore = useAppStore()
 const route = useRoute()
 const router = useRouter()
-const provider = dataProviderFactory.getProvider()
 const isMobile = inject('isMobile', ref(false))
 
-const deliveries = ref([])
-const stats = ref({})
-const loading = ref(true)
-const loadingStats = ref(true)
+// Use the new composable
+const {
+  isLoading,
+  loadingStates,
+  error,
+  deliveries,
+  stats,
+  currentPeriod,
+  refreshData,
+  getDateRange,
+} = useDeliveriesData()
+
 const selectedDelivery = ref(null)
+
+// Available periods for selection
+const periods = computed(() => [
+  { value: PERIODS.TODAY, label: t('common.periods.today') },
+  { value: PERIODS.THIS_WEEK, label: t('common.periods.this_week') },
+  { value: PERIODS.THIS_MONTH, label: t('common.periods.this_month') },
+])
 
 // Computed property to control sidebar visibility
 const showSidebar = computed(() => {
   return route.name === 'deliveries' && appStore.rightSidebarOpen
 })
 
-const fetchDeliveries = async () => {
-  loading.value = true
-  try {
-    const params = { sort: 'date,desc' }
-    deliveries.value = await provider.fetch('deliveries', params)
-    
-    // Restore selected delivery if exists in sidebar history
-    if (appStore.shouldRestoreSidebar('deliveries')) {
-      const { deliveryId } = appStore.sidebarHistory['deliveries']
-      const delivery = deliveries.value.find(d => d.invoice === deliveryId)
-      if (delivery) {
-        selectedDelivery.value = delivery
-        appStore.restoreSidebarState('deliveries')
-      }
-    }
-  } catch (error) {
-    console.error('Error fetching deliveries:', error)
-  } finally {
-    loading.value = false
-  }
-}
+// Handle period change
+const handlePeriodChange = async (period) => {
+  if (currentPeriod.value === period || isLoading.value) return
 
-const fetchStats = async () => {
-  loadingStats.value = true
   try {
-    stats.value = await provider.getDeliveryStats()
-  } catch (error) {
-    console.error('Error fetching stats:', error)
-  } finally {
-    loadingStats.value = false
+    currentPeriod.value = period
+    await refreshData()
+  } catch (e) {
+    console.error('Error changing period:', e)
   }
 }
 
@@ -134,14 +155,14 @@ watch(
       // Coming back to deliveries view
       if (appStore.shouldRestoreSidebar('deliveries')) {
         const deliveryId = appStore.sidebarHistory['deliveries'].deliveryId
-        const delivery = deliveries.value.find(d => d.invoice === deliveryId)
+        const delivery = deliveries.value.find((d) => d.invoice === deliveryId)
         if (delivery) {
           selectedDelivery.value = delivery
         }
       }
     }
   },
-  { immediate: true }
+  { immediate: true },
 )
 
 // Watch for mobile changes
@@ -153,16 +174,29 @@ watch(isMobile, (newValue) => {
   }
 })
 
+// Restore delivery from sidebar history
+const restoreDeliveryFromHistory = () => {
+  if (appStore.shouldRestoreSidebar('deliveries')) {
+    const { deliveryId } = appStore.sidebarHistory['deliveries']
+    const delivery = deliveries.value.find((d) => d.invoice === deliveryId)
+    if (delivery) {
+      selectedDelivery.value = delivery
+      appStore.restoreSidebarState('deliveries')
+    }
+  }
+}
+
 onMounted(() => {
   appStore.setCurrentView('deliveries')
-  fetchDeliveries()
-  fetchStats()
+  refreshData().then(() => {
+    restoreDeliveryFromHistory()
+  })
 })
 
 onBeforeUnmount(() => {
   // Clean up
   document.body.style.overflow = ''
-  
+
   // Save state if sidebar is open
   if (selectedDelivery.value) {
     appStore.saveSidebarState()
