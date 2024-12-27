@@ -1,19 +1,19 @@
 <template>
   <div class="relative">
     <!-- User Button (matches existing header styling) -->
-    <button 
-      @click="isOpen = !isOpen"
-      class="flex items-center gap-3 h-full"
-    >
+    <button @click="isOpen = !isOpen" class="flex items-center gap-3 h-full">
       <div class="w-8 h-8 rounded-full bg-gray-200 flex items-center justify-center">
         <UserCircle class="w-4 h-4 text-gray-500" />
       </div>
       <span class="text-sm font-medium text-gray-700 hidden md:block">{{ currentUserLabel }}</span>
-      <ChevronDown class="w-4 h-4 text-gray-500 hidden md:block" :class="{ 'rotate-180': isOpen }" />
+      <ChevronDown
+        class="w-4 h-4 text-gray-500 hidden md:block"
+        :class="{ 'rotate-180': isOpen }"
+      />
     </button>
 
     <!-- Dropdown Menu -->
-    <div 
+    <div
       v-if="isOpen"
       class="absolute right-0 mt-2 w-72 bg-white rounded-lg shadow-lg border border-gray-200 z-50"
     >
@@ -27,9 +27,7 @@
       <div class="p-2 space-y-1 max-h-[calc(100vh-200px)] overflow-y-auto">
         <!-- Global Admin -->
         <div v-if="adminUsers.length > 0">
-          <div class="px-2 py-1.5 text-xs font-medium text-gray-500 uppercase">
-            Global Admin
-          </div>
+          <div class="px-2 py-1.5 text-xs font-medium text-gray-500 uppercase">Global Admin</div>
           <button
             v-for="user in adminUsers"
             :key="user.id"
@@ -38,7 +36,7 @@
             :class="[
               currentUser?.id === user.id
                 ? 'bg-blue-50 text-blue-700'
-                : 'text-gray-600 hover:bg-gray-50'
+                : 'text-gray-600 hover:bg-gray-50',
             ]"
           >
             <UserCircle class="w-4 h-4" />
@@ -59,7 +57,7 @@
             :class="[
               currentUser?.id === user.id
                 ? 'bg-blue-50 text-blue-700'
-                : 'text-gray-600 hover:bg-gray-50'
+                : 'text-gray-600 hover:bg-gray-50',
             ]"
           >
             <UserCircle class="w-4 h-4" />
@@ -69,9 +67,7 @@
 
         <!-- Branch Managers -->
         <div v-if="branchManagerUsers.length > 0">
-          <div class="px-2 py-1.5 text-xs font-medium text-gray-500 uppercase">
-            Branch Managers
-          </div>
+          <div class="px-2 py-1.5 text-xs font-medium text-gray-500 uppercase">Branch Managers</div>
           <button
             v-for="user in branchManagerUsers"
             :key="user.id"
@@ -80,7 +76,7 @@
             :class="[
               currentUser?.id === user.id
                 ? 'bg-blue-50 text-blue-700'
-                : 'text-gray-600 hover:bg-gray-50'
+                : 'text-gray-600 hover:bg-gray-50',
             ]"
           >
             <UserCircle class="w-4 h-4" />
@@ -90,9 +86,7 @@
 
         <!-- Staff -->
         <div v-if="staffUsers.length > 0">
-          <div class="px-2 py-1.5 text-xs font-medium text-gray-500 uppercase">
-            Staff
-          </div>
+          <div class="px-2 py-1.5 text-xs font-medium text-gray-500 uppercase">Staff</div>
           <button
             v-for="user in staffUsers"
             :key="user.id"
@@ -101,7 +95,7 @@
             :class="[
               currentUser?.id === user.id
                 ? 'bg-blue-50 text-blue-700'
-                : 'text-gray-600 hover:bg-gray-50'
+                : 'text-gray-600 hover:bg-gray-50',
             ]"
           >
             <UserCircle class="w-4 h-4" />
@@ -122,7 +116,7 @@
             :class="[
               currentUser?.id === user.id
                 ? 'bg-blue-50 text-blue-700'
-                : 'text-gray-600 hover:bg-gray-50'
+                : 'text-gray-600 hover:bg-gray-50',
             ]"
           >
             <UserCircle class="w-4 h-4" />
@@ -149,30 +143,22 @@ const isOpen = ref(false)
 const currentUser = computed(() => userStore.currentUser)
 
 // Computed label for current user
-const currentUserLabel = computed(() => 
-  currentUser.value?.name || t('menu.selectUser')
-)
+const currentUserLabel = computed(() => currentUser.value?.name || t('menu.selectUser'))
 
 // Group users by role
-const adminUsers = computed(() => 
-  predefinedUsers.filter(u => u.role === 'admin')
+const adminUsers = computed(() => predefinedUsers.filter((u) => u.role === 'admin'))
+
+const regionalManagerUsers = computed(() =>
+  predefinedUsers.filter((u) => u.role === 'regional_manager'),
 )
 
-const regionalManagerUsers = computed(() => 
-  predefinedUsers.filter(u => u.role === 'regional_manager')
+const branchManagerUsers = computed(() =>
+  predefinedUsers.filter((u) => u.role === 'branch_manager'),
 )
 
-const branchManagerUsers = computed(() => 
-  predefinedUsers.filter(u => u.role === 'branch_manager')
-)
+const staffUsers = computed(() => predefinedUsers.filter((u) => u.role === 'staff'))
 
-const staffUsers = computed(() => 
-  predefinedUsers.filter(u => u.role === 'staff')
-)
-
-const operationalUsers = computed(() => 
-  predefinedUsers.filter(u => u.role === 'operational')
-)
+const operationalUsers = computed(() => predefinedUsers.filter((u) => u.role === 'operational'))
 
 // Get readable scope label
 const getScopeLabel = (scope) => {

@@ -85,6 +85,9 @@ export default {
   },
   deliveries: {
     title: 'Deliveries',
+    personal: {
+      title: 'Personal Deliveries',
+    },
     today: 'Today',
     deliveryStatus: 'Delivery Status',
     details: 'Delivery Details',
@@ -296,6 +299,10 @@ export default {
     admin: 'Administrator',
     manager: 'Manager',
     user: 'User',
+    operation: 'Field Operator',
+    staff: 'Branch Logistic SPV',
+    branch_manager: 'Branch Manager',
+    regional_manager: 'Regional Operational Manager',
   },
   errors: {
     fetchDeliveries: 'Failed to fetch deliveries', // 'Gagal mengambil data pengiriman'
@@ -318,6 +325,28 @@ export default {
     permissions: 'Permissions', // 'Izin'
     permissionsCount: '{count} permissions', // '{count} izin'
     selectUser: 'Select User', // 'Pilih Pengguna'
+  },
+  permissions: {
+    read_branch_data: 'Read Branch Data',
+    write_branch_expenses: 'Write Branch Expenses',
+    approve_branch_expenses: 'Approve Branch Expenses',
+    view_branch_dashboard: 'View Branch Dashboard',
+    view_branch_deliveries: 'View Branch Deliveries',
+    view_branch_vehicles: 'View Branch Vehicles',
+    read_region_data: 'Read Region Data',
+    write_region_data: 'Write Region Data',
+    write_branch_data: 'Write Branch Data',
+    approve_region_expenses: 'Approve Region Expenses',
+    view_region_dashboard: 'View Region Dashboard',
+    manage_region_vehicles: 'Manage Region Vehicles',
+    manage_branch_vehicles: 'Manage Branch Vehicles',
+    view_branch_expenses: 'View Branch Expenses',
+    read_personal_data: 'Read Personal Data',
+    write_delivery: 'Input Delivery',
+    write_expenses: 'Input Expenses',
+    view_personal_dashboard: 'View Personal Dashboard',
+    view_assigned_vehicle: 'View Assigned Vehicle',
+    all: 'All Permissions',
   },
   profile: {
     title: 'Profile', // 'Profil'

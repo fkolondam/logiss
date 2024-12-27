@@ -1,13 +1,22 @@
 <template>
-  <!-- Deliveries View Component -->
-  <div>
+  <div v-if="canAccessDeliveries">
     <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
       <div class="flex items-center gap-4">
-        <h1 class="text-2xl font-heading font-bold text-gray-900">{{ t('deliveries.title') }}</h1>
+        <h1 class="text-2xl font-heading font-bold text-gray-900">
+          {{ shouldUsePersonalDashboard ? t('deliveries.personal.title') : t('deliveries.title') }}
+        </h1>
+        <!-- Vehicle indicator for operational users -->
+        <div
+          v-if="shouldUsePersonalDashboard && assignedVehicle"
+          class="px-3 py-1 text-sm font-medium rounded-full bg-blue-50 text-blue-700 flex items-center gap-2"
+        >
+          <Truck class="w-4 h-4" />
+          {{ assignedVehicle }}
+        </div>
       </div>
 
-      <!-- Period Selector -->
-      <div class="w-full sm:w-auto">
+      <!-- Period Selector (hidden for personal dashboard) -->
+      <div v-if="!shouldUsePersonalDashboard" class="w-full sm:w-auto">
         <div
           class="grid grid-cols-3 w-full text-sm border border-gray-200 rounded-lg overflow-hidden bg-white"
         >
@@ -44,7 +53,11 @@
     </div>
 
     <!-- Stats Section -->
-    <DeliveryStats :stats="stats" :loading="loadingStates.stats" />
+    <DeliveryStats
+      :stats="stats"
+      :loading="loadingStates.stats"
+      :is-personal="shouldUsePersonalDashboard"
+    />
 
     <!-- Table with Search and Filters -->
     <div
@@ -54,6 +67,7 @@
       <DeliveriesTable
         :deliveries="deliveries"
         :loading="loadingStates.deliveries"
+        :is-personal="shouldUsePersonalDashboard"
         @show-detail="viewDelivery"
       />
     </div>
@@ -68,9 +82,29 @@
       leave-to-class="translate-x-full"
     >
       <div v-if="selectedDelivery && showSidebar" class="fixed inset-y-0 right-0 w-96">
-        <DeliveryDetail :delivery="selectedDelivery" :is-mobile="isMobile" @close="closeDetail" />
+        <DeliveryDetail
+          :delivery="selectedDelivery"
+          :is-mobile="isMobile"
+          :is-personal="shouldUsePersonalDashboard"
+          @close="closeDetail"
+        />
       </div>
     </Transition>
+  </div>
+  <!-- Access Denied -->
+  <div v-else class="flex flex-col items-center justify-center p-8">
+    <div class="w-16 h-16 rounded-full bg-red-50 flex items-center justify-center mb-4">
+      <AlertCircle class="w-8 h-8 text-red-500" />
+    </div>
+    <h2 class="text-xl font-bold text-gray-900 mb-2">{{ t('common.accessDenied') }}</h2>
+    <p class="text-gray-500 text-center mb-6">{{ t('deliveries.noAccess') }}</p>
+    <router-link
+      to="/"
+      class="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-blue-50 text-blue-700 hover:bg-blue-100"
+    >
+      <ArrowLeft class="w-4 h-4" />
+      {{ t('common.backToDashboard') }}
+    </router-link>
   </div>
 </template>
 
@@ -78,9 +112,10 @@
 import { ref, computed, onMounted, inject, onBeforeUnmount, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useAppStore } from '../stores/app'
+import { useUserStore } from '../stores/user'
 import { useTranslations } from '../composables/useTranslations'
 import { useDeliveriesData } from '../composables/useDeliveriesData'
-import { Loader2, AlertCircle } from 'lucide-vue-next'
+import { Loader2, AlertCircle, Truck, ArrowLeft } from 'lucide-vue-next'
 import DeliveryStats from '../components/deliveries/DeliveryStats.vue'
 import DeliveryDetail from '../components/deliveries/DeliveryDetail.vue'
 import DeliveriesTable from '../components/deliveries/DeliveriesTable.vue'
@@ -88,11 +123,16 @@ import { PERIODS } from '../constants/periods'
 
 const { t } = useTranslations()
 const appStore = useAppStore()
+const userStore = useUserStore()
 const route = useRoute()
 const router = useRouter()
 const isMobile = inject('isMobile', ref(false))
 
-// Use the new composable
+// Get user-specific flags
+const shouldUsePersonalDashboard = computed(() => userStore.shouldUsePersonalDashboard)
+const assignedVehicle = computed(() => userStore.assignedVehicle)
+
+// Use the deliveries data composable
 const {
   isLoading,
   loadingStates,
@@ -102,6 +142,7 @@ const {
   currentPeriod,
   refreshData,
   getDateRange,
+  canAccessDeliveries,
 } = useDeliveriesData()
 
 const selectedDelivery = ref(null)
@@ -188,9 +229,11 @@ const restoreDeliveryFromHistory = () => {
 
 onMounted(() => {
   appStore.setCurrentView('deliveries')
-  refreshData().then(() => {
-    restoreDeliveryFromHistory()
-  })
+  if (canAccessDeliveries) {
+    refreshData().then(() => {
+      restoreDeliveryFromHistory()
+    })
+  }
 })
 
 onBeforeUnmount(() => {

@@ -29,7 +29,9 @@ function getCacheKey(resource, scope, params = {}) {
     }
   }
 
-  // Include period in cache key
+  // Include period and role in cache key
+  const userStore = useUserStore()
+  const roleKey = userStore.currentUser?.role || 'none'
   const periodKey = params.period || 'all'
 
   // Sort and stringify params
@@ -38,7 +40,7 @@ function getCacheKey(resource, scope, params = {}) {
     .map(([key, value]) => `${key}=${value}`)
     .join('&')
 
-  return `${resource}:${scopeKey}:${periodKey}:${paramsKey}`
+  return `${resource}:${scopeKey}:${roleKey}:${periodKey}:${paramsKey}`
 }
 
 function clearScopedCache(scope) {
@@ -89,7 +91,13 @@ function setCachedData(key, data) {
 
 export function useDeliveriesData() {
   const userStore = useUserStore()
-  const { scope: currentScope } = storeToRefs(userStore)
+  const {
+    scope: currentScope,
+    roleConfig,
+    shouldUsePersonalDashboard,
+    assignedVehicle,
+    canAccessView,
+  } = storeToRefs(userStore)
 
   // Reactive states
   const isLoading = ref(false)
@@ -106,6 +114,12 @@ export function useDeliveriesData() {
   const deliveries = ref([])
   const stats = ref({})
   const currentPeriod = ref(PERIODS.TODAY)
+
+  // Check if user can access deliveries view
+  const canAccessDeliveries = computed(() => {
+    const access = canAccessView.value('deliveries')
+    return access !== 'none' && access !== false
+  })
 
   function getDateRange(period = currentPeriod.value) {
     const now = new Date()
@@ -133,6 +147,11 @@ export function useDeliveriesData() {
   }
 
   async function fetchDeliveries(params = {}) {
+    if (!canAccessDeliveries.value) {
+      error.value = 'Access denied'
+      return
+    }
+
     loadingStates.value.deliveries = true
     error.value = null
 
@@ -146,6 +165,12 @@ export function useDeliveriesData() {
         },
         period: currentPeriod.value,
         sort: 'date,desc',
+      }
+
+      // Add role-specific parameters
+      if (shouldUsePersonalDashboard.value) {
+        fetchParams.assignedVehicle = assignedVehicle.value
+        fetchParams.personalView = true
       }
 
       // Check cache first
@@ -179,6 +204,11 @@ export function useDeliveriesData() {
   }
 
   async function fetchStats(params = {}) {
+    if (!canAccessDeliveries.value) {
+      error.value = 'Access denied'
+      return
+    }
+
     loadingStates.value.stats = true
     error.value = null
 
@@ -191,6 +221,13 @@ export function useDeliveriesData() {
           end: dateRange.end.toISOString().split('T')[0],
         },
         period: currentPeriod.value,
+      }
+
+      // Add role-specific parameters
+      if (shouldUsePersonalDashboard.value) {
+        fetchParams.assignedVehicle = assignedVehicle.value
+        fetchParams.personalStats = true
+        fetchParams.focusOnVehicle = true
       }
 
       // Check cache first
@@ -217,7 +254,7 @@ export function useDeliveriesData() {
   }
 
   async function refreshData(params = {}) {
-    if (isLoading.value) return
+    if (isLoading.value || !canAccessDeliveries.value) return
 
     const dateRange = getDateRange(currentPeriod.value)
     loadingStates.value[currentPeriod.value] = true
@@ -286,6 +323,7 @@ export function useDeliveriesData() {
     deliveries,
     stats,
     currentPeriod,
+    canAccessDeliveries,
 
     // Methods
     fetchDeliveries,

@@ -27,8 +27,8 @@
 
       <!-- Scope Groups -->
       <div class="flex-1 p-2 space-y-1 overflow-y-auto max-h-40">
-        <!-- Global -->
-        <div>
+        <!-- Global (only for admin) -->
+        <div v-if="canAccessGlobal">
           <div class="px-2 py-1.5 text-xs font-medium text-gray-500 uppercase">
             {{ t('scope.global') }}
           </div>
@@ -47,7 +47,7 @@
         </div>
 
         <!-- Regions -->
-        <div>
+        <div v-if="availableRegions.length > 0">
           <div class="px-2 py-1.5 text-xs font-medium text-gray-500 uppercase">
             {{ t('scope.regions') }}
           </div>
@@ -68,7 +68,7 @@
         </div>
 
         <!-- Branches -->
-        <div>
+        <div v-if="availableBranches.length > 0">
           <div class="px-2 py-1.5 text-xs font-medium text-gray-500 uppercase">
             {{ t('scope.branches') }}
           </div>
@@ -108,21 +108,57 @@ import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { Database, ChevronDown, Globe, Map, Building2, RefreshCw } from 'lucide-vue-next'
 import { useUserStore } from '../../stores/user'
 import { useTranslations } from '../../composables/useTranslations'
-import { branchConfig } from '../../services/mockdata/generators/branchData'
+import { regionBranches } from '../../config/users'
 
 const userStore = useUserStore()
 const { t } = useTranslations()
+
+// UI State
 const isOpen = ref(false)
 
 // Current scope from store
 const currentScope = computed(() => userStore.scope)
+const currentUser = computed(() => userStore.currentUser)
 
-// Available regions and branches
-const availableRegions = computed(() => [
-  ...new Set(Object.values(branchConfig).map((b) => b.region)),
-])
+// Check if user can access global scope
+const canAccessGlobal = computed(() => currentUser.value?.role === 'admin')
 
-const availableBranches = computed(() => Object.keys(branchConfig))
+// Available regions based on user role
+const availableRegions = computed(() => {
+  switch (currentUser.value?.role) {
+    case 'admin':
+      return Object.keys(regionBranches)
+    case 'regional_manager':
+      return [currentUser.value.scope.value]
+    case 'branch_manager':
+    case 'staff':
+    case 'operational':
+      return currentUser.value.region ? [currentUser.value.region] : []
+    default:
+      return []
+  }
+})
+
+// Available branches based on user role
+const availableBranches = computed(() => {
+  switch (currentUser.value?.role) {
+    case 'admin':
+      // Admin can see all branches
+      return Object.values(regionBranches).flat()
+    case 'regional_manager':
+      // Regional manager can see all branches in their region
+      return regionBranches[currentUser.value.scope.value] || []
+    case 'branch_manager':
+    case 'staff':
+      // Branch level users can only see their branch
+      return [currentUser.value.scope.value]
+    case 'operational':
+      // Operational users can only see their assigned branch
+      return [currentUser.value.branch]
+    default:
+      return []
+  }
+})
 
 // Computed label for current scope
 const currentScopeLabel = computed(() => {
@@ -132,9 +168,9 @@ const currentScopeLabel = computed(() => {
     case 'global':
       return t('scope.allData')
     case 'region':
-      return currentScope.value.value
+      return `${t('scope.region')}: ${currentScope.value.value}`
     case 'branch':
-      return currentScope.value.value
+      return `${t('scope.branch')}: ${currentScope.value.value}`
     default:
       return t('dataSelector.selectScope')
   }
@@ -142,8 +178,10 @@ const currentScopeLabel = computed(() => {
 
 // Handle scope selection
 const selectScope = (scope) => {
-  userStore.setScope(scope)
-  isOpen.value = false
+  if (userStore.canSelectScope(scope)) {
+    userStore.setScope(scope)
+    isOpen.value = false
+  }
 }
 
 // Clear scope selection

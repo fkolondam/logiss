@@ -1,122 +1,99 @@
 import { defineStore } from 'pinia'
-import { predefinedUsers, roles, expensePermissions } from '../config/users'
-
-/**
- * @typedef {import('../services/interfaces/AccessControl').User} User
- * @typedef {import('../services/interfaces/DataProvider').Scope} Scope
- */
+import {
+  predefinedUsers,
+  roles,
+  expensePermissions,
+  viewAccess,
+  dashboardConfig,
+  regionBranches,
+} from '../config/users'
 
 export const useUserStore = defineStore('user', {
-  state: () => ({
-    /** @type {User|null} */
-    currentUser: null,
-    /** @type {Scope|null} */
-    selectedScope: null,
-    /** @type {string|null} */
-    error: null,
-  }),
+  state() {
+    return {
+      currentUser: null,
+      selectedScope: null,
+      error: null,
+    }
+  },
 
   getters: {
-    /**
-     * Get current scope (selected or user's default)
-     * @returns {Scope|null}
-     */
-    scope: (state) => state.selectedScope || state.currentUser?.scope || null,
-
-    /**
-     * Get current user's role configuration
-     * @returns {Object|null}
-     */
-    roleConfig: (state) => (state.currentUser ? roles[state.currentUser.role] : null),
-
-    /**
-     * Check if user has specific permission
-     * @returns {function(string): boolean}
-     */
-    hasPermission: (state) => (permission) => {
-      if (!state.currentUser) return false
-      const userRole = roles[state.currentUser.role]
-      return userRole.permissions.includes('all') || userRole.permissions.includes(permission)
+    scope() {
+      return this.selectedScope || this.currentUser?.scope || null
     },
 
-    /**
-     * Check if user can access specific expense category
-     * @returns {function(string): boolean}
-     */
-    canAccessExpenseCategory: (state) => (category) => {
-      if (!state.currentUser) return false
-
-      // Admin and managers can access all categories
-      if (['admin', 'regional_manager', 'branch_manager'].includes(state.currentUser.role)) {
-        return true
-      }
-
-      // Staff can view but not modify
-      if (state.currentUser.role === 'staff') {
-        return true
-      }
-
-      // Operational users can only access their allowed categories
-      if (state.currentUser.role === 'operational') {
-        return expensePermissions.operational.includes(category)
-      }
-
-      return false
+    roleConfig() {
+      return this.currentUser ? roles[this.currentUser.role] : null
     },
 
-    /**
-     * Check if user can modify specific expense category
-     * @returns {function(string): boolean}
-     */
-    canModifyExpenseCategory: (state) => (category) => {
-      if (!state.currentUser) return false
-
-      // Admin and managers can modify all categories
-      if (['admin', 'regional_manager', 'branch_manager'].includes(state.currentUser.role)) {
-        return true
-      }
-
-      // Operational users can only modify their allowed categories
-      if (state.currentUser.role === 'operational') {
-        return expensePermissions.operational.includes(category)
-      }
-
-      return false
+    dashboardConfig() {
+      return this.currentUser ? dashboardConfig[this.currentUser.role] : null
     },
 
-    /**
-     * Check if user can select a specific scope
-     * @returns {function(Scope): boolean}
-     */
-    canSelectScope: (state) => (scope) => {
-      if (!state.currentUser) return false
-      const userRole = roles[state.currentUser.role]
+    viewAccess() {
+      return this.currentUser ? viewAccess : null
+    },
 
-      switch (userRole.level) {
-        case 'global':
-          return true
-        case 'region':
-          return (
-            scope.type === 'global' ||
-            (scope.type === 'region' && scope.value === state.currentUser.scope.value) ||
-            (scope.type === 'branch' && scope.value.startsWith(state.currentUser.scope.value))
-          )
-        case 'branch':
-          return scope.type === 'branch' && scope.value === state.currentUser.scope.value
-        case 'personal':
-          return scope.type === 'personal' && scope.value === state.currentUser.scope.value
+    accessibleBranches() {
+      if (!this.currentUser) return []
+
+      switch (this.currentUser.role) {
+        case 'admin':
+          return Object.values(regionBranches).flat()
+        case 'regional_manager':
+          return regionBranches[this.currentUser.scope.value] || []
+        case 'branch_manager':
+        case 'staff':
+          return [this.currentUser.scope.value]
+        case 'operational':
+          return [this.currentUser.branch]
         default:
-          return false
+          return []
       }
+    },
+
+    currentRegion() {
+      if (!this.currentUser) return null
+
+      switch (this.currentUser.role) {
+        case 'regional_manager':
+          return this.currentUser.scope.value
+        case 'branch_manager':
+        case 'staff':
+        case 'operational':
+          return this.currentUser.region
+        default:
+          return null
+      }
+    },
+
+    hasPermission() {
+      return (permission) => {
+        if (!this.currentUser) return false
+        const userRole = roles[this.currentUser.role]
+        return userRole.permissions.includes('all') || userRole.permissions.includes(permission)
+      }
+    },
+
+    canAccessView() {
+      return (viewName) => {
+        if (!this.currentUser) return false
+        const role = this.currentUser.role
+        return viewAccess[viewName]?.[role] || false
+      }
+    },
+
+    shouldUsePersonalDashboard() {
+      return this.currentUser?.role === 'operational' || false
+    },
+
+    assignedVehicle() {
+      if (!this.currentUser || this.currentUser.role !== 'operational') return null
+      return this.currentUser.assignedVehicle || null
     },
   },
 
   actions: {
-    /**
-     * Switch to a different user
-     * @param {string} userId
-     * @returns {Promise<void>}
-     */
     async switchUser(userId) {
       const user = predefinedUsers.find((u) => u.id === userId)
       if (!user) {
@@ -125,79 +102,96 @@ export const useUserStore = defineStore('user', {
       }
 
       this.currentUser = user
-      this.selectedScope = null // Reset scope when switching users
+      this.selectedScope = null
       this.error = null
     },
 
-    /**
-     * Set selected scope
-     * @param {Scope} scope
-     */
     setScope(scope) {
       if (this.canSelectScope(scope)) {
         this.selectedScope = scope
       }
     },
 
-    /**
-     * Clear selected scope (revert to user's default scope)
-     */
     clearScope() {
       this.selectedScope = null
     },
 
-    /**
-     * Clear current user
-     */
     clearUser() {
       this.currentUser = null
       this.selectedScope = null
       this.error = null
     },
 
-    /**
-     * Check if user can access specific branch
-     * @param {string} branchId
-     * @returns {boolean}
-     */
     canAccessBranch(branchId) {
       if (!this.currentUser) return false
 
-      switch (this.scope.type) {
-        case 'global':
+      switch (this.currentUser.role) {
+        case 'admin':
           return true
-        case 'region':
-          // TODO: Check if branch is in user's region
-          return true
-        case 'branch':
-          return this.scope.value === branchId
-        case 'personal':
-          // Operational users can only access their assigned branch
-          return this.scope.value === branchId
+        case 'regional_manager':
+          return regionBranches[this.currentUser.scope.value]?.includes(branchId)
+        case 'branch_manager':
+        case 'staff':
+          return this.currentUser.scope.value === branchId
+        case 'operational':
+          return this.currentUser.branch === branchId
         default:
           return false
       }
     },
 
-    /**
-     * Check if user can access specific vehicle
-     * @param {string} vehicleId
-     * @returns {boolean}
-     */
     canAccessVehicle(vehicleId) {
       if (!this.currentUser) return false
 
-      switch (this.scope.type) {
-        case 'global':
-        case 'region':
-        case 'branch':
+      switch (this.currentUser.role) {
+        case 'admin':
           return true
-        case 'personal':
-          // TODO: Check if vehicle is assigned to user
-          return true
+        case 'regional_manager':
+          return true // TODO: Implement vehicle-to-branch mapping check
+        case 'branch_manager':
+        case 'staff':
+          return true // TODO: Implement vehicle-to-branch mapping check
+        case 'operational':
+          return vehicleId === this.currentUser.assignedVehicle
         default:
           return false
       }
+    },
+
+    canSelectScope(scope) {
+      if (!this.currentUser) return false
+
+      switch (this.currentUser.role) {
+        case 'admin':
+          return true
+        case 'regional_manager':
+          return (
+            scope.type === 'global' ||
+            (scope.type === 'region' && scope.value === this.currentUser.scope.value) ||
+            (scope.type === 'branch' &&
+              regionBranches[this.currentUser.scope.value]?.includes(scope.value))
+          )
+        case 'branch_manager':
+        case 'staff':
+          return scope.type === 'branch' && scope.value === this.currentUser.scope.value
+        case 'operational':
+          return scope.type === 'personal' && scope.value === this.currentUser.scope.value
+        default:
+          return false
+      }
+    },
+
+    getBranchesInRegion(region) {
+      return regionBranches[region] || []
+    },
+
+    getRegionForBranch(branch) {
+      for (const [region, branches] of Object.entries(regionBranches)) {
+        if (branches.includes(branch)) {
+          return region
+        }
+      }
+      return null
     },
   },
 })
