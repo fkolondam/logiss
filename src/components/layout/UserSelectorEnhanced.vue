@@ -14,7 +14,7 @@
         <!-- Role Level Indicator -->
         <div
           v-if="currentUser"
-          class="absolute -bottom-1 -right-1 w-4 h-4 rounded-full flex items-center justify-center text-[10px] font-medium border-2 border-white"
+          class="absolute -bottom-1 -right-1 w-4 h-4 rounded-full flex items-center justify-center text-[10px] font-medium border-1 border-white"
           :class="getRoleLevelClass(currentUser.role)"
         >
           {{ getRoleLevelIcon(currentUser.role) }}
@@ -33,44 +33,76 @@
         class="w-4 h-4 text-gray-500 hidden md:block transition-transform duration-200"
         :class="{ 'rotate-180': isOpen }"
       />
-
-      <!-- Tooltip on Hover -->
-      <div
-        class="absolute hidden group-hover:block top-full left-0 mt-1 w-48 p-2 bg-gray-800 text-white text-xs rounded-md shadow-lg"
-      >
-        <div class="font-medium">{{ t(`roles.${currentUser?.role || 'none'}`) }}</div>
-        <div class="text-gray-300 text-[10px] mt-0.5">
-          {{ t(`scope.level.${roles[currentUser?.role]?.level || 'none'}`) }}
-        </div>
-      </div>
     </button>
+
+    <!-- Backdrop Overlay for Mobile -->
+    <div
+      v-if="isMobile && isOpen"
+      class="fixed inset-0 bg-black/50 z-[15] top-[72px] bottom-[72px] transition-opacity duration-300 ease-out-cubic"
+      :class="{ 'opacity-0 pointer-events-none': !isOpen }"
+      @click="isOpen = false"
+    ></div>
 
     <!-- Enhanced Dropdown Menu -->
     <div
       v-if="isOpen"
-      class="absolute right-0 mt-2 w-[420px] bg-white rounded-lg shadow-lg border border-gray-200 z-50"
+      class="bg-white z-[16] flex flex-col transform will-change-transform transition-transform duration-300 ease-out-cubic"
+      :class="[
+        isMobile
+          ? 'fixed inset-x-0 top-[72px] bottom-[72px] shadow-none'
+          : 'absolute right-0 top-[calc(100%+0px)] w-[420px] rounded-lg shadow-lg border border-white-200',
+        !isOpen ? 'translate-x-full' : 'translate-x-0',
+      ]"
     >
-      <!-- Search & Quick Filters -->
-      <div class="p-4 border-b space-y-3">
-        <!-- Search -->
-        <div class="relative">
-          <Search class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-          <input
-            v-model="searchQuery"
-            type="text"
-            class="w-full pl-9 pr-4 py-2 text-sm border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-            :placeholder="t('userSelector.searchPlaceholder')"
-          />
+      <!-- Mobile Header -->
+      <div
+        v-if="isMobile"
+        class="flex items-center justify-between h-14 px-3 border-b border-white-200/80"
+      >
+        <div class="flex items-center gap-3">
+          <button
+            @click="isOpen = false"
+            class="p-2 -ml-2 rounded-full text-gray-400 hover:text-gray-600 hover:bg-gray-100/80 active:bg-gray-200/80 transition-all duration-200"
+          >
+            <ArrowLeft class="w-5 h-5" />
+          </button>
+          <h2 class="text-lg font-display font-bold tracking-tight text-gray-900">Pilih User</h2>
         </div>
+      </div>
 
+      <!-- Tabs -->
+      <div class="flex border-b border-white-200/80 bg-white/80 backdrop-blur-sm">
+        <button
+          v-for="tab in tabs"
+          :key="tab.key"
+          @click="activeTab = tab.key"
+          class="flex-1 flex items-center justify-center gap-1.5 relative text-sm font-medium transition-all duration-200"
+          :class="[
+            isMobile ? 'px-2 py-2' : 'px-3 py-2.5',
+            activeTab === tab.key
+              ? 'text-primary-600 font-medium bg-primary-50/50'
+              : 'text-gray-500 hover:text-gray-900 hover:bg-gray-50/80',
+          ]"
+        >
+          <component :is="tab.icon" class="w-4 h-4" />
+          {{ t(tab.translationKey) }}
+          <div
+            v-if="activeTab === tab.key"
+            class="absolute bottom-0 left-0 right-0 h-0.5 bg-primary-600"
+          ></div>
+        </button>
+      </div>
+
+      <!-- Quick Filters (Desktop Only) -->
+      <div v-if="activeTab === 'selector'" class="hidden md:block border-b p-4 space-y-3">
         <!-- Region Quick Filters -->
         <div class="flex flex-wrap gap-1.5">
           <button
             v-for="region in availableRegions"
             :key="region"
             @click="toggleRegionFilter(region)"
+            class="px-2 py-1 text-xs font-medium rounded-md transition-colors"
             :class="[
-              'px-2 py-1 text-xs font-medium rounded-md transition-colors',
               activeRegionFilters.includes(region)
                 ? 'bg-blue-100 text-blue-700'
                 : 'bg-gray-100 text-gray-600 hover:bg-gray-200',
@@ -101,7 +133,11 @@
       </div>
 
       <!-- Current User Info -->
-      <div v-if="currentUser" class="p-4 bg-blue-50/50 border-b">
+      <div
+        v-if="currentUser && activeTab === 'info'"
+        class="p-3 bg-blue-50/50 border-b"
+        :class="{ 'md:p-4': !isMobile }"
+      >
         <div class="flex items-start gap-4">
           <!-- Avatar with Role Indicator -->
           <div class="relative">
@@ -182,7 +218,11 @@
       </div>
 
       <!-- User List -->
-      <div class="max-h-[calc(100vh-500px)] overflow-y-auto">
+      <div
+        v-if="activeTab === 'selector'"
+        class="flex-1 overflow-y-auto"
+        :class="[isMobile ? 'scrollbar-elegant' : 'max-h-[calc(100vh-500px)]']"
+      >
         <!-- Role Groups -->
         <div v-for="(users, role) in filteredUsersByRole" :key="role" class="py-2">
           <div
@@ -208,8 +248,11 @@
               v-for="user in users"
               :key="user.id"
               @click="selectUser(user)"
-              class="w-full px-4 py-2 hover:bg-gray-50 transition-colors group"
-              :class="[currentUser?.id === user.id ? 'bg-blue-50/50' : '']"
+              class="w-full hover:bg-gray-50 transition-colors group"
+              :class="[
+                isMobile ? 'px-3 py-1.5' : 'px-4 py-2',
+                currentUser?.id === user.id ? 'bg-blue-50/50' : '',
+              ]"
             >
               <div class="flex items-center gap-3">
                 <!-- User Avatar with Role -->
@@ -282,6 +325,14 @@
           </div>
         </div>
       </div>
+
+      <!-- Info Tab Content -->
+      <div v-if="activeTab === 'info'" class="flex-1 overflow-y-auto scrollbar-elegant">
+        <div class="flex flex-col items-center justify-center h-full text-gray-500 p-3 md:p-4">
+          <Info class="w-8 h-8 mb-2" />
+          <p class="text-sm">{{ t('userSelector.infoTabPlaceholder') }}</p>
+        </div>
+      </div>
     </div>
   </div>
 </template>
@@ -299,6 +350,10 @@ import {
   Globe,
   Building2,
   Users,
+  ArrowLeft,
+  X,
+  Settings,
+  Info,
 } from 'lucide-vue-next'
 import { useUserStore } from '../../stores/user'
 import { predefinedUsers, roles } from '../../config/users'
@@ -313,6 +368,27 @@ const isOpen = ref(false)
 const searchQuery = ref('')
 const activeRegionFilters = ref([])
 const activeScopeFilters = ref([])
+const isMobile = ref(false)
+const activeTab = ref('selector')
+
+// Tabs configuration
+const tabs = [
+  {
+    key: 'selector',
+    translationKey: 'Pilih User',
+    icon: Users,
+  },
+  {
+    key: 'info',
+    translationKey: 'Info User',
+    icon: Info,
+  },
+]
+
+// Check if mobile on mount and window resize
+const checkMobile = () => {
+  isMobile.value = window.innerWidth < 768
+}
 
 // Available regions from branch config
 const availableRegions = computed(() => [
@@ -324,7 +400,6 @@ const scopeFilters = [
   { id: 'global', label: t('scope.global'), icon: Globe },
   { id: 'region', label: t('scope.region'), icon: Map },
   { id: 'branch', label: t('scope.branch'), icon: Building2 },
-  { id: 'personal', label: t('scope.personal'), icon: Users },
 ]
 
 // Current user from store
@@ -548,9 +623,12 @@ const handleClickOutside = (event) => {
 
 onMounted(() => {
   document.addEventListener('click', handleClickOutside)
+  checkMobile()
+  window.addEventListener('resize', checkMobile)
 })
 
 onUnmounted(() => {
   document.removeEventListener('click', handleClickOutside)
+  window.removeEventListener('resize', checkMobile)
 })
 </script>
