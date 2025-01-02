@@ -1,79 +1,52 @@
 export const sheetsConfig = {
-  spreadsheetId: process.env.SHEETS_SPREADSHEET_ID,
-  credentials: {
-    client_email: process.env.SHEETS_CLIENT_EMAIL,
-    private_key: process.env.SHEETS_PRIVATE_KEY?.replace(/\\n/g, '\n'),
-  },
-  sheets: {
-    deliveries: 'Deliveries',
-    expenses: 'Expenses',
-    vehicles: 'Vehicles'
-  },
-  headers: {
-    deliveries: [
-      'id', 'branch', 'driver', 'helper', 'vehicleNumber', 'date', 'time',
-      'customer', 'location', 'invoice', 'amount', 'payment', 'status',
-      'proofImage', 'coordinates.lat', 'coordinates.lng'
-    ],
-    expenses: [
-      'id', 'branch', 'date', 'category', 'amount', 'vehicleNumber',
-      'driver', 'description', 'status', 'receipt'
-    ],
-    vehicles: [
-      'id', 'plateNumber', 'type', 'model', 'capacity', 'status',
-      'lastServiceDate', 'nextServiceDue', 'fuelEfficiency'
-    ]
-  },
+  // Base URLs for published CSV sheets
+  deliveriesSheetUrl: import.meta.env.VITE_SHEETS_DELIVERIES_URL || '',
+  branchesSheetUrl: import.meta.env.VITE_SHEETS_BRANCHES_URL || '',
+
+  // Sheet structure definitions
   structure: {
     deliveries: {
-      startRow: 2,
-      columns: {
-        id: 'A',
-        branch: 'B',
-        driver: 'C',
-        helper: 'D',
-        vehicleNumber: 'E',
-        date: 'F',
-        time: 'G',
-        customer: 'H',
-        location: 'I',
-        invoice: 'J',
-        amount: 'K',
-        payment: 'L',
-        status: 'M',
-        proofImage: 'N',
-        'coordinates.lat': 'O',
-        'coordinates.lng': 'P'
-      }
+      // Actual CSV Headers:
+      // Timestamp,CABANG,NAMA DRIVER,NAMA HELPER,NO POLISI ARMADA,WAKTU PENGIRIMAN,
+      // NAMA TOKO,ALAMAT TOKO,NO FAKTUR,NILAI FAKTUR,PEMBAYARAN,STATUS,FOTO OUTLET,
+      // LATITUDE,LONGITUDE,COORDINATE,ID,INPUTAN,LINK FORM
+      columns: [
+        'timestamp', // Column A (0)
+        'branchName', // Column B (1) - CABANG
+        'driver', // Column C (2) - NAMA DRIVER
+        'helper', // Column D (3) - NAMA HELPER
+        'vehicleNumber', // Column E (4) - NO POLISI ARMADA
+        'date', // Column F (5) - WAKTU PENGIRIMAN
+        'customer', // Column G (6) - NAMA TOKO
+        'location', // Column H (7) - ALAMAT TOKO
+        'invoice', // Column I (8) - NO FAKTUR
+        'amount', // Column J (9) - NILAI FAKTUR
+        'paymentMethod', // Column K (10) - PEMBAYARAN
+        'status', // Column L (11) - STATUS
+        'proofImage', // Column M (12) - FOTO OUTLET
+        'coordinates.lat', // Column N (13) - LATITUDE
+        'coordinates.lng', // Column O (14) - LONGITUDE
+        'coordinate', // Column P (15) - COORDINATE
+        'id', // Column Q (16) - ID
+        'input', // Column R (17) - INPUTAN
+        'formLink', // Column S (18) - LINK FORM
+      ],
     },
-    expenses: {
-      startRow: 2,
-      columns: {
-        id: 'A',
-        branch: 'B',
-        date: 'C',
-        category: 'D',
-        amount: 'E',
-        vehicleNumber: 'F',
-        driver: 'G',
-        description: 'H',
-        status: 'I',
-        receipt: 'J'
-      }
+    branches: {
+      columns: [
+        'branchId', // Column A (0)
+        'branchName', // Column B (1)
+        'region', // Column C (2)
+        'address', // Column D (3)
+        'coordinates.lat', // Column E (4)
+        'coordinates.lng', // Column F (5)
+      ],
     },
-    vehicles: {
-      startRow: 2,
-      columns: {
-        id: 'A',
-        plateNumber: 'B',
-        type: 'C',
-        model: 'D',
-        capacity: 'E',
-        status: 'F',
-        lastServiceDate: 'G',
-        nextServiceDue: 'H',
-        fuelEfficiency: 'I'
-      }
-    }
-  }
+  },
+
+  // Cache configuration
+  cache: {
+    timeout: 5 * 60 * 1000, // 5 minutes
+    maxSize: 100, // Maximum number of cached items
+  },
 }

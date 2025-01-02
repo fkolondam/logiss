@@ -5,6 +5,7 @@ import ExpensesView from '../views/ExpensesView.vue'
 import VehiclesView from '../views/VehiclesView.vue'
 import ProfileView from '../views/ProfileView.vue'
 import LogoutView from '../views/LogoutView.vue'
+import GoogleSheetsTest from '../components/__tests__/GoogleSheetsTest.vue'
 import { useAppStore } from '../stores/app'
 
 const router = createRouter({
@@ -13,34 +14,39 @@ const router = createRouter({
     {
       path: '/',
       name: 'dashboard',
-      component: DashboardView
+      component: DashboardView,
     },
     {
       path: '/deliveries',
       name: 'deliveries',
-      component: DeliveriesView
+      component: DeliveriesView,
     },
     {
       path: '/expenses',
       name: 'expenses',
-      component: ExpensesView
+      component: ExpensesView,
     },
     {
       path: '/vehicles',
       name: 'vehicles',
-      component: VehiclesView
+      component: VehiclesView,
     },
     {
       path: '/profile',
       name: 'profile',
-      component: ProfileView
+      component: ProfileView,
     },
     {
       path: '/logout',
       name: 'logout',
-      component: LogoutView
-    }
-  ]
+      component: LogoutView,
+    },
+    {
+      path: '/test/sheets',
+      name: 'sheetsTest',
+      component: GoogleSheetsTest,
+    },
+  ],
 })
 
 // Navigation guard to handle UI state when leaving deliveries
