@@ -32,7 +32,7 @@ export function processDeliveryStats(result) {
     total: result.total || result.data.length,
     'diterima - semua': 0,
     'diterima - sebagian': 0,
-    'kirim ulang': 0,
+    'minta kirim ulang': 0,
     batal: 0,
     'batal - toko tutup': 0,
     'batal - toko tidak dapat diakses': 0,
@@ -55,8 +55,12 @@ export function processDeliveryStats(result) {
       // Count by status with validation
       const status = delivery.status?.trim().toLowerCase()
       if (status) {
-        // Increment the matching status counter
-        if (stats.hasOwnProperty(status)) {
+        // Handle 'MINTA KIRIM ULANG' case specifically
+        if (status === 'minta kirim ulang') {
+          stats['minta kirim ulang']++
+        }
+        // Handle other statuses
+        else if (stats.hasOwnProperty(status)) {
           stats[status]++
         }
         // Track raw status counts

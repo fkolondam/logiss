@@ -148,7 +148,7 @@ const statusConfigs = {
     barColor: 'bg-yellow-500',
     textColor: 'text-yellow-600',
   },
-  'kirim ulang': {
+  'minta kirim ulang': {
     icon: RefreshCw,
     iconBg: 'bg-blue-50',
     iconColor: 'text-blue-600',
@@ -194,7 +194,12 @@ const statusConfigs = {
 
 // Helper function to determine if status should be shown
 const shouldShowStatus = (status) => {
-  return props.stats?.[status] > 0 || status === 'diterima - semua' || status === 'batal'
+  return (
+    props.stats?.[status] > 0 ||
+    status === 'diterima - semua' ||
+    status === 'batal' ||
+    status === 'minta kirim ulang'
+  )
 }
 
 const calculateCompletionRate = () => {
@@ -214,7 +219,7 @@ watch(
       total: newStats?.total,
       'diterima - semua': newStats?.['diterima - semua'],
       'diterima - sebagian': newStats?.['diterima - sebagian'],
-      'kirim ulang': newStats?.['kirim ulang'],
+      'minta kirim ulang': newStats?.['minta kirim ulang'],
       batal: newStats?.['batal'],
       'batal - toko tutup': newStats?.['batal - toko tutup'],
       'batal - toko tidak dapat diakses': newStats?.['batal - toko tidak dapat diakses'],
