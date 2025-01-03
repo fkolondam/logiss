@@ -2,9 +2,29 @@ export const sheetsConfig = {
   // Base URLs for published CSV sheets
   deliveriesSheetUrl: import.meta.env.VITE_SHEETS_DELIVERIES_URL || '',
   branchesSheetUrl: import.meta.env.VITE_SHEETS_BRANCHES_URL || '',
+  expensesSheetUrl: import.meta.env.VITE_SHEETS_EXPENSES_URL || '',
 
   // Sheet structure definitions
   structure: {
+    expenses: {
+      // Actual CSV Headers:
+      // idjournal,branch,no_bukti,no_akun,akun,amount,tanggal_lengkap,keterangan,
+      // remarks tipe3_remap,Expenses Category,Komponen,Nomor Polisi
+      columns: [
+        'idjournal', // Column A (0)
+        'branch', // Column B (1)
+        'no_bukti', // Column C (2)
+        'no_akun', // Column D (3)
+        'akun', // Column E (4)
+        'amount', // Column F (5)
+        'tanggal_lengkap', // Column G (6)
+        'keterangan', // Column H (7)
+        'remarks_tipe3_remap', // Column I (8)
+        'expenses_category', // Column J (9)
+        'komponen', // Column K (10)
+        'nomor_polisi', // Column L (11)
+      ],
+    },
     deliveries: {
       // Actual CSV Headers:
       // Timestamp,CABANG,NAMA DRIVER,NAMA HELPER,NO POLISI ARMADA,WAKTU PENGIRIMAN,

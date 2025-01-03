@@ -1,5 +1,6 @@
 import { createRouter, createWebHistory } from 'vue-router'
 import DashboardView from '../views/DashboardView.vue'
+import ExpensesTest from '../components/__tests__/ExpensesTest.vue'
 import DeliveriesView from '../views/DeliveriesView.vue'
 import ExpensesView from '../views/ExpensesView.vue'
 import VehiclesView from '../views/VehiclesView.vue'
@@ -45,6 +46,11 @@ const router = createRouter({
       path: '/test/sheets',
       name: 'sheetsTest',
       component: GoogleSheetsTest,
+    },
+    {
+      path: '/test/expenses',
+      name: 'expenses-test',
+      component: ExpensesTest,
     },
   ],
 })

@@ -14,6 +14,7 @@ export class GoogleSheetsProvider extends DataProvider {
     console.log('Initializing GoogleSheetsProvider...')
     console.log('Branches URL:', this.config.branchesSheetUrl ? 'Configured' : 'Not configured')
     console.log('Deliveries URL:', this.config.deliveriesSheetUrl ? 'Configured' : 'Not configured')
+    console.log('Expenses URL:', this.config.expensesSheetUrl ? 'Configured' : 'Not configured')
 
     try {
       // Load and cache branch data first as it's needed for delivery transformations
@@ -81,6 +82,9 @@ export class GoogleSheetsProvider extends DataProvider {
         case 'branches':
           data = await this.fetchBranches()
           break
+        case 'expenses':
+          data = await this.fetchExpenses()
+          break
         default:
           throw new Error('Unsupported resource: ' + resource)
       }
@@ -89,10 +93,15 @@ export class GoogleSheetsProvider extends DataProvider {
       const result = {
         data,
         total: data.length,
-        metadata: {
-          cutoffDate: this.transformer.CUTOFF_DATE.toISOString(),
-          filteredCount: data.length,
-        },
+        metadata:
+          resource === 'deliveries'
+            ? {
+                cutoffDate: this.transformer.CUTOFF_DATE.toISOString(),
+                filteredCount: data.length,
+              }
+            : {
+                totalCount: data.length,
+              },
       }
       this.setInCache(cacheKey, result)
 
@@ -257,6 +266,70 @@ export class GoogleSheetsProvider extends DataProvider {
       data,
       timestamp: Date.now(),
     })
+  }
+
+  async fetchExpenses() {
+    console.log('Fetching expenses from:', this.config.expensesSheetUrl)
+    try {
+      const response = await fetch(this.config.expensesSheetUrl)
+      if (!response.ok) {
+        throw new Error('HTTP error! status: ' + response.status)
+      }
+
+      const csvText = await response.text()
+      console.log('Received expenses CSV:', csvText.substring(0, 200) + '...')
+      console.log('Full expenses CSV:', csvText) // Log full CSV for debugging
+
+      const rows = this.parseCSV(csvText)
+      console.log('Parsed expense rows:', rows.length)
+
+      // Remove header row and log it
+      const headers = rows.shift()
+      console.log('Expense headers:', headers.join(', '))
+      console.log('First data row:', rows[0]?.join(', '))
+
+      // Transform and validate expense data
+      const expenses = rows
+        .map((row, index) => {
+          try {
+            if (!row || row.length < 12) {
+              // Expenses has 12 columns
+              console.log('Skipping invalid row:', index, row)
+              return null
+            }
+            const expense = this.transformer.transformExpense(row)
+            if (!expense) {
+              console.log('Failed to transform expense row:', index, row)
+            }
+            return expense
+          } catch (error) {
+            console.error('Error transforming expense row:', index, error, row)
+            return null
+          }
+        })
+        .filter((expense) => {
+          try {
+            const isValid = expense && this.transformer.validateExpense(expense)
+            if (!isValid && expense) {
+              console.log('Invalid expense:', expense)
+            }
+            return isValid
+          } catch (error) {
+            console.error('Error validating expense:', error)
+            return false
+          }
+        })
+
+      console.log('Transformed expenses:', expenses.length)
+      if (expenses.length > 0) {
+        console.log('Sample expense:', expenses[0])
+      }
+
+      return expenses
+    } catch (error) {
+      console.error('Error in fetchExpenses:', error)
+      throw new Error('Failed to fetch expenses: ' + error.message)
+    }
   }
 
   clearCache() {

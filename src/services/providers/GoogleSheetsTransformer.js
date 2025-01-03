@@ -193,4 +193,65 @@ export class GoogleSheetsTransformer {
 
     return true
   }
+
+  // Transform expense data
+  transformExpense(row) {
+    try {
+      // Parse amount - remove currency symbols and commas
+      let amount = 0
+      if (row[5]) {
+        const cleanAmount = row[5].toString().replace(/[^0-9.-]+/g, '')
+        amount = Number(cleanAmount) || 0
+      }
+
+      // Parse date
+      const { date } = this.parseDatetime(row[6] || '')
+
+      const expense = {
+        // Main display fields
+        branch: (row[1] || '').trim(),
+        date: date,
+        category: (row[10] || '').trim(), // Expenses Category
+        component: (row[11] || '').trim(), // Komponen
+        vehicleNumber: (row[12] || '').trim(), // Nomor Polisi
+        amount: amount,
+
+        // Detail fields
+        idjournal: (row[0] || '').trim(),
+        no_bukti: (row[2] || '').trim(),
+        no_akun: (row[3] || '').trim(),
+        akun: (row[4] || '').trim(),
+        keterangan: (row[7] || '').trim(),
+        remarks: (row[8] || '').trim(),
+      }
+
+      return expense
+    } catch (error) {
+      console.error('Error transforming expense row:', error)
+      console.log('Problematic row:', row)
+      return null
+    }
+  }
+
+  // Validate expense data
+  validateExpense(data) {
+    if (!data) return false
+
+    // Required fields
+    if (!data.idjournal || !data.branch) {
+      console.log('Failed validation - missing required fields:', {
+        idjournal: data.idjournal,
+        branch: data.branch,
+      })
+      return false
+    }
+
+    // Amount validation
+    if (typeof data.amount !== 'number' || isNaN(data.amount)) {
+      console.log('Failed validation - invalid amount:', data.amount)
+      return false
+    }
+
+    return true
+  }
 }
