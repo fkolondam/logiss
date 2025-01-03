@@ -151,7 +151,7 @@ export default {
       'batal - toko tidak dapat diakses': 'Batal - Toko Tidak Dapat Diakses',
       'batal - tidak ada uang': 'Batal - Tidak Ada Uang',
       'batal - salah order': 'Batal - Salah Order',
-      'kirim ulang': 'Kirim Ulang',
+      'minta kirim ulang': 'Minta Kirim Ulang',
     },
     tabs: {
       delivery: 'Pengiriman',
@@ -198,9 +198,9 @@ export default {
       maintenance: 'Pemeliharaan',
       vehicleLicense: 'Surat Kendaraan',
       labour: 'Kuli Bongkar',
-      parkingToll: 'Parkir, Tol & Retribusi',
-      insurance: 'Asuransi',
-      others: 'Lainnya',
+      toll: 'Tol',
+      parking: 'Parkir',
+      retribution: 'Retribusi',
     },
     stats: {
       total: 'Total',

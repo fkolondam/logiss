@@ -40,9 +40,35 @@ const chartData = computed(() => {
   const percentages = amounts.map((amount) => ((amount / total) * 100).toFixed(1))
 
   return {
-    labels: categories.map(
-      (category, index) => `${t(`expenses.categories.${category}`)} (${percentages[index]}%)`,
-    ),
+    labels: categories.map((category, index) => {
+      let translationKey = 'expenses.categories.'
+      switch (category) {
+        case 'BBM':
+          translationKey += 'fuel'
+          break
+        case 'PARKIR':
+          translationKey += 'parking'
+          break
+        case 'TOL':
+          translationKey += 'toll'
+          break
+        case 'MAINTENANCE':
+          translationKey += 'maintenance'
+          break
+        case 'KULI BONGKAR':
+          translationKey += 'labour'
+          break
+        case 'RETRIBUSI':
+          translationKey += 'retribution'
+          break
+        case 'SURAT DAN PAJAK KENDARAAN':
+          translationKey += 'vehicleLicense'
+          break
+        default:
+          return category
+      }
+      return `${t(translationKey)} (${percentages[index]}%)`
+    }),
     datasets: [
       {
         data: amounts,
@@ -80,7 +106,8 @@ const chartOptions = {
             minimumFractionDigits: 0,
             maximumFractionDigits: 0,
           }).format(value)
-          return `${formattedValue} (${percentage}%)`
+          const category = context.label.split(' (')[0] // Get category name without percentage
+          return `${category}: ${formattedValue} (${percentage}%)`
         },
       },
     },

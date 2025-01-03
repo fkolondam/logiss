@@ -17,19 +17,19 @@
       <!-- Metric (1 row) -->
       <div class="flex items-center gap-2">
         <div class="text-3xl font-bold text-green-900">
-          {{ loading ? '...' : formatCurrency(stats?.totalAmount || 0) }}
+          {{ loading ? '...' : formatCurrency(props.stats?.totalAmount || 0) }}
         </div>
-        <div v-if="stats?.trend" class="flex items-center gap-1">
-          <TrendingUp v-if="stats.trend > 0" class="w-4 h-4 text-green-600" />
-          <TrendingDown v-if="stats.trend < 0" class="w-4 h-4 text-red-600" />
-          <span :class="stats.trend > 0 ? 'text-green-600' : 'text-red-600'">
-            {{ Math.abs(stats.trend) }}%
+        <div v-if="props.stats?.trend" class="flex items-center gap-1">
+          <TrendingUp v-if="props.stats.trend > 0" class="w-4 h-4 text-green-600" />
+          <TrendingDown v-if="props.stats.trend < 0" class="w-4 h-4 text-red-600" />
+          <span :class="props.stats.trend > 0 ? 'text-green-600' : 'text-red-600'">
+            {{ Math.abs(props.stats.trend) }}%
           </span>
         </div>
       </div>
       <!-- Stats Label (1 row) -->
       <div class="text-xs mt-1.5 text-green-600">
-        {{ stats?.trend > 0 ? t('expenses.increased') : t('expenses.decreased') }}
+        {{ props.stats?.trend > 0 ? t('expenses.increased') : t('expenses.decreased') }}
       </div>
       <!-- Drilldown (1 row) -->
       <div class="text-xs text-right text-green-600 mt-3 hover:underline cursor-pointer">
@@ -65,12 +65,12 @@
                 ></div>
               </div>
               <div
-                v-if="stats?.byCategory?.[category.id]?.trend"
+                v-if="props.stats?.byCategory?.[category.id]?.trend"
                 class="text-xs"
                 :class="category.textClass"
               >
-                {{ stats.byCategory[category.id].trend > 0 ? '+' : ''
-                }}{{ stats.byCategory[category.id].trend }}% from last period
+                {{ props.stats.byCategory[category.id].trend > 0 ? '+' : ''
+                }}{{ props.stats.byCategory[category.id].trend }}% from last period
               </div>
             </div>
           </div>
@@ -122,22 +122,6 @@ const categories = computed(() => [
     textClass: 'text-blue-600',
   },
   {
-    id: 'KULI BONGKAR',
-    label: t('expenses.categories.labour'),
-    icon: Users,
-    iconClass: 'bg-pink-50 text-pink-600',
-    barClass: 'bg-pink-500',
-    textClass: 'text-pink-600',
-  },
-  {
-    id: 'MAINTENANCE',
-    label: t('expenses.categories.maintenance'),
-    icon: Wrench,
-    iconClass: 'bg-orange-50 text-orange-600',
-    barClass: 'bg-orange-500',
-    textClass: 'text-orange-600',
-  },
-  {
     id: 'PARKIR',
     label: t('expenses.categories.parking'),
     icon: ParkingSquare,
@@ -152,6 +136,22 @@ const categories = computed(() => [
     iconClass: 'bg-green-50 text-green-600',
     barClass: 'bg-green-500',
     textClass: 'text-green-600',
+  },
+  {
+    id: 'MAINTENANCE',
+    label: t('expenses.categories.maintenance'),
+    icon: Wrench,
+    iconClass: 'bg-orange-50 text-orange-600',
+    barClass: 'bg-orange-500',
+    textClass: 'text-orange-600',
+  },
+  {
+    id: 'KULI BONGKAR',
+    label: t('expenses.categories.labour'),
+    icon: Users,
+    iconClass: 'bg-pink-50 text-pink-600',
+    barClass: 'bg-pink-500',
+    textClass: 'text-pink-600',
   },
   {
     id: 'RETRIBUSI',

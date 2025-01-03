@@ -151,7 +151,7 @@ export default {
       'batal - toko tidak dapat diakses': 'Cancel - Store Inaccessible',
       'batal - tidak ada uang': 'Cancel - No Money',
       'batal - salah order': 'Cancel - Wrong Order',
-      'kirim ulang': 'Resend',
+      'minta kirim ulang': 'Request Resend',
     },
     tabs: {
       delivery: 'Delivery',
@@ -185,11 +185,11 @@ export default {
     categories: {
       fuel: 'Fuel',
       maintenance: 'Maintenance',
-      vehicleLicense: 'Vehicle License',
+      vehicleLicense: 'Vehicle License & Tax',
       labour: 'Unloading Labour',
-      parkingToll: 'Parking, Toll & Retribution',
-      insurance: 'Insurances',
-      others: 'Others',
+      toll: 'Toll',
+      parking: 'Parking',
+      retribution: 'Retribution',
     },
     stats: {
       total: 'Total',

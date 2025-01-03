@@ -186,11 +186,11 @@ export function useDashboardData() {
       previousStats.totalAmount,
     )
 
-    // Calculate component-specific trends
-    Object.keys(currentStats.byComponent).forEach((component) => {
-      const currentAmount = currentStats.byComponent[component].amount
-      const previousAmount = previousStats.byComponent[component]?.amount || 0
-      currentStats.byComponent[component].trend = calculateTrendPercentage(
+    // Calculate category-specific trends
+    Object.keys(currentStats.byCategory).forEach((category) => {
+      const currentAmount = currentStats.byCategory[category].amount
+      const previousAmount = previousStats.byCategory[category]?.amount || 0
+      currentStats.byCategory[category].trend = calculateTrendPercentage(
         currentAmount,
         previousAmount,
       )

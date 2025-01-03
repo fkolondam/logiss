@@ -10,7 +10,6 @@
 
     <!-- Vehicle Function Overview -->
     <div class="mb-6">
-      <h3 class="text-sm font-medium text-gray-700 mb-4">{{ t('vehicles.function.title') }}</h3>
       <div class="grid grid-cols-2 gap-4">
         <!-- Passenger Vehicles -->
         <div class="bg-blue-50 rounded-lg p-4">

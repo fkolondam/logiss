@@ -103,12 +103,14 @@ export function processDeliveryStats(result) {
  * Components are taken directly from the 'Komponen' column
  */
 export function processExpenseStats(result) {
+  console.log('Processing expense data:', result)
+
   if (!result?.data) {
     console.warn('No expense data available')
     return {
       total: 0,
       totalAmount: 0,
-      byComponent: {},
+      byCategory: {},
       trend: 0,
       metadata: {},
     }
@@ -118,7 +120,7 @@ export function processExpenseStats(result) {
   const stats = {
     total: result.total || result.data.length,
     totalAmount: 0,
-    byComponent: {},
+    byCategory: {},
     trend: 0,
     metadata: {
       ...result.metadata,
@@ -127,29 +129,33 @@ export function processExpenseStats(result) {
   }
 
   // Process each expense with error handling
-  result.data.forEach((expense) => {
+  result.data.forEach((expense, index) => {
     try {
+      console.log(`Processing expense ${index}:`, expense)
+
       // Add to total amount
       const amount = expense.amount || 0
       stats.totalAmount += amount
 
       // Group by component with validation
       const component = expense.component?.trim() || 'Uncategorized'
-      if (!stats.byComponent[component]) {
-        stats.byComponent[component] = {
+      console.log(`Expense component: ${component}, amount: ${amount}`)
+
+      if (!stats.byCategory[component]) {
+        stats.byCategory[component] = {
           count: 0,
           amount: 0,
           trend: 0,
         }
       }
-      stats.byComponent[component].count++
-      stats.byComponent[component].amount += amount
+      stats.byCategory[component].count++
+      stats.byCategory[component].amount += amount
     } catch (error) {
       console.error('Error processing expense:', error, expense)
     }
   })
 
-  console.log('Processed expense stats:', stats)
+  console.log('Final processed expense stats:', stats)
   return stats
 }
 
