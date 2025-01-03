@@ -4,6 +4,7 @@ export const sheetsConfig = {
   branchesSheetUrl: import.meta.env.VITE_SHEETS_BRANCHES_URL || '',
   expensesSheetUrl: import.meta.env.VITE_SHEETS_EXPENSES_URL || '',
   vehiclesSheetUrl: import.meta.env.VITE_SHEETS_VEHICLES_URL || '',
+  invoicesSheetUrl: import.meta.env.VITE_SHEETS_INVOICES_URL || '',
 
   // Sheet structure definitions
   structure: {
@@ -104,6 +105,27 @@ export const sheetsConfig = {
         'functionalityDocs', // Column AK (36) - DOKUMENTASI FUNGSIONALITAS
         'additionalInfo', // Column AL (37) - INFORMASI TAMBAHAN
         'vendor', // Column AM (38) - VENDOR
+      ],
+    },
+    invoices: {
+      columns: [
+        'branch', // Column A (3) - CABANG
+        'system', // Column B (4) - SISTEM
+        'principal', // Column C (5) - PRINCIPAL
+        'principalXxx', // Column D (6) - PRINCIPAL xxx
+        'salesmanCode', // Column E (7) - KODESALESMAN
+        'salesmanName', // Column F (8) - NAMASALESMAN
+        'customerCode', // Column G (9) - KODECUSTOMER
+        'customerName', // Column H (10) - NAMACUSTOMER
+        'channel', // Column I (11) - CHANNEL
+        'date', // Column J (12) - TANGGAL LENGKAP
+        'invoiceNumber', // Column K (13) - NOMORNOTA
+        'transactionType', // Column L (14) - TIPETRANS
+        'transactionReason', // Column M (15) - TIPETRANS REASON
+        'warehouseReason', // Column N (16) - TIPE REASON GUDANG
+        'dpp', // Column O (17) - DPP
+        'ppn', // Column P (18) - PPN
+        'netSales', // Column Q (19) - NET SALES
       ],
     },
   },

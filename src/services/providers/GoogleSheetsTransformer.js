@@ -351,4 +351,98 @@ export class GoogleSheetsTransformer {
 
     return true
   }
+
+  // Transform invoice data
+  transformInvoice(row) {
+    try {
+      // Parse date
+      const { date } = this.parseDatetime(row[12] || '')
+
+      // Parse amounts - remove currency symbols and commas
+      let dpp = 0
+      let ppn = 0
+      let netSales = 0
+
+      if (row[17]) {
+        const cleanDpp = row[17].toString().replace(/[^0-9.-]+/g, '')
+        dpp = Number(cleanDpp) || 0
+      }
+      if (row[18]) {
+        const cleanPpn = row[18].toString().replace(/[^0-9.-]+/g, '')
+        ppn = Number(cleanPpn) || 0
+      }
+      if (row[19]) {
+        const cleanNetSales = row[19].toString().replace(/[^0-9.-]+/g, '')
+        netSales = Number(cleanNetSales) || 0
+      }
+
+      const invoice = {
+        // Branch and system info
+        branch: (row[3] || '').trim(),
+        system: (row[4] || '').trim(),
+
+        // Principal info
+        principal: (row[5] || '').trim(),
+        principalXxx: (row[6] || '').trim(),
+
+        // Salesman info
+        salesmanCode: (row[7] || '').trim(),
+        salesmanName: (row[8] || '').trim(),
+
+        // Customer info
+        customerCode: (row[9] || '').trim(),
+        customerName: (row[10] || '').trim(),
+        channel: (row[11] || '').trim(),
+
+        // Transaction info
+        date: date,
+        invoiceNumber: (row[13] || '').trim(),
+        transactionType: (row[14] || '').trim(),
+        transactionReason: (row[15] || '').trim(),
+        warehouseReason: (row[16] || '').trim(),
+
+        // Financial info
+        dpp: dpp,
+        ppn: ppn,
+        netSales: netSales,
+      }
+
+      return invoice
+    } catch (error) {
+      console.error('Error transforming invoice row:', error)
+      console.log('Problematic row:', row)
+      return null
+    }
+  }
+
+  // Validate invoice data
+  validateInvoice(data) {
+    if (!data) return false
+
+    // Required fields
+    if (!data.invoiceNumber || !data.branch) {
+      console.log('Failed validation - missing required fields:', {
+        invoiceNumber: data.invoiceNumber,
+        branch: data.branch,
+      })
+      return false
+    }
+
+    // Amount validation
+    if (typeof data.netSales !== 'number' || isNaN(data.netSales)) {
+      console.log('Failed validation - invalid net sales amount:', data.netSales)
+      return false
+    }
+
+    // Basic data validation
+    if (!data.customerName || !data.transactionType) {
+      console.log('Failed validation - missing customer or transaction type:', {
+        customerName: data.customerName,
+        transactionType: data.transactionType,
+      })
+      return false
+    }
+
+    return true
+  }
 }

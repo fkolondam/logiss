@@ -16,6 +16,7 @@ export class GoogleSheetsProvider extends DataProvider {
     console.log('Deliveries URL:', this.config.deliveriesSheetUrl ? 'Configured' : 'Not configured')
     console.log('Expenses URL:', this.config.expensesSheetUrl ? 'Configured' : 'Not configured')
     console.log('Vehicles URL:', this.config.vehiclesSheetUrl ? 'Configured' : 'Not configured')
+    console.log('Invoices URL:', this.config.invoicesSheetUrl ? 'Configured' : 'Not configured')
 
     try {
       // Load and cache branch data first as it's needed for delivery transformations
@@ -88,6 +89,9 @@ export class GoogleSheetsProvider extends DataProvider {
           break
         case 'vehicles':
           data = await this.fetchVehicles()
+          break
+        case 'invoices':
+          data = await this.fetchInvoices()
           break
         default:
           throw new Error('Unsupported resource: ' + resource)
@@ -396,6 +400,69 @@ export class GoogleSheetsProvider extends DataProvider {
     } catch (error) {
       console.error('Error in fetchVehicles:', error)
       throw new Error('Failed to fetch vehicles: ' + error.message)
+    }
+  }
+
+  async fetchInvoices() {
+    console.log('Fetching invoices from:', this.config.invoicesSheetUrl)
+    try {
+      const response = await fetch(this.config.invoicesSheetUrl)
+      if (!response.ok) {
+        throw new Error('HTTP error! status: ' + response.status)
+      }
+
+      const csvText = await response.text()
+      console.log('Received invoices CSV:', csvText.substring(0, 200) + '...')
+
+      const rows = this.parseCSV(csvText)
+      console.log('Parsed invoice rows:', rows.length)
+
+      // Remove header row and log it
+      const headers = rows.shift()
+      console.log('Invoice headers:', headers.join(', '))
+      console.log('First data row:', rows[0]?.join(', '))
+
+      // Transform and validate invoice data
+      const invoices = rows
+        .map((row, index) => {
+          try {
+            if (!row || row.length < 17) {
+              // Invoices has 17 columns
+              console.log('Skipping invalid row:', index, row)
+              return null
+            }
+            const invoice = this.transformer.transformInvoice(row)
+            if (!invoice) {
+              console.log('Failed to transform invoice row:', index, row)
+            }
+            return invoice
+          } catch (error) {
+            console.error('Error transforming invoice row:', index, error, row)
+            return null
+          }
+        })
+        .filter((invoice) => {
+          try {
+            const isValid = invoice && this.transformer.validateInvoice(invoice)
+            if (!isValid && invoice) {
+              console.log('Invalid invoice:', invoice)
+            }
+            return isValid
+          } catch (error) {
+            console.error('Error validating invoice:', error)
+            return false
+          }
+        })
+
+      console.log('Transformed invoices:', invoices.length)
+      if (invoices.length > 0) {
+        console.log('Sample invoice:', invoices[0])
+      }
+
+      return invoices
+    } catch (error) {
+      console.error('Error in fetchInvoices:', error)
+      throw new Error('Failed to fetch invoices: ' + error.message)
     }
   }
 
