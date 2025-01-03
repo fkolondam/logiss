@@ -90,6 +90,7 @@ import {
   TrendingUp,
   TrendingDown,
   ParkingSquare,
+  Ticket,
   Receipt,
   Users,
 } from 'lucide-vue-next'
@@ -113,7 +114,7 @@ const props = defineProps({
 // Categories configuration - matching expenseCategoryConfig from branchData.js
 const categories = computed(() => [
   {
-    id: 'Fuel',
+    id: 'BBM',
     label: t('expenses.categories.fuel'),
     icon: Fuel,
     iconClass: 'bg-blue-50 text-blue-600',
@@ -121,23 +122,7 @@ const categories = computed(() => [
     textClass: 'text-blue-600',
   },
   {
-    id: 'Maintenance',
-    label: t('expenses.categories.maintenance'),
-    icon: Wrench,
-    iconClass: 'bg-orange-50 text-orange-600',
-    barClass: 'bg-orange-500',
-    textClass: 'text-orange-600',
-  },
-  {
-    id: 'Vehicle License',
-    label: t('expenses.categories.vehicleLicense'),
-    icon: ShieldCheck,
-    iconClass: 'bg-green-50 text-green-600',
-    barClass: 'bg-green-500',
-    textClass: 'text-green-600',
-  },
-  {
-    id: 'Labour',
+    id: 'KULI BONGKAR',
     label: t('expenses.categories.labour'),
     icon: Users,
     iconClass: 'bg-pink-50 text-pink-600',
@@ -145,12 +130,44 @@ const categories = computed(() => [
     textClass: 'text-pink-600',
   },
   {
-    id: 'Parking-Tol-Retribution',
-    label: t('expenses.categories.parkingToll'),
+    id: 'MAINTENANCE',
+    label: t('expenses.categories.maintenance'),
+    icon: Wrench,
+    iconClass: 'bg-orange-50 text-orange-600',
+    barClass: 'bg-orange-500',
+    textClass: 'text-orange-600',
+  },
+  {
+    id: 'PARKIR',
+    label: t('expenses.categories.parking'),
     icon: ParkingSquare,
     iconClass: 'bg-indigo-50 text-indigo-600',
     barClass: 'bg-indigo-500',
     textClass: 'text-indigo-600',
+  },
+  {
+    id: 'TOL',
+    label: t('expenses.categories.toll'),
+    icon: Ticket,
+    iconClass: 'bg-green-50 text-green-600',
+    barClass: 'bg-green-500',
+    textClass: 'text-green-600',
+  },
+  {
+    id: 'RETRIBUSI',
+    label: t('expenses.categories.retribution'),
+    icon: Ticket,
+    iconClass: 'bg-cyan-50 text-cyan-600',
+    barClass: 'bg-cyan-500',
+    textClass: 'text-cyan-600',
+  },
+  {
+    id: 'SURAT DAN PAJAK KENDARAAN',
+    label: t('expenses.categories.vehicleLicense'),
+    icon: ShieldCheck,
+    iconClass: 'bg-purple-50 text-purple-600',
+    barClass: 'bg-purple-500',
+    textClass: 'text-purple-600',
   },
 ])
 
