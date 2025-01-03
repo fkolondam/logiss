@@ -74,29 +74,48 @@ export function useDashboardData() {
       }
 
       console.log(`Loading ${section} data with params:`, fetchParams)
-      const result = await dataProviderFactory.getData(section, currentScope.value, fetchParams)
-      console.log(`Received ${section} data:`, result)
 
+      // Fetch current and previous period data for trend calculation
+      const [currentResult, previousResult] = await Promise.all([
+        dataProviderFactory.getData(section, currentScope.value, fetchParams),
+        loadPreviousPeriodData(section, dateRange, currentScope.value),
+      ])
+
+      console.log(`Received ${section} current period data:`, currentResult)
+      console.log(`Received ${section} previous period data:`, previousResult)
+
+      // Process stats with trend calculations
+      let stats
       switch (section) {
         case 'deliveries':
-          deliveryStats.value = processDeliveryStats(result)
+          stats = processDeliveryStats(currentResult)
+          if (previousResult?.data) {
+            const prevStats = processDeliveryStats(previousResult)
+            calculateDeliveryTrends(stats, prevStats)
+          }
+          deliveryStats.value = stats
           break
+
         case 'expenses':
-          expenseStats.value = processExpenseStats(result)
+          stats = processExpenseStats(currentResult)
+          if (previousResult?.data) {
+            const prevStats = processExpenseStats(previousResult)
+            calculateExpenseTrends(stats, prevStats)
+          }
+          expenseStats.value = stats
           break
+
         case 'vehicles':
-          vehicleStats.value = processVehicleStats(result)
+          stats = processVehicleStats(currentResult)
+          if (previousResult?.data) {
+            const prevStats = processVehicleStats(previousResult)
+            calculateVehicleTrends(stats, prevStats)
+          }
+          vehicleStats.value = stats
           break
       }
 
-      console.log(
-        `Updated ${section} stats:`,
-        {
-          deliveries: deliveryStats.value,
-          expenses: expenseStats.value,
-          vehicles: vehicleStats.value,
-        }[section],
-      )
+      console.log(`Updated ${section} stats with trends:`, stats)
     } catch (e) {
       error.value = e.message
       console.error(`Error loading ${section} data:`, e)
@@ -104,6 +123,99 @@ export function useDashboardData() {
       loadingStates.value[section] = false
       updateLoadingState()
     }
+  }
+
+  // Helper function to load previous period data
+  async function loadPreviousPeriodData(section, currentDateRange, scope) {
+    const previousDateRange = getPreviousDateRange(currentDateRange)
+    try {
+      return await dataProviderFactory.getData(section, scope, {
+        dateRange: {
+          start: previousDateRange.start.toISOString().split('T')[0],
+          end: previousDateRange.end.toISOString().split('T')[0],
+        },
+      })
+    } catch (error) {
+      console.warn(`Failed to load previous period data for ${section}:`, error)
+      return null
+    }
+  }
+
+  // Helper function to get previous period date range
+  function getPreviousDateRange({ start, end }) {
+    const duration = end.getTime() - start.getTime()
+    const previousStart = new Date(start.getTime() - duration)
+    const previousEnd = new Date(end.getTime() - duration)
+    return { start: previousStart, end: previousEnd }
+  }
+
+  // Calculate trends for different sections
+  function calculateDeliveryTrends(currentStats, previousStats) {
+    if (!previousStats) return
+
+    // Calculate overall trend
+    currentStats.trend = calculateTrendPercentage(currentStats.total, previousStats.total)
+
+    // Calculate completion rate trend
+    const currentCompletionRate = (currentStats.receivedAll / currentStats.total) * 100
+    const previousCompletionRate = (previousStats.receivedAll / previousStats.total) * 100
+    currentStats.completionTrend = Math.round(currentCompletionRate - previousCompletionRate)
+
+    // Calculate status-specific trends
+    currentStats.receivedTrend = calculateTrendPercentage(
+      currentStats.receivedAll,
+      previousStats.receivedAll,
+    )
+    currentStats.partialTrend = calculateTrendPercentage(
+      currentStats.partial,
+      previousStats.partial,
+    )
+    currentStats.resendTrend = calculateTrendPercentage(currentStats.resend, previousStats.resend)
+    currentStats.cancelledTrend = calculateTrendPercentage(
+      currentStats.cancelled,
+      previousStats.cancelled,
+    )
+  }
+
+  function calculateExpenseTrends(currentStats, previousStats) {
+    if (!previousStats) return
+
+    // Calculate total amount trend
+    currentStats.trend = calculateTrendPercentage(
+      currentStats.totalAmount,
+      previousStats.totalAmount,
+    )
+
+    // Calculate component-specific trends
+    Object.keys(currentStats.byComponent).forEach((component) => {
+      const currentAmount = currentStats.byComponent[component].amount
+      const previousAmount = previousStats.byComponent[component]?.amount || 0
+      currentStats.byComponent[component].trend = calculateTrendPercentage(
+        currentAmount,
+        previousAmount,
+      )
+    })
+  }
+
+  function calculateVehicleTrends(currentStats, previousStats) {
+    if (!previousStats) return
+
+    // Calculate status trends
+    currentStats.activeTrend = calculateTrendPercentage(currentStats.active, previousStats.active)
+    currentStats.maintenanceTrend = calculateTrendPercentage(
+      currentStats.maintenance,
+      previousStats.maintenance,
+    )
+    currentStats.utilizationTrend = calculateTrendPercentage(
+      (currentStats.active / currentStats.total) * 100,
+      (previousStats.active / previousStats.total) * 100,
+    )
+  }
+
+  // Helper function to calculate trend percentage
+  function calculateTrendPercentage(current, previous) {
+    if (!previous) return 0
+    return Math.round(((current - previous) / previous) * 100)
   }
 
   async function loadDashboardData() {
