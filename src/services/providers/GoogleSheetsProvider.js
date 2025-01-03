@@ -6,8 +6,6 @@ export class GoogleSheetsProvider extends DataProvider {
     super()
     this.config = config
     this.transformer = new GoogleSheetsTransformer()
-    this.cache = new Map()
-    this.cacheTimeout = 5 * 60 * 1000 // 5 minutes
   }
 
   async initialize() {
@@ -19,12 +17,56 @@ export class GoogleSheetsProvider extends DataProvider {
     console.log('Invoices URL:', this.config.invoicesSheetUrl ? 'Configured' : 'Not configured')
 
     try {
-      // Load and cache branch data first as it's needed for delivery transformations
+      // Load branch data first as it's needed for delivery transformations
       await this.fetchBranches()
       console.log('Successfully initialized GoogleSheetsProvider')
     } catch (error) {
       console.error('Failed to initialize GoogleSheetsProvider:', error)
       throw new Error('Failed to initialize data provider: ' + error.message)
+    }
+  }
+
+  async fetch(resource, params = {}) {
+    try {
+      console.log(`Fetching ${resource} with params:`, params)
+      let data = []
+
+      switch (resource) {
+        case 'deliveries':
+          data = await this.fetchDeliveries(params)
+          break
+        case 'branches':
+          data = await this.fetchBranches()
+          break
+        case 'expenses':
+          data = await this.fetchExpenses()
+          break
+        case 'vehicles':
+          data = await this.fetchVehicles()
+          break
+        case 'invoices':
+          data = await this.fetchInvoices()
+          break
+        default:
+          throw new Error('Unsupported resource: ' + resource)
+      }
+
+      // Log the fetched data for debugging
+      console.log(`Fetched ${resource} data:`, {
+        count: data.length,
+        sample: data.length > 0 ? data[0] : null,
+      })
+
+      return {
+        data,
+        total: data.length,
+        metadata: {
+          totalCount: data.length,
+        },
+      }
+    } catch (error) {
+      console.error('Error in fetch:', error)
+      throw error
     }
   }
 
@@ -66,77 +108,28 @@ export class GoogleSheetsProvider extends DataProvider {
     }
   }
 
-  async fetch(resource, params = {}) {
-    // Check cache first
-    const cacheKey = this.getCacheKey(resource, params)
-    const cachedData = this.getFromCache(cacheKey)
-    if (cachedData) {
-      return cachedData
-    }
-
-    try {
-      let data = []
-
-      switch (resource) {
-        case 'deliveries':
-          data = await this.fetchDeliveries(params)
-          break
-        case 'branches':
-          data = await this.fetchBranches()
-          break
-        case 'expenses':
-          data = await this.fetchExpenses()
-          break
-        case 'vehicles':
-          data = await this.fetchVehicles()
-          break
-        case 'invoices':
-          data = await this.fetchInvoices()
-          break
-        default:
-          throw new Error('Unsupported resource: ' + resource)
-      }
-
-      // Cache the result
-      const result = {
-        data,
-        total: data.length,
-        metadata:
-          resource === 'deliveries'
-            ? {
-                cutoffDate: this.transformer.CUTOFF_DATE.toISOString(),
-                filteredCount: data.length,
-              }
-            : {
-                totalCount: data.length,
-              },
-      }
-      this.setInCache(cacheKey, result)
-
-      return result
-    } catch (error) {
-      console.error('Error in fetch:', error)
-      throw error
-    }
-  }
-
   async fetchDeliveries(params = {}) {
     console.log('Fetching deliveries from:', this.config.deliveriesSheetUrl)
     try {
+      console.log('Making fetch request for deliveries...')
       const response = await fetch(this.config.deliveriesSheetUrl)
+      console.log('Delivery response status:', response.status)
       if (!response.ok) {
         throw new Error('HTTP error! status: ' + response.status)
       }
 
       const csvText = await response.text()
-      console.log('Received deliveries CSV:', csvText.substring(0, 200) + '...')
+      console.log('Received deliveries CSV length:', csvText.length)
+      console.log('First 200 chars of CSV:', csvText.substring(0, 200))
 
+      console.log('Parsing CSV to rows...')
       const rows = this.parseCSV(csvText)
-      console.log('Parsed delivery rows:', rows.length)
+      console.log('Total delivery rows parsed:', rows.length)
 
       // Remove header row and log it
       const headers = rows.shift()
       console.log('Delivery headers:', headers)
+      console.log('First data row:', rows[0])
 
       // Transform and validate delivery data
       const deliveries = rows
@@ -257,25 +250,6 @@ export class GoogleSheetsProvider extends DataProvider {
     return value.replace(/^["']|["']$/g, '').trim()
   }
 
-  getCacheKey(resource, params) {
-    return resource + ':' + JSON.stringify(params)
-  }
-
-  getFromCache(key) {
-    const cached = this.cache.get(key)
-    if (cached && Date.now() - cached.timestamp < this.cacheTimeout) {
-      return cached.data
-    }
-    return null
-  }
-
-  setInCache(key, data) {
-    this.cache.set(key, {
-      data,
-      timestamp: Date.now(),
-    })
-  }
-
   async fetchExpenses() {
     console.log('Fetching expenses from:', this.config.expensesSheetUrl)
     try {
@@ -286,7 +260,6 @@ export class GoogleSheetsProvider extends DataProvider {
 
       const csvText = await response.text()
       console.log('Received expenses CSV:', csvText.substring(0, 200) + '...')
-      console.log('Full expenses CSV:', csvText) // Log full CSV for debugging
 
       const rows = this.parseCSV(csvText)
       console.log('Parsed expense rows:', rows.length)
@@ -464,9 +437,5 @@ export class GoogleSheetsProvider extends DataProvider {
       console.error('Error in fetchInvoices:', error)
       throw new Error('Failed to fetch invoices: ' + error.message)
     }
-  }
-
-  clearCache() {
-    this.cache.clear()
   }
 }

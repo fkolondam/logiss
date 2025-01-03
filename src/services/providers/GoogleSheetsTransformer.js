@@ -1,8 +1,6 @@
 export class GoogleSheetsTransformer {
   constructor() {
     this.branchesCache = new Map()
-    // Set cutoff date for filtering
-    this.CUTOFF_DATE = new Date('2024-10-22')
   }
 
   // Set branches data in cache
@@ -29,15 +27,33 @@ export class GoogleSheetsTransformer {
   // Parse datetime string from Google Sheets
   parseDatetime(datetimeStr) {
     try {
-      // Input format: m/d/yyyy hh:ii:ss
-      if (!datetimeStr) return { date: '', time: '', timestamp: null }
+      // Handle empty input
+      if (!datetimeStr) return { date: '', time: '' }
 
+      // Split into date and time parts
       const [datePart, timePart] = datetimeStr.split(' ')
 
       if (datePart) {
-        const [month, day, year] = datePart.split('/')
-        // Convert to YYYY-MM-DD
-        const formattedDate = year + '-' + month.padStart(2, '0') + '-' + day.padStart(2, '0')
+        let month, day, year
+
+        // Handle different date formats
+        if (datePart.includes('/')) {
+          // Format: m/d/yyyy or mm/dd/yyyy
+          ;[month, day, year] = datePart.split('/')
+        } else if (datePart.includes('-')) {
+          // Format: yyyy-mm-dd
+          ;[year, month, day] = datePart.split('-')
+        } else {
+          throw new Error('Unsupported date format: ' + datePart)
+        }
+
+        // Ensure year is 4 digits
+        if (year.length === 2) {
+          year = '20' + year
+        }
+
+        // Convert to m/d/yyyy format
+        const formattedDate = `${parseInt(month)}/${parseInt(day)}/${year}`
 
         // Extract time if available
         let formattedTime = ''
@@ -46,34 +62,27 @@ export class GoogleSheetsTransformer {
           formattedTime = timePart
         }
 
-        // Create timestamp for comparison
-        const timestamp = new Date(formattedDate + ' ' + (formattedTime || '00:00:00'))
-
         return {
           date: formattedDate,
           time: formattedTime,
-          timestamp,
         }
       }
 
-      return { date: '', time: '', timestamp: null }
+      return { date: '', time: '' }
     } catch (error) {
       console.error('Error parsing datetime:', error, datetimeStr)
-      return { date: '', time: '', timestamp: null }
+      return { date: '', time: '' }
     }
   }
 
   // Transform delivery data and enrich with branch information
   transformDelivery(row) {
     try {
-      // Parse delivery datetime first to check cutoff
-      const { date, time, timestamp } = this.parseDatetime(row[5])
+      // Parse delivery datetime
+      const { date, time } = this.parseDatetime(row[5])
 
-      // Skip data before cutoff date
-      if (!timestamp || timestamp < this.CUTOFF_DATE) {
-        console.log('Skipping delivery before cutoff date:', row[5])
-        return null
-      }
+      // Log for debugging
+      console.log('Processing delivery:', { date, time, row: row[5] })
 
       const branchName = (row[1] || '').trim() // CABANG
       const branchInfo = this.branchesCache.get(branchName)
@@ -166,12 +175,8 @@ export class GoogleSheetsTransformer {
       return false
     }
 
-    // Branch validation
-    if (!this.branchesCache.has(data.branchName)) {
-      console.log('Failed validation - branch not found in cache:', data.branchName)
-      return false
-    }
-
+    // Log successful validation
+    console.log('Delivery validated successfully:', { id: data.id, branchName: data.branchName })
     return true
   }
 
