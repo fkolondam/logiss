@@ -5,8 +5,7 @@ import { sheetsConfig } from './config/googleSheets'
 
 class DataProviderFactory {
   constructor() {
-    // Default to mock provider, will be switched to sheets provider when initialized
-    this.baseProvider = new MockDataProvider()
+    this.baseProvider = null
     this.sheetsProvider = null
     this.pendingRequests = new Map()
     this.isInitialized = false
@@ -14,19 +13,26 @@ class DataProviderFactory {
 
   async initialize() {
     try {
-      // Only initialize if sheets URLs are configured
+      // Always try to initialize Google Sheets provider if URLs are configured
       if (sheetsConfig.deliveriesSheetUrl && sheetsConfig.branchesSheetUrl) {
+        console.log('Initializing Google Sheets provider...')
         this.sheetsProvider = new GoogleSheetsProvider(sheetsConfig)
         await this.sheetsProvider.initialize()
         this.baseProvider = this.sheetsProvider
         console.log('Successfully initialized Google Sheets provider')
       } else {
-        console.log('Using mock data provider (Google Sheets URLs not configured)')
+        throw new Error('Google Sheets URLs not configured')
       }
       this.isInitialized = true
     } catch (error) {
       console.error('Failed to initialize Google Sheets provider:', error)
-      console.log('Falling back to mock data provider')
+      // Only fallback to mock if explicitly configured or in development
+      if (process.env.NODE_ENV === 'development' || process.env.USE_MOCK_DATA) {
+        console.log('Falling back to mock data provider')
+        this.baseProvider = new MockDataProvider()
+      } else {
+        throw error // Re-throw in production to show error to user
+      }
     }
   }
 
@@ -41,7 +47,11 @@ class DataProviderFactory {
       await this.initialize()
     }
 
-    console.log(`Fetching ${resource} with scope:`, scope)
+    if (!this.baseProvider) {
+      throw new Error('No data provider available')
+    }
+
+    console.log(`Fetching ${resource} with scope:`, scope, 'params:', params)
 
     if (!this.validateScopeAccess(resource, scope)) {
       throw new Error(`Access denied: Invalid scope for resource ${resource}`)
@@ -55,29 +65,21 @@ class DataProviderFactory {
 
     const requestPromise = (async () => {
       try {
-        const scopedParams = { ...params }
-        if (scope && scope.type !== 'global') {
-          switch (scope.type) {
-            case 'region':
-              scopedParams.region = scope.value
-              break
-            case 'branch':
-              scopedParams.branchId = scope.value
-              break
-            case 'personal':
-              scopedParams.userId = scope.value
-              scopedParams.driverId = scope.value
-              scopedParams.assignedTo = scope.value
-              scopedParams.driver = scope.value
-              break
-          }
-        }
+        // Build scoped parameters
+        const scopedParams = this.buildScopedParams(params, scope)
+        console.log(`Built scoped params for ${resource}:`, scopedParams)
 
+        // Fetch data from provider
         const result = await this.baseProvider.fetch(resource, scopedParams)
-        const filteredData = AccessControlWrapper.filterByScope(result.data, scope)
+        console.log(`Received ${resource} data:`, {
+          total: result.data?.length || 0,
+          sample: result.data?.[0] || null,
+        })
 
+        // Apply access control filtering
+        const filteredData = AccessControlWrapper.filterByScope(result.data, scope)
         console.log(`Filtered ${resource} data:`, {
-          total: result.data.length,
+          total: result.data?.length || 0,
           filtered: filteredData.length,
           scope,
           params: scopedParams,
@@ -87,7 +89,16 @@ class DataProviderFactory {
           ...result,
           data: filteredData,
           total: filteredData.length,
+          metadata: {
+            ...result.metadata,
+            scope,
+            params: scopedParams,
+            timestamp: new Date().toISOString(),
+          },
         }
+      } catch (error) {
+        console.error(`Error fetching ${resource} data:`, error)
+        throw new Error(`Failed to fetch ${resource} data: ${error.message}`)
       } finally {
         this.pendingRequests.delete(requestKey)
       }
