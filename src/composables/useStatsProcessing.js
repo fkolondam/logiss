@@ -7,10 +7,14 @@ export function processDeliveryStats(result) {
     console.warn('No delivery data available')
     return {
       total: 0,
-      receivedAll: 0,
-      partial: 0,
-      resend: 0,
-      cancelled: 0,
+      'diterima - semua': 0,
+      'diterima - sebagian': 0,
+      'kirim ulang': 0,
+      batal: 0,
+      'batal - toko tutup': 0,
+      'batal - toko tidak dapat diakses': 0,
+      'batal - tidak ada uang': 0,
+      'batal - salah order': 0,
       byStatus: {},
       byPaymentMethod: {
         tunai: 0,
@@ -18,28 +22,22 @@ export function processDeliveryStats(result) {
       },
       trend: 0,
       completionTrend: 0,
-      receivedTrend: 0,
-      partialTrend: 0,
-      resendTrend: 0,
-      cancelledTrend: 0,
+      completionRate: 0,
+      period: null,
     }
-  }
-
-  // Map status values from Google Sheets to our display values
-  const statusMap = {
-    'DITERIMA - SEMUA': 'receivedAll',
-    'DITERIMA - SEBAGIAN': 'partial',
-    'KIRIM ULANG': 'resend',
-    BATAL: 'cancelled',
   }
 
   // Initialize counters with proper typing
   const stats = {
     total: result.total || result.data.length,
-    receivedAll: 0,
-    partial: 0,
-    resend: 0,
-    cancelled: 0,
+    'diterima - semua': 0,
+    'diterima - sebagian': 0,
+    'kirim ulang': 0,
+    batal: 0,
+    'batal - toko tutup': 0,
+    'batal - toko tidak dapat diakses': 0,
+    'batal - tidak ada uang': 0,
+    'batal - salah order': 0,
     byStatus: {},
     byPaymentMethod: {
       tunai: 0,
@@ -47,37 +45,44 @@ export function processDeliveryStats(result) {
     },
     trend: 0,
     completionTrend: 0,
-    receivedTrend: 0,
-    partialTrend: 0,
-    resendTrend: 0,
-    cancelledTrend: 0,
+    completionRate: 0,
+    period: result.period || null,
   }
 
   // Process each delivery with error handling
   result.data.forEach((delivery) => {
     try {
       // Count by status with validation
-      const status = delivery.status?.trim().toUpperCase()
+      const status = delivery.status?.trim().toLowerCase()
       if (status) {
-        const mappedStatus = statusMap[status]
-        if (mappedStatus) {
-          stats[mappedStatus]++
+        // Increment the matching status counter
+        if (stats.hasOwnProperty(status)) {
+          stats[status]++
         }
         // Track raw status counts
         stats.byStatus[status] = (stats.byStatus[status] || 0) + 1
+
+        // Update total batal count for all cancellation types
+        if (status.startsWith('batal')) {
+          stats['batal']++
+        }
       }
 
       // Count by payment method with validation
-      const paymentMethod = delivery.paymentMethod?.trim().toUpperCase()
-      if (paymentMethod === 'TUNAI') {
+      const paymentMethod = delivery.paymentMethod?.trim().toLowerCase()
+      if (paymentMethod === 'tunai') {
         stats.byPaymentMethod.tunai++
-      } else if (paymentMethod === 'KREDIT') {
+      } else if (paymentMethod === 'kredit') {
         stats.byPaymentMethod.kredit++
       }
     } catch (error) {
       console.error('Error processing delivery:', error, delivery)
     }
   })
+
+  // Calculate completion rate
+  stats.completionRate =
+    stats.total > 0 ? Math.round((stats['diterima - semua'] / stats.total) * 100) : 0
 
   // Add metadata
   stats.metadata = {

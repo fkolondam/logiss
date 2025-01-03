@@ -64,114 +64,37 @@
     <div>
       <h3 class="text-sm font-medium text-gray-700 mb-4">{{ t('deliveries.deliveryStatus') }}</h3>
       <div class="space-y-4">
-        <!-- Diterima - Semua -->
-        <div class="flex items-center gap-3">
-          <div class="bg-green-50 p-2 rounded-lg">
-            <PackageCheck class="w-5 h-5 text-green-600" />
-          </div>
-          <div class="flex-1 min-w-0">
-            <div class="flex justify-between items-center mb-1">
-              <div class="text-sm font-medium text-gray-700">
-                {{ t('deliveries.status.diterima - semua') }}
-              </div>
-              <div class="text-sm text-gray-900 font-medium">
-                {{ stats?.receivedAll || 0 }}
-              </div>
+        <!-- Delivery Status Breakdown -->
+        <template v-for="(config, status) in statusConfigs" :key="status">
+          <div v-if="shouldShowStatus(status)" class="flex items-center gap-3">
+            <div :class="config.iconBg" class="p-2 rounded-lg">
+              <component :is="config.icon" class="w-5 h-5" :class="config.iconColor" />
             </div>
-            <div class="flex flex-col gap-1">
-              <div class="w-full bg-gray-100 rounded-full h-1.5">
-                <div
-                  class="h-1.5 rounded-full bg-green-500 transition-all duration-500"
-                  :style="{ width: `${calculatePercentage('receivedAll')}%` }"
-                ></div>
+            <div class="flex-1 min-w-0">
+              <div class="flex justify-between items-center mb-1">
+                <div class="text-sm font-medium text-gray-700">
+                  {{ t(`deliveries.status.${status}`) }}
+                </div>
+                <div class="text-sm text-gray-900 font-medium">
+                  {{ stats?.[status] || 0 }}
+                </div>
               </div>
-              <div v-if="stats?.receivedTrend" class="text-xs text-green-600">
-                {{ stats.receivedTrend > 0 ? '+' : '' }}{{ stats.receivedTrend }}% from last period
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <!-- Parsial -->
-        <div class="flex items-center gap-3">
-          <div class="bg-yellow-50 p-2 rounded-lg">
-            <PackageMinus class="w-5 h-5 text-yellow-600" />
-          </div>
-          <div class="flex-1 min-w-0">
-            <div class="flex justify-between items-center mb-1">
-              <div class="text-sm font-medium text-gray-700">
-                {{ t('deliveries.status.diterima - sebagian') }}
-              </div>
-              <div class="text-sm text-gray-900 font-medium">{{ stats?.partial || 0 }}</div>
-            </div>
-            <div class="flex flex-col gap-1">
-              <div class="w-full bg-gray-100 rounded-full h-1.5">
-                <div
-                  class="h-1.5 rounded-full bg-yellow-500 transition-all duration-500"
-                  :style="{ width: `${calculatePercentage('partial')}%` }"
-                ></div>
-              </div>
-              <div v-if="stats?.partialTrend" class="text-xs text-yellow-600">
-                {{ stats.partialTrend > 0 ? '+' : '' }}{{ stats.partialTrend }}% from last period
+              <div class="flex flex-col gap-1">
+                <div class="w-full bg-gray-100 rounded-full h-1.5">
+                  <div
+                    class="h-1.5 rounded-full transition-all duration-500"
+                    :class="config.barColor"
+                    :style="{ width: `${calculatePercentage(status)}%` }"
+                  ></div>
+                </div>
+                <div v-if="stats?.[`${status}Trend`]" class="text-xs" :class="config.textColor">
+                  {{ stats[`${status}Trend`] > 0 ? '+' : '' }}{{ stats[`${status}Trend`] }}% from
+                  last period
+                </div>
               </div>
             </div>
           </div>
-        </div>
-
-        <!-- Kirim Ulang -->
-        <div class="flex items-center gap-3">
-          <div class="bg-blue-50 p-2 rounded-lg">
-            <RefreshCw class="w-5 h-5 text-blue-600" />
-          </div>
-          <div class="flex-1 min-w-0">
-            <div class="flex justify-between items-center mb-1">
-              <div class="text-sm font-medium text-gray-700">
-                {{ t('deliveries.status.kirim ulang') }}
-              </div>
-              <div class="text-sm text-gray-900 font-medium">{{ stats?.resend || 0 }}</div>
-            </div>
-            <div class="flex flex-col gap-1">
-              <div class="w-full bg-gray-100 rounded-full h-1.5">
-                <div
-                  class="h-1.5 rounded-full bg-blue-500 transition-all duration-500"
-                  :style="{ width: `${calculatePercentage('resend')}%` }"
-                ></div>
-              </div>
-              <div v-if="stats?.resendTrend" class="text-xs text-blue-600">
-                {{ stats.resendTrend > 0 ? '+' : '' }}{{ stats.resendTrend }}% from last period
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <!-- Batal -->
-        <div class="flex items-center gap-3">
-          <div class="bg-red-50 p-2 rounded-lg">
-            <PackageX class="w-5 h-5 text-red-600" />
-          </div>
-          <div class="flex-1 min-w-0">
-            <div class="flex justify-between items-center mb-1">
-              <div class="text-sm font-medium text-gray-700">
-                {{ t('deliveries.status.batal') }}
-              </div>
-              <div class="text-sm text-gray-900 font-medium">
-                {{ stats?.cancelled || 0 }}
-              </div>
-            </div>
-            <div class="flex flex-col gap-1">
-              <div class="w-full bg-gray-100 rounded-full h-1.5">
-                <div
-                  class="h-1.5 rounded-full bg-red-500 transition-all duration-500"
-                  :style="{ width: `${calculatePercentage('cancelled')}%` }"
-                ></div>
-              </div>
-              <div v-if="stats?.cancelledTrend" class="text-xs text-red-600">
-                {{ stats.cancelledTrend > 0 ? '+' : '' }}{{ stats.cancelledTrend }}% from last
-                period
-              </div>
-            </div>
-          </div>
-        </div>
+        </template>
       </div>
     </div>
   </div>
@@ -179,7 +102,16 @@
 
 <script setup>
 import { computed, watch } from 'vue'
-import { PackageCheck, PackageX, PackageMinus, RefreshCw } from 'lucide-vue-next'
+import {
+  PackageCheck,
+  PackageX,
+  PackageMinus,
+  RefreshCw,
+  AlertCircle,
+  XCircle,
+  DollarSign,
+  FileX,
+} from 'lucide-vue-next'
 import { useTranslations } from '../../composables/useTranslations'
 import { PERIODS } from '../../constants/periods'
 
@@ -200,9 +132,73 @@ const props = defineProps({
   },
 })
 
+// Status configuration for icons and colors
+const statusConfigs = {
+  'diterima - semua': {
+    icon: PackageCheck,
+    iconBg: 'bg-green-50',
+    iconColor: 'text-green-600',
+    barColor: 'bg-green-500',
+    textColor: 'text-green-600',
+  },
+  'diterima - sebagian': {
+    icon: PackageMinus,
+    iconBg: 'bg-yellow-50',
+    iconColor: 'text-yellow-600',
+    barColor: 'bg-yellow-500',
+    textColor: 'text-yellow-600',
+  },
+  'kirim ulang': {
+    icon: RefreshCw,
+    iconBg: 'bg-blue-50',
+    iconColor: 'text-blue-600',
+    barColor: 'bg-blue-500',
+    textColor: 'text-blue-600',
+  },
+  batal: {
+    icon: PackageX,
+    iconBg: 'bg-red-50',
+    iconColor: 'text-red-600',
+    barColor: 'bg-red-500',
+    textColor: 'text-red-600',
+  },
+  'batal - toko tutup': {
+    icon: XCircle,
+    iconBg: 'bg-red-50',
+    iconColor: 'text-red-600',
+    barColor: 'bg-red-400',
+    textColor: 'text-red-600',
+  },
+  'batal - toko tidak dapat diakses': {
+    icon: AlertCircle,
+    iconBg: 'bg-red-50',
+    iconColor: 'text-red-600',
+    barColor: 'bg-red-400',
+    textColor: 'text-red-600',
+  },
+  'batal - tidak ada uang': {
+    icon: DollarSign,
+    iconBg: 'bg-red-50',
+    iconColor: 'text-red-600',
+    barColor: 'bg-red-400',
+    textColor: 'text-red-600',
+  },
+  'batal - salah order': {
+    icon: FileX,
+    iconBg: 'bg-red-50',
+    iconColor: 'text-red-600',
+    barColor: 'bg-red-400',
+    textColor: 'text-red-600',
+  },
+}
+
+// Helper function to determine if status should be shown
+const shouldShowStatus = (status) => {
+  return props.stats?.[status] > 0 || status === 'diterima - semua' || status === 'batal'
+}
+
 const calculateCompletionRate = () => {
-  if (!props.stats?.total || !props.stats?.receivedAll) return 0
-  return Math.round((props.stats.receivedAll / props.stats.total) * 100)
+  return props.stats?.completionRate || 0
 }
 
 const calculatePercentage = (status) => {
@@ -216,18 +212,18 @@ watch(
   (newStats) => {
     console.log('RecentDeliveries stats:', {
       total: newStats?.total,
-      receivedAll: newStats?.receivedAll,
-      partial: newStats?.partial,
-      resend: newStats?.resend,
-      cancelled: newStats?.cancelled,
+      'diterima - semua': newStats?.['diterima - semua'],
+      'diterima - sebagian': newStats?.['diterima - sebagian'],
+      'kirim ulang': newStats?.['kirim ulang'],
+      batal: newStats?.['batal'],
+      'batal - toko tutup': newStats?.['batal - toko tutup'],
+      'batal - toko tidak dapat diakses': newStats?.['batal - toko tidak dapat diakses'],
+      'batal - tidak ada uang': newStats?.['batal - tidak ada uang'],
+      'batal - salah order': newStats?.['batal - salah order'],
       trend: newStats?.trend,
+      completionRate: newStats?.completionRate,
       completionTrend: newStats?.completionTrend,
-      receivedTrend: newStats?.receivedTrend,
-      partialTrend: newStats?.partialTrend,
-      resendTrend: newStats?.resendTrend,
-      cancelledTrend: newStats?.cancelledTrend,
       byPaymentMethod: newStats?.byPaymentMethod,
-      byBranch: newStats?.byBranch,
       scope: props.scope,
       period: newStats?.period,
     })
