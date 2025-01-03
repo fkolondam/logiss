@@ -12,11 +12,14 @@ import { ref, onMounted } from 'vue'
 import { RouterView } from 'vue-router'
 import { useTranslationsStore } from './stores/translations'
 import { useUserStore } from './stores/user'
+import { useDataSourceStore } from './stores/dataSource'
+import { DataSourceType } from './services/DataProviderFactory'
 import AppLayout from './layouts/AppLayout.vue'
 
 const isReady = ref(false)
 const translationsStore = useTranslationsStore()
 const userStore = useUserStore()
+const dataSourceStore = useDataSourceStore()
 
 onMounted(async () => {
   try {
@@ -26,9 +29,22 @@ onMounted(async () => {
     // Initialize user (default to admin for testing)
     await userStore.switchUser('admin1')
 
+    // Initialize data source to Google Sheets
+    console.log('Switching to Google Sheets data source...')
+    await dataSourceStore.switchDataSource(DataSourceType.GOOGLE_SHEETS)
+    console.log('Successfully switched to Google Sheets')
+
     isReady.value = true
   } catch (error) {
     console.error('Error initializing app:', error)
+    // If Google Sheets fails, try to fall back to mock data
+    try {
+      console.log('Falling back to mock data...')
+      await dataSourceStore.switchDataSource(DataSourceType.MOCK)
+      isReady.value = true
+    } catch (fallbackError) {
+      console.error('Failed to fall back to mock data:', fallbackError)
+    }
   }
 })
 </script>

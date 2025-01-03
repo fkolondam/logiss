@@ -7,173 +7,211 @@
       <h3 class="text-lg font-semibold mb-2">Data Summary</h3>
       <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div>
-          <div class="text-sm text-gray-600">Cutoff Date:</div>
-          <div class="font-medium">October 22, 2024</div>
-        </div>
-        <div>
           <div class="text-sm text-gray-600">Total Branches:</div>
           <div class="font-medium">{{ branches.length }}</div>
         </div>
         <div>
-          <div class="text-sm text-gray-600">Total Deliveries (After Cutoff):</div>
+          <div class="text-sm text-gray-600">Total Deliveries:</div>
           <div class="font-medium">{{ deliveries.length }}</div>
         </div>
-        <div v-if="deliveries.length > 0">
-          <div class="text-sm text-gray-600">Date Range:</div>
-          <div class="font-medium">
-            {{ formatDate(getDateRange().start) }} - {{ formatDate(getDateRange().end) }}
-          </div>
+        <div>
+          <div class="text-sm text-gray-600">Total Expenses:</div>
+          <div class="font-medium">{{ expenses.length }}</div>
+        </div>
+        <div>
+          <div class="text-sm text-gray-600">Total Vehicles:</div>
+          <div class="font-medium">{{ vehicles.length }}</div>
+        </div>
+        <div>
+          <div class="text-sm text-gray-600">Total Invoices:</div>
+          <div class="font-medium">{{ invoices.length }}</div>
         </div>
       </div>
     </div>
 
-    <!-- Debug Info -->
-    <div class="mb-6">
-      <h3 class="text-lg font-semibold mb-2">Debug Information</h3>
-      <div class="bg-gray-100 p-4 rounded">
-        <div>Branches URL: {{ branchesUrl }}</div>
-        <div>Deliveries URL: {{ deliveriesUrl }}</div>
-        <div class="mt-2">
-          <button
-            @click="testUrls"
-            class="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
-          >
-            Test URLs Directly
-          </button>
-        </div>
-      </div>
+    <!-- Error Display -->
+    <div v-if="hasErrors" class="mb-6 bg-red-50 p-4 rounded-lg border border-red-200">
+      <h3 class="text-lg font-semibold mb-2 text-red-700">Errors</h3>
+      <div v-if="error.branches" class="text-red-600">Branches: {{ error.branches }}</div>
+      <div v-if="error.deliveries" class="text-red-600">Deliveries: {{ error.deliveries }}</div>
+      <div v-if="error.expenses" class="text-red-600">Expenses: {{ error.expenses }}</div>
+      <div v-if="error.vehicles" class="text-red-600">Vehicles: {{ error.vehicles }}</div>
+      <div v-if="error.invoices" class="text-red-600">Invoices: {{ error.invoices }}</div>
     </div>
 
-    <!-- Raw CSV Data -->
-    <div v-if="rawData.branches || rawData.deliveries" class="mb-6">
-      <h3 class="text-lg font-semibold mb-2">Raw CSV Data</h3>
-      <div v-if="rawData.branches" class="mb-4">
-        <h4 class="font-semibold">Branches CSV (First 200 chars):</h4>
-        <pre class="bg-gray-100 p-2 rounded text-sm">{{ rawData.branches }}</pre>
-      </div>
-      <div v-if="rawData.deliveries">
-        <h4 class="font-semibold">Deliveries CSV (First 200 chars):</h4>
-        <pre class="bg-gray-100 p-2 rounded text-sm">{{ rawData.deliveries }}</pre>
-      </div>
-    </div>
-
-    <!-- Branches Data -->
-    <div class="mb-6">
-      <h3 class="text-lg font-semibold mb-2">
-        Branches ({{ branches.length }})
-        <span v-if="loading.branches" class="text-sm text-gray-500 ml-2">Loading...</span>
-      </h3>
-      <div v-if="error.branches" class="text-red-500 mb-2">{{ error.branches }}</div>
-      <div v-else-if="branches.length > 0" class="overflow-x-auto">
-        <table class="min-w-full bg-white border">
-          <thead>
-            <tr>
-              <th class="px-4 py-2 border">Branch ID</th>
-              <th class="px-4 py-2 border">Branch Name</th>
-              <th class="px-4 py-2 border">Region</th>
-              <th class="px-4 py-2 border">Address</th>
-              <th class="px-4 py-2 border">Coordinates</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr v-for="branch in branches" :key="branch.branchId">
-              <td class="px-4 py-2 border font-mono">{{ branch.branchId }}</td>
-              <td class="px-4 py-2 border">{{ branch.branchName }}</td>
-              <td class="px-4 py-2 border">{{ branch.region }}</td>
-              <td class="px-4 py-2 border">{{ branch.address }}</td>
-              <td class="px-4 py-2 border">
-                {{ branch.coordinates.lat }}, {{ branch.coordinates.lng }}
-              </td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
-    </div>
-
-    <!-- Deliveries Data -->
-    <div class="mb-6">
-      <h3 class="text-lg font-semibold mb-2">
-        Recent Deliveries ({{ deliveries.length }})
-        <span v-if="loading.deliveries" class="text-sm text-gray-500 ml-2">Loading...</span>
-      </h3>
-      <div v-if="error.deliveries" class="text-red-500 mb-2">{{ error.deliveries }}</div>
-      <div v-else-if="deliveries.length > 0">
-        <div class="mb-2 text-sm text-gray-600">
-          Showing latest 10 deliveries ({{ deliveries.length }} total records after Oct 22, 2024)
-        </div>
+    <!-- Data Sections -->
+    <div class="space-y-8">
+      <!-- Branches Section -->
+      <section v-if="branches.length" class="border rounded-lg p-4">
+        <h3 class="text-lg font-semibold mb-4">Branches ({{ branches.length }})</h3>
         <div class="overflow-x-auto">
           <table class="min-w-full bg-white border">
             <thead>
               <tr>
-                <th class="px-4 py-2 border">ID</th>
+                <th class="px-4 py-2 border">Branch ID</th>
                 <th class="px-4 py-2 border">Branch Name</th>
-                <th class="px-4 py-2 border">Driver</th>
+                <th class="px-4 py-2 border">Region</th>
+                <th class="px-4 py-2 border">Address</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr v-for="branch in branches.slice(0, 5)" :key="branch.branchId">
+                <td class="px-4 py-2 border">{{ branch.branchId }}</td>
+                <td class="px-4 py-2 border">{{ branch.branchName }}</td>
+                <td class="px-4 py-2 border">{{ branch.region }}</td>
+                <td class="px-4 py-2 border">{{ branch.address }}</td>
+              </tr>
+            </tbody>
+          </table>
+          <div class="mt-2 text-sm text-gray-600">Showing first 5 records</div>
+        </div>
+      </section>
+
+      <!-- Deliveries Section -->
+      <section v-if="deliveries.length" class="border rounded-lg p-4">
+        <h3 class="text-lg font-semibold mb-4">Deliveries ({{ deliveries.length }})</h3>
+        <div class="overflow-x-auto">
+          <table class="min-w-full bg-white border">
+            <thead>
+              <tr>
+                <th class="px-4 py-2 border">Branch</th>
                 <th class="px-4 py-2 border">Date</th>
-                <th class="px-4 py-2 border">Time</th>
+                <th class="px-4 py-2 border">Driver</th>
                 <th class="px-4 py-2 border">Customer</th>
                 <th class="px-4 py-2 border">Amount</th>
                 <th class="px-4 py-2 border">Status</th>
               </tr>
             </thead>
             <tbody>
-              <tr v-for="delivery in deliveries.slice(0, 10)" :key="delivery.id">
-                <td class="px-4 py-2 border font-mono">{{ delivery.id }}</td>
+              <tr v-for="delivery in deliveries.slice(0, 5)" :key="delivery.id">
                 <td class="px-4 py-2 border">{{ delivery.branchName }}</td>
+                <td class="px-4 py-2 border">{{ delivery.date }}</td>
                 <td class="px-4 py-2 border">{{ delivery.driver }}</td>
-                <td class="px-4 py-2 border">{{ formatDate(delivery.date) }}</td>
-                <td class="px-4 py-2 border">{{ delivery.time }}</td>
                 <td class="px-4 py-2 border">{{ delivery.customer }}</td>
                 <td class="px-4 py-2 border text-right">{{ formatAmount(delivery.amount) }}</td>
                 <td class="px-4 py-2 border">{{ delivery.status }}</td>
               </tr>
             </tbody>
           </table>
+          <div class="mt-2 text-sm text-gray-600">Showing first 5 records</div>
         </div>
+      </section>
 
-        <!-- Sample Raw Data -->
-        <div class="mt-4">
-          <button
-            @click="showRawData = !showRawData"
-            class="px-4 py-2 bg-gray-500 text-white rounded hover:bg-gray-600"
-          >
-            {{ showRawData ? 'Hide' : 'Show' }} Raw Data Sample
-          </button>
-          <pre v-if="showRawData" class="mt-2 bg-gray-100 p-2 rounded overflow-auto max-h-96">
-            {{ JSON.stringify(deliveries[0], null, 2) }}
-          </pre>
+      <!-- Expenses Section -->
+      <section v-if="expenses.length" class="border rounded-lg p-4">
+        <h3 class="text-lg font-semibold mb-4">Expenses ({{ expenses.length }})</h3>
+        <div class="overflow-x-auto">
+          <table class="min-w-full bg-white border">
+            <thead>
+              <tr>
+                <th class="px-4 py-2 border">Branch</th>
+                <th class="px-4 py-2 border">Date</th>
+                <th class="px-4 py-2 border">Category</th>
+                <th class="px-4 py-2 border">Component</th>
+                <th class="px-4 py-2 border">Amount</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr v-for="expense in expenses.slice(0, 5)" :key="expense.idjournal">
+                <td class="px-4 py-2 border">{{ expense.branch }}</td>
+                <td class="px-4 py-2 border">{{ expense.date }}</td>
+                <td class="px-4 py-2 border">{{ expense.category }}</td>
+                <td class="px-4 py-2 border">{{ expense.component }}</td>
+                <td class="px-4 py-2 border text-right">{{ formatAmount(expense.amount) }}</td>
+              </tr>
+            </tbody>
+          </table>
+          <div class="mt-2 text-sm text-gray-600">Showing first 5 records</div>
         </div>
-      </div>
+      </section>
+
+      <!-- Vehicles Section -->
+      <section v-if="vehicles.length" class="border rounded-lg p-4">
+        <h3 class="text-lg font-semibold mb-4">Vehicles ({{ vehicles.length }})</h3>
+        <div class="overflow-x-auto">
+          <table class="min-w-full bg-white border">
+            <thead>
+              <tr>
+                <th class="px-4 py-2 border">Branch</th>
+                <th class="px-4 py-2 border">Vehicle Number</th>
+                <th class="px-4 py-2 border">Type</th>
+                <th class="px-4 py-2 border">Status</th>
+                <th class="px-4 py-2 border">STNK Expiry</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr v-for="vehicle in vehicles.slice(0, 5)" :key="vehicle.vehicleNumber">
+                <td class="px-4 py-2 border">{{ vehicle.branch }}</td>
+                <td class="px-4 py-2 border">{{ vehicle.vehicleNumber }}</td>
+                <td class="px-4 py-2 border">{{ vehicle.type }}</td>
+                <td class="px-4 py-2 border">{{ vehicle.status }}</td>
+                <td class="px-4 py-2 border">{{ vehicle.stnkExpiry }}</td>
+              </tr>
+            </tbody>
+          </table>
+          <div class="mt-2 text-sm text-gray-600">Showing first 5 records</div>
+        </div>
+      </section>
+
+      <!-- Invoices Section -->
+      <section v-if="invoices.length" class="border rounded-lg p-4">
+        <h3 class="text-lg font-semibold mb-4">Invoices ({{ invoices.length }})</h3>
+        <div class="overflow-x-auto">
+          <table class="min-w-full bg-white border">
+            <thead>
+              <tr>
+                <th class="px-4 py-2 border">Branch</th>
+                <th class="px-4 py-2 border">Date</th>
+                <th class="px-4 py-2 border">Invoice Number</th>
+                <th class="px-4 py-2 border">Customer</th>
+                <th class="px-4 py-2 border">DPP</th>
+                <th class="px-4 py-2 border">PPN</th>
+                <th class="px-4 py-2 border">Net Sales</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr v-for="invoice in invoices.slice(0, 5)" :key="invoice.invoiceNumber">
+                <td class="px-4 py-2 border">{{ invoice.branch }}</td>
+                <td class="px-4 py-2 border">{{ invoice.date }}</td>
+                <td class="px-4 py-2 border">{{ invoice.invoiceNumber }}</td>
+                <td class="px-4 py-2 border">{{ invoice.customerName }}</td>
+                <td class="px-4 py-2 border text-right">{{ formatAmount(invoice.dpp) }}</td>
+                <td class="px-4 py-2 border text-right">{{ formatAmount(invoice.ppn) }}</td>
+                <td class="px-4 py-2 border text-right">{{ formatAmount(invoice.netSales) }}</td>
+              </tr>
+            </tbody>
+          </table>
+          <div class="mt-2 text-sm text-gray-600">Showing first 5 records</div>
+        </div>
+      </section>
     </div>
   </div>
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
-import { dataProviderFactory } from '@/services/DataProviderFactory'
+import { ref, computed, onMounted } from 'vue'
+import { GoogleSheetsProvider } from '@/services/providers/GoogleSheetsProvider'
+import { sheetsConfig } from '@/services/config/googleSheets'
 
+// Data refs
 const branches = ref([])
 const deliveries = ref([])
-const loading = ref({ branches: true, deliveries: true })
-const error = ref({ branches: null, deliveries: null })
-const showRawData = ref(false)
-const rawData = ref({ branches: '', deliveries: '' })
+const expenses = ref([])
+const vehicles = ref([])
+const invoices = ref([])
 
-// Get URLs from environment
-const branchesUrl = ref(import.meta.env.VITE_SHEETS_BRANCHES_URL || 'Not configured')
-const deliveriesUrl = ref(import.meta.env.VITE_SHEETS_DELIVERIES_URL || 'Not configured')
+// Error handling
+const error = ref({
+  branches: null,
+  deliveries: null,
+  expenses: null,
+  vehicles: null,
+  invoices: null,
+})
 
-// Get date range of deliveries
-const getDateRange = () => {
-  if (deliveries.value.length === 0) {
-    return { start: null, end: null }
-  }
-
-  const dates = deliveries.value.map((d) => new Date(d.date))
-  return {
-    start: new Date(Math.min(...dates)),
-    end: new Date(Math.max(...dates)),
-  }
-}
+const hasErrors = computed(() => {
+  return Object.values(error.value).some((err) => err !== null)
+})
 
 // Format amount as currency
 const formatAmount = (amount) => {
@@ -185,87 +223,46 @@ const formatAmount = (amount) => {
   }).format(amount)
 }
 
-// Format date for display
-const formatDate = (dateStr) => {
-  if (!dateStr) return ''
-  const date = new Date(dateStr)
-  return new Intl.DateTimeFormat('id-ID', {
-    year: 'numeric',
-    month: 'long',
-    day: 'numeric',
-  }).format(date)
-}
-
-// Test URLs directly
-const testUrls = async () => {
-  console.log('Testing URLs directly...')
-
+// Fetch data for each resource
+const fetchData = async (resource) => {
   try {
-    // Test branches URL
-    console.log('Testing branches URL:', branchesUrl.value)
-    const branchesResponse = await fetch(branchesUrl.value)
-    const branchesText = await branchesResponse.text()
-    rawData.value.branches = branchesText.substring(0, 200)
-    console.log('Branches response:', {
-      status: branchesResponse.status,
-      headers: Object.fromEntries(branchesResponse.headers),
-      sample: branchesText.substring(0, 200),
-    })
-
-    // Test deliveries URL
-    console.log('Testing deliveries URL:', deliveriesUrl.value)
-    const deliveriesResponse = await fetch(deliveriesUrl.value)
-    const deliveriesText = await deliveriesResponse.text()
-    rawData.value.deliveries = deliveriesText.substring(0, 200)
-    console.log('Deliveries response:', {
-      status: deliveriesResponse.status,
-      headers: Object.fromEntries(deliveriesResponse.headers),
-      sample: deliveriesText.substring(0, 200),
-    })
+    const provider = new GoogleSheetsProvider(sheetsConfig)
+    const result = await provider.fetch(resource)
+    return result.data
   } catch (e) {
-    console.error('Error testing URLs:', e)
+    error.value[resource] = e.message
+    console.error(`Error fetching ${resource}:`, e)
+    return []
   }
 }
 
 onMounted(async () => {
   try {
-    console.log('Initializing data provider...')
+    const provider = new GoogleSheetsProvider(sheetsConfig)
+    await provider.initialize()
 
-    // Initialize the provider
-    await dataProviderFactory.initialize()
-    console.log('Provider initialized')
+    // Fetch all data in parallel
+    const results = await Promise.all([
+      fetchData('branches'),
+      fetchData('deliveries'),
+      fetchData('expenses'),
+      fetchData('vehicles'),
+      fetchData('invoices'),
+    ])
 
-    // Fetch branches
-    try {
-      loading.value.branches = true
-      console.log('Fetching branches...')
-      const branchesResult = await dataProviderFactory.getData('branches', { type: 'global' })
-      branches.value = branchesResult.data
-      console.log('Branches fetched:', branchesResult)
-    } catch (e) {
-      error.value.branches = e.message
-      console.error('Error fetching branches:', e)
-    } finally {
-      loading.value.branches = false
-    }
+    // Update refs
+    ;[branches.value, deliveries.value, expenses.value, vehicles.value, invoices.value] = results
 
-    // Fetch deliveries
-    try {
-      loading.value.deliveries = true
-      console.log('Fetching deliveries...')
-      const deliveriesResult = await dataProviderFactory.getData('deliveries', { type: 'global' })
-      deliveries.value = deliveriesResult.data
-      console.log('Deliveries fetched:', deliveriesResult)
-    } catch (e) {
-      error.value.deliveries = e.message
-      console.error('Error fetching deliveries:', e)
-    } finally {
-      loading.value.deliveries = false
-    }
+    console.log('All data fetched:', {
+      branches: branches.value.length,
+      deliveries: deliveries.value.length,
+      expenses: expenses.value.length,
+      vehicles: vehicles.value.length,
+      invoices: invoices.length,
+    })
   } catch (e) {
     console.error('Error initializing provider:', e)
-    error.value.branches = 'Failed to initialize data provider: ' + e.message
-    error.value.deliveries = 'Failed to initialize data provider: ' + e.message
+    error.value.general = e.message
   }
 })
 </script>
