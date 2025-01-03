@@ -254,4 +254,101 @@ export class GoogleSheetsTransformer {
 
     return true
   }
+
+  // Transform vehicle data
+  transformVehicle(row) {
+    try {
+      // Parse dates
+      const { date: stnkExpiry } = this.parseDatetime(row[20] || '')
+      const { date: taxExpiry } = this.parseDatetime(row[21] || '')
+
+      const vehicle = {
+        // Main identification fields
+        branch: (row[0] || '').trim(),
+        vehicleNumber: (row[1] || '').trim(),
+        logisticType: (row[2] || '').trim(),
+        ownerName: (row[3] || '').trim(),
+        ownership: (row[4] || '').trim(),
+        status: (row[5] || '').trim(),
+
+        // Usage and assignment
+        entitledTo: (row[6] || '').trim(),
+        user: (row[7] || '').trim(),
+        type: (row[8] || '').trim(),
+        vehicleFunction: (row[9] || '').trim(),
+        operationType: (row[10] || '').trim(),
+
+        // Registration details
+        stnkUnitType: (row[11] || '').trim(),
+        stnkOwnerName: (row[12] || '').trim(),
+
+        // Vehicle specifications
+        brand: (row[13] || '').trim(),
+        model: (row[14] || '').trim(),
+        color: (row[15] || '').trim(),
+        year: (row[16] || '').trim(),
+        engineNumber: (row[17] || '').trim(),
+        chassisNumber: (row[18] || '').trim(),
+        ownershipStatus: (row[19] || '').trim(),
+
+        // Document expiry dates
+        stnkExpiry: stnkExpiry,
+        taxExpiry: taxExpiry,
+
+        // Photos and documentation
+        frontPhoto: (row[22] || '').trim(),
+        backPhoto: (row[23] || '').trim(),
+        sidePhoto: (row[24] || '').trim(),
+        stnkPhoto: (row[25] || '').trim(),
+        stnkPhoto38: (row[26] || '').trim(),
+        taxPhoto: (row[27] || '').trim(),
+        kirLetterPhoto: (row[28] || '').trim(),
+        kirCardPhoto: (row[29] || '').trim(),
+
+        // Maintenance and condition
+        tireCode: (row[30] || '').trim(),
+        equipment: (row[31] || '').trim(),
+        bodyBoxCondition: (row[32] || '').trim(),
+        bodyConditionPhoto: (row[33] || '').trim(),
+        boxConditionPhoto: (row[34] || '').trim(),
+        functionality: (row[35] || '').trim(),
+        functionalityDocs: (row[36] || '').trim(),
+
+        // Additional information
+        additionalInfo: (row[37] || '').trim(),
+        vendor: (row[38] || '').trim(),
+      }
+
+      return vehicle
+    } catch (error) {
+      console.error('Error transforming vehicle row:', error)
+      console.log('Problematic row:', row)
+      return null
+    }
+  }
+
+  // Validate vehicle data
+  validateVehicle(data) {
+    if (!data) return false
+
+    // Required fields
+    if (!data.vehicleNumber || !data.branch) {
+      console.log('Failed validation - missing required fields:', {
+        vehicleNumber: data.vehicleNumber,
+        branch: data.branch,
+      })
+      return false
+    }
+
+    // Basic data validation
+    if (!data.status || !data.type) {
+      console.log('Failed validation - missing status or type:', {
+        status: data.status,
+        type: data.type,
+      })
+      return false
+    }
+
+    return true
+  }
 }

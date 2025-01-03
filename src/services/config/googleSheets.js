@@ -3,6 +3,7 @@ export const sheetsConfig = {
   deliveriesSheetUrl: import.meta.env.VITE_SHEETS_DELIVERIES_URL || '',
   branchesSheetUrl: import.meta.env.VITE_SHEETS_BRANCHES_URL || '',
   expensesSheetUrl: import.meta.env.VITE_SHEETS_EXPENSES_URL || '',
+  vehiclesSheetUrl: import.meta.env.VITE_SHEETS_VEHICLES_URL || '',
 
   // Sheet structure definitions
   structure: {
@@ -60,6 +61,49 @@ export const sheetsConfig = {
         'address', // Column D (3)
         'coordinates.lat', // Column E (4)
         'coordinates.lng', // Column F (5)
+      ],
+    },
+    vehicles: {
+      columns: [
+        'branch', // Column A (0) - BRANCH
+        'vehicleNumber', // Column B (1) - NOPOL
+        'logisticType', // Column C (2) - TIPE LOGISTIK
+        'ownerName', // Column D (3) - NAMA PEMILIK/VENDOR
+        'ownership', // Column E (4) - OWNERSHIP
+        'status', // Column F (5) - STATUS
+        'entitledTo', // Column G (6) - ENTITLED TO
+        'user', // Column H (7) - USER
+        'type', // Column I (8) - TYPE
+        'vehicleFunction', // Column J (9) - FUNGSI KENDARAAN
+        'operationType', // Column K (10) - TIPE OPERASIONAL
+        'stnkUnitType', // Column L (11) - TIPE UNIT STNK
+        'stnkOwnerName', // Column M (12) - NAMA PEMILIK STNK
+        'brand', // Column N (13) - MERK / BRAND
+        'model', // Column O (14) - TIPE
+        'color', // Column P (15) - WARNA
+        'year', // Column Q (16) - TAHUN PEMBUATAN
+        'engineNumber', // Column R (17) - NOMOR MESIN
+        'chassisNumber', // Column S (18) - NOMOR RANGKA
+        'ownershipStatus', // Column T (19) - STATUS KEPEMILIKAN
+        'stnkExpiry', // Column U (20) - MASA BERLAKU STNK
+        'taxExpiry', // Column V (21) - MASA BERLAKU PAJAK TAHUNAN
+        'frontPhoto', // Column W (22) - FOTO TAMPAK DEPAN
+        'backPhoto', // Column X (23) - FOTO TAMPAK BELAKANG
+        'sidePhoto', // Column Y (24) - FOTO TAMPAK SAMPING
+        'stnkPhoto', // Column Z (25) - FOTO STNK
+        'stnkPhoto38', // Column AA (26) - FOTO STNK_38
+        'taxPhoto', // Column AB (27) - FOTO PAJAK
+        'kirLetterPhoto', // Column AC (28) - FOTO SURAT KIR
+        'kirCardPhoto', // Column AD (29) - FOTO KARTU KIR
+        'tireCode', // Column AE (30) - KODE BAN
+        'equipment', // Column AF (31) - KELENGKAPAN ALAT
+        'bodyBoxCondition', // Column AG (32) - KONDISI FISIK BODY DAN BOX
+        'bodyConditionPhoto', // Column AH (33) - FOTO KONDISI BODY
+        'boxConditionPhoto', // Column AI (34) - FOTO KONDISI BOX
+        'functionality', // Column AJ (35) - FUNGSIONALITAS
+        'functionalityDocs', // Column AK (36) - DOKUMENTASI FUNGSIONALITAS
+        'additionalInfo', // Column AL (37) - INFORMASI TAMBAHAN
+        'vendor', // Column AM (38) - VENDOR
       ],
     },
   },

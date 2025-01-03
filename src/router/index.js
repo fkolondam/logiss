@@ -1,6 +1,7 @@
 import { createRouter, createWebHistory } from 'vue-router'
 import DashboardView from '../views/DashboardView.vue'
 import ExpensesTest from '../components/__tests__/ExpensesTest.vue'
+import VehiclesTest from '../components/__tests__/VehiclesTest.vue'
 import DeliveriesView from '../views/DeliveriesView.vue'
 import ExpensesView from '../views/ExpensesView.vue'
 import VehiclesView from '../views/VehiclesView.vue'
@@ -51,6 +52,11 @@ const router = createRouter({
       path: '/test/expenses',
       name: 'expenses-test',
       component: ExpensesTest,
+    },
+    {
+      path: '/test/vehicles',
+      name: 'vehicles-test',
+      component: VehiclesTest,
     },
   ],
 })

@@ -15,6 +15,7 @@ export class GoogleSheetsProvider extends DataProvider {
     console.log('Branches URL:', this.config.branchesSheetUrl ? 'Configured' : 'Not configured')
     console.log('Deliveries URL:', this.config.deliveriesSheetUrl ? 'Configured' : 'Not configured')
     console.log('Expenses URL:', this.config.expensesSheetUrl ? 'Configured' : 'Not configured')
+    console.log('Vehicles URL:', this.config.vehiclesSheetUrl ? 'Configured' : 'Not configured')
 
     try {
       // Load and cache branch data first as it's needed for delivery transformations
@@ -84,6 +85,9 @@ export class GoogleSheetsProvider extends DataProvider {
           break
         case 'expenses':
           data = await this.fetchExpenses()
+          break
+        case 'vehicles':
+          data = await this.fetchVehicles()
           break
         default:
           throw new Error('Unsupported resource: ' + resource)
@@ -329,6 +333,69 @@ export class GoogleSheetsProvider extends DataProvider {
     } catch (error) {
       console.error('Error in fetchExpenses:', error)
       throw new Error('Failed to fetch expenses: ' + error.message)
+    }
+  }
+
+  async fetchVehicles() {
+    console.log('Fetching vehicles from:', this.config.vehiclesSheetUrl)
+    try {
+      const response = await fetch(this.config.vehiclesSheetUrl)
+      if (!response.ok) {
+        throw new Error('HTTP error! status: ' + response.status)
+      }
+
+      const csvText = await response.text()
+      console.log('Received vehicles CSV:', csvText.substring(0, 200) + '...')
+
+      const rows = this.parseCSV(csvText)
+      console.log('Parsed vehicle rows:', rows.length)
+
+      // Remove header row and log it
+      const headers = rows.shift()
+      console.log('Vehicle headers:', headers.join(', '))
+      console.log('First data row:', rows[0]?.join(', '))
+
+      // Transform and validate vehicle data
+      const vehicles = rows
+        .map((row, index) => {
+          try {
+            if (!row || row.length < 39) {
+              // Vehicles has 39 columns
+              console.log('Skipping invalid row:', index, row)
+              return null
+            }
+            const vehicle = this.transformer.transformVehicle(row)
+            if (!vehicle) {
+              console.log('Failed to transform vehicle row:', index, row)
+            }
+            return vehicle
+          } catch (error) {
+            console.error('Error transforming vehicle row:', index, error, row)
+            return null
+          }
+        })
+        .filter((vehicle) => {
+          try {
+            const isValid = vehicle && this.transformer.validateVehicle(vehicle)
+            if (!isValid && vehicle) {
+              console.log('Invalid vehicle:', vehicle)
+            }
+            return isValid
+          } catch (error) {
+            console.error('Error validating vehicle:', error)
+            return false
+          }
+        })
+
+      console.log('Transformed vehicles:', vehicles.length)
+      if (vehicles.length > 0) {
+        console.log('Sample vehicle:', vehicles[0])
+      }
+
+      return vehicles
+    } catch (error) {
+      console.error('Error in fetchVehicles:', error)
+      throw new Error('Failed to fetch vehicles: ' + error.message)
     }
   }
 
