@@ -8,6 +8,7 @@ import {
   processExpenseStats,
   processVehicleStats,
 } from './useStatsProcessing'
+import { GoogleSheetsProvider } from '../services/providers/GoogleSheetsProvider'
 
 export function useDashboardData() {
   const userStore = useUserStore()
@@ -32,6 +33,13 @@ export function useDashboardData() {
   const canAccessDeliveries = computed(() => userStore.hasPermission('read_deliveries'))
   const canAccessExpenses = computed(() => userStore.hasPermission('read_expenses'))
   const canAccessVehicles = computed(() => userStore.hasPermission('read_vehicles'))
+
+  // Fetch branches data and set it in the user store
+  async function loadBranchesData() {
+    const branchesData = await GoogleSheetsProvider.getBranchesData()
+    userStore.setBranches(branchesData)
+    userStore.setRegions([...new Set(branchesData.map((branch) => branch.region))]) // Set unique regions
+  }
 
   function getDateRange(period = currentPeriod.value) {
     const now = new Date()
@@ -71,6 +79,7 @@ export function useDashboardData() {
           end: dateRange.end.toISOString().split('T')[0],
         },
         period: currentPeriod.value,
+        scope: currentScope.value,
       }
 
       console.log(`Loading ${section} data with params:`, fetchParams)

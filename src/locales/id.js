@@ -18,6 +18,8 @@ export default {
       this_week: 'Minggu ini',
       this_month: 'Bulan ini',
       custom: 'Custom',
+      lastThreeMonths: 'L3M',
+      monthToDate: 'MTD',
     },
   },
   menu: {
@@ -192,6 +194,11 @@ export default {
       month: 'Bulanan',
       thisWeek: 'Minggu Ini',
       thisMonth: 'Bulan Ini',
+      lastThreeMonths: '3 Bulan Terakhir',
+      monthToDate: 'Bulan Berjalan',
+      yesterday: 'Kemarin',
+      last_week: 'Minggu Lalu',
+      last_month: 'Bulan Lalu',
     },
     categories: {
       fuel: 'Bahan Bakar',
@@ -201,6 +208,8 @@ export default {
       toll: 'Tol',
       parking: 'Parkir',
       retribution: 'Retribusi',
+      insurance: 'Asuransi',
+      others: 'Lainnya',
     },
     stats: {
       total: 'Total',
@@ -227,6 +236,12 @@ export default {
       passenger: 'Kendaraan Penumpang',
       logistic: 'Kendaraan Logistik',
     },
+    status: {
+      active: 'Aktif',
+      maintenance: 'Dalam Perawatan',
+      inactive: 'Tidak Aktif',
+    },
+    fuel: 'Level BBM',
     logisticType: {
       title: 'Tipe Logistik',
       '4 RODA L': 'Logistik 4 Roda',

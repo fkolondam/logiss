@@ -13,34 +13,29 @@
         </div>
       </div>
 
-      <!-- Period Selector with Enhanced UI -->
-      <div class="w-full sm:w-auto flex items-center gap-4">
-        <!-- Period Selector -->
-        <div class="flex-1 sm:flex-none">
+      <!-- Period Selector with Icons -->
+      <div class="flex items-center gap-1">
+        <button
+          v-for="period in periods"
+          :key="period.value"
+          @click="handlePeriodChange(period.value)"
+          class="p-2 text-sm font-medium transition-all duration-200 rounded-lg relative flex items-center gap-1"
+          :class="[
+            currentPeriod === period.value
+              ? 'bg-blue-500 text-white'
+              : 'text-gray-600 hover:bg-gray-50',
+          ]"
+          :title="period.label"
+        >
+          <component :is="period.icon" class="w-4 h-4" />
+          <span class="text-xs">{{ period.shortLabel }}</span>
           <div
-            class="grid grid-cols-3 w-full text-sm border border-gray-200 rounded-lg overflow-hidden bg-white"
+            v-if="loadingStates[period.value]"
+            class="absolute inset-0 bg-black/5 flex items-center justify-center rounded-lg"
           >
-            <button
-              v-for="period in periods"
-              :key="period.value"
-              @click="handlePeriodChange(period.value)"
-              class="px-4 py-2 font-medium text-center transition-all duration-200 relative"
-              :class="[
-                currentPeriod === period.value
-                  ? 'bg-blue-500 text-white'
-                  : 'text-gray-600 hover:bg-gray-50',
-              ]"
-            >
-              {{ period.label }}
-              <div
-                v-if="loadingStates[period.value]"
-                class="absolute inset-0 bg-black/5 flex items-center justify-center"
-              >
-                <Loader2 class="w-4 h-4 animate-spin text-current" />
-              </div>
-            </button>
+            <Loader2 class="w-4 h-4 animate-spin text-current" />
           </div>
-        </div>
+        </button>
       </div>
     </div>
 
@@ -136,7 +131,19 @@
 
 <script setup>
 import { ref, computed, onMounted, watch } from 'vue'
-import { AlertCircle, Globe, Map, Building2, RefreshCw, Loader2 } from 'lucide-vue-next'
+import {
+  AlertCircle,
+  Globe,
+  Map,
+  Building2,
+  RefreshCw,
+  Loader2,
+  Calendar,
+  CalendarDays,
+  CalendarRange,
+  CalendarClock,
+  History,
+} from 'lucide-vue-next'
 import { useTranslations } from '../composables/useTranslations'
 import { useUserStore } from '../stores/user'
 import { useDashboardData } from '../composables/useDashboardData'
@@ -175,11 +182,38 @@ const {
   currentPeriod,
 } = useDashboardData()
 
-// Available periods
+// Available periods with icons
 const periods = computed(() => [
-  { value: PERIODS.TODAY, label: t('common.periods.today') },
-  { value: PERIODS.THIS_WEEK, label: t('common.periods.this_week') },
-  { value: PERIODS.THIS_MONTH, label: t('common.periods.this_month') },
+  {
+    value: PERIODS.TODAY,
+    label: t('common.periods.today'),
+    shortLabel: 'Hari ini',
+    icon: Calendar,
+  },
+  {
+    value: PERIODS.THIS_WEEK,
+    label: t('common.periods.this_week'),
+    shortLabel: 'Minggu',
+    icon: CalendarDays,
+  },
+  {
+    value: PERIODS.THIS_MONTH,
+    label: t('common.periods.this_month'),
+    shortLabel: 'Bulan',
+    icon: CalendarRange,
+  },
+  {
+    value: 'L3M',
+    label: t('common.periods.lastThreeMonths'),
+    shortLabel: 'L3M',
+    icon: History,
+  },
+  {
+    value: 'MTD',
+    label: t('common.periods.monthToDate'),
+    shortLabel: 'MTD',
+    icon: CalendarClock,
+  },
 ])
 
 // Check if user has any dashboard permissions

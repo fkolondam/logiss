@@ -18,6 +18,8 @@ export default {
       this_week: 'This Week',
       this_month: 'This Month',
       custom: 'Custom',
+      lastThreeMonths: 'L3M',
+      monthToDate: 'MTD',
     },
   },
   menu: {
@@ -173,6 +175,12 @@ export default {
       last_week: 'Last Week',
       this_month: 'This Month',
       last_month: 'Last Month',
+      month: 'Month',
+      week: 'Week',
+      thisMonth: 'This Month',
+      thisWeek: 'This Week',
+      lastThreeMonths: 'Last 3 Months',
+      monthToDate: 'Month to Date',
     },
   },
   expenses: {
@@ -190,6 +198,8 @@ export default {
       toll: 'Toll',
       parking: 'Parking',
       retribution: 'Retribution',
+      insurance: 'Insurance',
+      others: 'Others',
     },
     stats: {
       total: 'Total',
@@ -203,6 +213,10 @@ export default {
       last_week: 'Last Week',
       this_month: 'This Month',
       last_month: 'Last Month',
+      month: 'Monthly',
+      week: 'Weekly',
+      thisMonth: 'This Month',
+      thisWeek: 'This Week',
     },
   },
   vehicles: {
@@ -213,6 +227,12 @@ export default {
       passenger: 'Passenger Vehicles',
       logistic: 'Logistic Vehicles',
     },
+    status: {
+      active: 'Active',
+      maintenance: 'Under Maintenance',
+      inactive: 'Inactive',
+    },
+    fuel: 'Fuel Level',
     logisticType: {
       title: 'Logistic Types',
       '4 RODA L': '4-Wheeler Logistics',
