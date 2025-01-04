@@ -152,7 +152,15 @@ const {
   refreshSection,
   currentPeriod,
   customDateRange,
+  updateDateRange,
 } = useDashboardData()
+
+// Watch for custom date range changes
+watch(customDateRange, (newRange) => {
+  if (newRange?.length === 2) {
+    updateDateRange(newRange)
+  }
+})
 
 // Check if user has any dashboard permissions
 const hasAnyPermissions = computed(() => {

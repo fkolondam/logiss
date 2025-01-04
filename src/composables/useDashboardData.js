@@ -30,6 +30,7 @@ export function useDashboardData() {
   })
 
   const currentPeriod = ref(PERIODS.TODAY)
+  const customDateRange = ref([])
   const deliveryStats = ref({})
   const expenseStats = ref({})
   const vehicleStats = ref({})
@@ -38,14 +39,12 @@ export function useDashboardData() {
   const canAccessExpenses = computed(() => userStore.hasPermission('read_expenses'))
   const canAccessVehicles = computed(() => userStore.hasPermission('read_vehicles'))
 
-  // Fetch branches data and set it in the user store
-  async function loadBranchesData() {
-    const branchesData = await GoogleSheetsProvider.getBranchesData()
-    userStore.setBranches(branchesData)
-    userStore.setRegions([...new Set(branchesData.map((branch) => branch.region))]) // Set unique regions
+  function updateDateRange(range) {
+    if (range?.length === 2) {
+      customDateRange.value = range
+      loadDashboardData()
+    }
   }
-
-  const customDateRange = ref([])
 
   function getDateRange(period = currentPeriod.value) {
     const now = new Date()
@@ -79,10 +78,13 @@ export function useDashboardData() {
         return { start: yearStart, end: today }
       case PERIODS.CUSTOM_RANGE:
         if (customDateRange.value?.length === 2) {
-          return {
-            start: customDateRange.value[0],
-            end: customDateRange.value[1],
-          }
+          const [start, end] = customDateRange.value
+          // Set time to start of day for start date and end of day for end date
+          const startDate = new Date(start)
+          startDate.setHours(0, 0, 0, 0)
+          const endDate = new Date(end)
+          endDate.setHours(23, 59, 59, 999)
+          return { start: startDate, end: endDate }
         }
         return { start: today, end: today }
       default:
@@ -114,9 +116,6 @@ export function useDashboardData() {
         loadPreviousPeriodData(section, dateRange, currentScope.value),
       ])
 
-      console.log(`Received ${section} current period data:`, currentResult)
-      console.log(`Received ${section} previous period data:`, previousResult)
-
       // Process stats with trend calculations
       let stats
       switch (section) {
@@ -147,8 +146,6 @@ export function useDashboardData() {
           vehicleStats.value = stats
           break
       }
-
-      console.log(`Updated ${section} stats with trends:`, stats)
     } catch (e) {
       error.value = e.message
       console.error(`Error loading ${section} data:`, e)
@@ -158,7 +155,6 @@ export function useDashboardData() {
     }
   }
 
-  // Helper function to load previous period data
   async function loadPreviousPeriodData(section, currentDateRange, scope) {
     const previousDateRange = getPreviousDateRange(currentDateRange)
     try {
@@ -174,7 +170,6 @@ export function useDashboardData() {
     }
   }
 
-  // Helper function to get previous period date range
   function getPreviousDateRange({ start, end }) {
     const duration = end.getTime() - start.getTime()
     const previousStart = new Date(start.getTime() - duration)
@@ -182,19 +177,15 @@ export function useDashboardData() {
     return { start: previousStart, end: previousEnd }
   }
 
-  // Calculate trends for different sections
   function calculateDeliveryTrends(currentStats, previousStats) {
     if (!previousStats) return
 
-    // Calculate overall trend
     currentStats.trend = calculateTrendPercentage(currentStats.total, previousStats.total)
 
-    // Calculate completion rate trend
     const currentCompletionRate = (currentStats.receivedAll / currentStats.total) * 100
     const previousCompletionRate = (previousStats.receivedAll / previousStats.total) * 100
     currentStats.completionTrend = Math.round(currentCompletionRate - previousCompletionRate)
 
-    // Calculate status-specific trends
     currentStats.receivedTrend = calculateTrendPercentage(
       currentStats.receivedAll,
       previousStats.receivedAll,
@@ -213,13 +204,11 @@ export function useDashboardData() {
   function calculateExpenseTrends(currentStats, previousStats) {
     if (!previousStats) return
 
-    // Calculate total amount trend
     currentStats.trend = calculateTrendPercentage(
       currentStats.totalAmount,
       previousStats.totalAmount,
     )
 
-    // Calculate category-specific trends
     Object.keys(currentStats.byCategory).forEach((category) => {
       const currentAmount = currentStats.byCategory[category].amount
       const previousAmount = previousStats.byCategory[category]?.amount || 0
@@ -233,7 +222,6 @@ export function useDashboardData() {
   function calculateVehicleTrends(currentStats, previousStats) {
     if (!previousStats) return
 
-    // Calculate status trends
     currentStats.activeTrend = calculateTrendPercentage(currentStats.active, previousStats.active)
     currentStats.maintenanceTrend = calculateTrendPercentage(
       currentStats.maintenance,
@@ -245,7 +233,6 @@ export function useDashboardData() {
     )
   }
 
-  // Helper function to calculate trend percentage
   function calculateTrendPercentage(current, previous) {
     if (!previous) return 0
     return Math.round(((current - previous) / previous) * 100)
@@ -281,6 +268,7 @@ export function useDashboardData() {
     isLoading.value = Object.values(loadingStates.value).some(Boolean)
   }
 
+  // Watch for scope changes
   watch(
     () => ({
       type: currentScope.value?.type || 'global',
@@ -288,9 +276,6 @@ export function useDashboardData() {
     }),
     (newScope, oldScope) => {
       if (newScope.type !== oldScope?.type || newScope.value !== oldScope?.value) {
-        console.log(
-          `Scope changed from ${oldScope?.type}:${oldScope?.value} to ${newScope.type}:${newScope.value}`,
-        )
         loadDashboardData()
       }
     },
@@ -300,7 +285,6 @@ export function useDashboardData() {
   // Watch for period changes
   watch(currentPeriod, (newPeriod, oldPeriod) => {
     if (newPeriod !== oldPeriod) {
-      console.log(`Period changed from ${oldPeriod} to ${newPeriod}`)
       loadDashboardData()
     }
   })
@@ -308,7 +292,6 @@ export function useDashboardData() {
   // Watch for custom date range changes
   watch(customDateRange, (newRange) => {
     if (currentPeriod.value === PERIODS.CUSTOM_RANGE && newRange?.length === 2) {
-      console.log('Custom date range changed:', newRange)
       loadDashboardData()
     }
   })
@@ -326,5 +309,6 @@ export function useDashboardData() {
     loadDashboardData,
     loadSectionData,
     getDateRange,
+    updateDateRange,
   }
 }
