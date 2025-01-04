@@ -23,6 +23,10 @@ export function useDashboardData() {
     [PERIODS.TODAY]: false,
     [PERIODS.THIS_WEEK]: false,
     [PERIODS.THIS_MONTH]: false,
+    [PERIODS.LAST_MONTH]: false,
+    [PERIODS.L3M]: false,
+    [PERIODS.YTD]: false,
+    [PERIODS.CUSTOM_RANGE]: false,
   })
 
   const currentPeriod = ref(PERIODS.TODAY)
@@ -40,6 +44,8 @@ export function useDashboardData() {
     userStore.setBranches(branchesData)
     userStore.setRegions([...new Set(branchesData.map((branch) => branch.region))]) // Set unique regions
   }
+
+  const customDateRange = ref([])
 
   function getDateRange(period = currentPeriod.value) {
     const now = new Date()
@@ -61,6 +67,24 @@ export function useDashboardData() {
         const firstDay = new Date(today.getFullYear(), today.getMonth(), 1)
         const lastDay = new Date(today.getFullYear(), today.getMonth() + 1, 0)
         return { start: firstDay, end: lastDay }
+      case PERIODS.LAST_MONTH:
+        const lastMonthFirstDay = new Date(today.getFullYear(), today.getMonth() - 1, 1)
+        const lastMonthLastDay = new Date(today.getFullYear(), today.getMonth(), 0)
+        return { start: lastMonthFirstDay, end: lastMonthLastDay }
+      case PERIODS.L3M:
+        const threeMonthsAgo = new Date(today.getFullYear(), today.getMonth() - 3, 1)
+        return { start: threeMonthsAgo, end: today }
+      case PERIODS.YTD:
+        const yearStart = new Date(today.getFullYear(), 0, 1)
+        return { start: yearStart, end: today }
+      case PERIODS.CUSTOM_RANGE:
+        if (customDateRange.value?.length === 2) {
+          return {
+            start: customDateRange.value[0],
+            end: customDateRange.value[1],
+          }
+        }
+        return { start: today, end: today }
       default:
         return { start: today, end: new Date(today.getTime() + 24 * 60 * 60 * 1000 - 1) }
     }
@@ -273,9 +297,18 @@ export function useDashboardData() {
     { immediate: true, deep: true },
   )
 
+  // Watch for period changes
   watch(currentPeriod, (newPeriod, oldPeriod) => {
     if (newPeriod !== oldPeriod) {
       console.log(`Period changed from ${oldPeriod} to ${newPeriod}`)
+      loadDashboardData()
+    }
+  })
+
+  // Watch for custom date range changes
+  watch(customDateRange, (newRange) => {
+    if (currentPeriod.value === PERIODS.CUSTOM_RANGE && newRange?.length === 2) {
+      console.log('Custom date range changed:', newRange)
       loadDashboardData()
     }
   })
@@ -288,6 +321,7 @@ export function useDashboardData() {
     expenseStats,
     vehicleStats,
     currentPeriod,
+    customDateRange,
     PERIODS,
     loadDashboardData,
     loadSectionData,

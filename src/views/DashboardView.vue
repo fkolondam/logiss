@@ -13,30 +13,12 @@
         </div>
       </div>
 
-      <!-- Period Selector with Icons -->
-      <div class="flex items-center gap-1">
-        <button
-          v-for="period in periods"
-          :key="period.value"
-          @click="handlePeriodChange(period.value)"
-          class="p-2 text-sm font-medium transition-all duration-200 rounded-lg relative flex items-center gap-1"
-          :class="[
-            currentPeriod === period.value
-              ? 'bg-blue-500 text-white'
-              : 'text-gray-600 hover:bg-gray-50',
-          ]"
-          :title="period.label"
-        >
-          <component :is="period.icon" class="w-4 h-4" />
-          <span class="text-xs">{{ period.shortLabel }}</span>
-          <div
-            v-if="loadingStates[period.value]"
-            class="absolute inset-0 bg-black/5 flex items-center justify-center rounded-lg"
-          >
-            <Loader2 class="w-4 h-4 animate-spin text-current" />
-          </div>
-        </button>
-      </div>
+      <!-- Timeline Selector -->
+      <TimelineSelector
+        v-model="currentPeriod"
+        v-model:custom-range="customDateRange"
+        @update:model-value="handlePeriodChange"
+      />
     </div>
 
     <!-- Error Alert -->
@@ -131,19 +113,7 @@
 
 <script setup>
 import { ref, computed, onMounted, watch } from 'vue'
-import {
-  AlertCircle,
-  Globe,
-  Map,
-  Building2,
-  RefreshCw,
-  Loader2,
-  Calendar,
-  CalendarDays,
-  CalendarRange,
-  CalendarClock,
-  History,
-} from 'lucide-vue-next'
+import { AlertCircle, Globe, Map, Building2 } from 'lucide-vue-next'
 import { useTranslations } from '../composables/useTranslations'
 import { useUserStore } from '../stores/user'
 import { useDashboardData } from '../composables/useDashboardData'
@@ -151,6 +121,7 @@ import RecentDeliveries from '../components/dashboard/RecentDeliveries.vue'
 import ExpensesOverview from '../components/dashboard/ExpensesOverview.vue'
 import VehicleStatus from '../components/dashboard/VehicleStatus.vue'
 import { PERIODS } from '../constants/periods'
+import TimelineSelector from '../components/layout/TimelineSelector.vue'
 
 // Skeleton component for loading state
 const DashboardSkeleton = {
@@ -180,41 +151,8 @@ const {
   loadDashboardData,
   refreshSection,
   currentPeriod,
+  customDateRange,
 } = useDashboardData()
-
-// Available periods with icons
-const periods = computed(() => [
-  {
-    value: PERIODS.TODAY,
-    label: t('common.periods.today'),
-    shortLabel: 'Hari ini',
-    icon: Calendar,
-  },
-  {
-    value: PERIODS.THIS_WEEK,
-    label: t('common.periods.this_week'),
-    shortLabel: 'Minggu',
-    icon: CalendarDays,
-  },
-  {
-    value: PERIODS.THIS_MONTH,
-    label: t('common.periods.this_month'),
-    shortLabel: 'Bulan',
-    icon: CalendarRange,
-  },
-  {
-    value: 'L3M',
-    label: t('common.periods.lastThreeMonths'),
-    shortLabel: 'L3M',
-    icon: History,
-  },
-  {
-    value: 'MTD',
-    label: t('common.periods.monthToDate'),
-    shortLabel: 'MTD',
-    icon: CalendarClock,
-  },
-])
 
 // Check if user has any dashboard permissions
 const hasAnyPermissions = computed(() => {
