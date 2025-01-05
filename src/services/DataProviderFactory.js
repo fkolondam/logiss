@@ -24,6 +24,29 @@ class DataProviderFactory extends DataProvider {
     this.currentProvider = null
     this.pendingRequests = new Map()
     this.initialized = new Set()
+    this.cacheRefreshInterval = null
+    this.CACHE_REFRESH_INTERVAL = 5 * 60 * 1000 // 5 minutes
+    this.setupCacheRefresh()
+  }
+
+  setupCacheRefresh() {
+    // Clear any existing interval
+    if (this.cacheRefreshInterval) {
+      clearInterval(this.cacheRefreshInterval)
+    }
+
+    // Set up periodic cache refresh
+    this.cacheRefreshInterval = setInterval(() => {
+      console.log('Performing periodic cache refresh')
+      this.clearCache()
+    }, this.CACHE_REFRESH_INTERVAL)
+  }
+
+  stopCacheRefresh() {
+    if (this.cacheRefreshInterval) {
+      clearInterval(this.cacheRefreshInterval)
+      this.cacheRefreshInterval = null
+    }
   }
 
   /**
@@ -227,6 +250,7 @@ class DataProviderFactory extends DataProvider {
   }
 
   clearCache() {
+    console.log('Clearing cache for all providers')
     // Clear cache for all providers
     for (const provider of this.providers.values()) {
       if (provider.clearCache) {
@@ -234,6 +258,38 @@ class DataProviderFactory extends DataProvider {
       }
     }
     this.pendingRequests.clear()
+
+    // Emit cache clear event for debugging
+    console.log('Cache cleared at:', new Date().toISOString())
+  }
+
+  /**
+   * Force an immediate cache refresh
+   */
+  async refreshCache() {
+    console.log('Forcing immediate cache refresh')
+    this.clearCache()
+
+    // Re-fetch data for the current provider if any
+    if (this.currentProvider) {
+      try {
+        await this.currentProvider.initialize()
+        console.log('Cache refreshed successfully')
+      } catch (error) {
+        console.error('Error refreshing cache:', error)
+        throw error
+      }
+    }
+  }
+
+  /**
+   * Clean up resources when factory is no longer needed
+   */
+  dispose() {
+    this.stopCacheRefresh()
+    this.clearCache()
+    this.providers.clear()
+    this.currentProvider = null
   }
 }
 

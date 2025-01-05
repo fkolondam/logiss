@@ -1,4 +1,4 @@
-import { ref, computed, watch } from 'vue'
+import { ref, computed, watch, onMounted } from 'vue'
 import { storeToRefs } from 'pinia'
 import { dataProviderFactory } from '../services/DataProviderFactory'
 import { useUserStore } from '../stores/user'
@@ -29,11 +29,44 @@ export function useDashboardData() {
     [PERIODS.CUSTOM_RANGE]: false,
   })
 
+  // Cache configuration
+  const CACHE_DURATION = 5 * 60 * 1000 // 5 minutes
+  const cache = ref(new Map())
+
   const currentPeriod = ref(PERIODS.TODAY)
   const customDateRange = ref([])
   const deliveryStats = ref({})
   const expenseStats = ref({})
   const vehicleStats = ref({})
+
+  // Cache management
+  function getCacheKey(section, scope, period) {
+    return `${section}:${scope?.type}:${scope?.value}:${period}`
+  }
+
+  function getCachedData(section, scope, period) {
+    const key = getCacheKey(section, scope, period)
+    const cached = cache.value.get(key)
+    if (cached && Date.now() - cached.timestamp < CACHE_DURATION) {
+      console.log(`Using cached data for ${key}`)
+      return cached.data
+    }
+    return null
+  }
+
+  function setCachedData(section, scope, period, data) {
+    const key = getCacheKey(section, scope, period)
+    cache.value.set(key, {
+      data,
+      timestamp: Date.now(),
+    })
+    console.log(`Cached data for ${key}`)
+  }
+
+  function clearCache() {
+    cache.value.clear()
+    console.log('Cache cleared')
+  }
 
   const canAccessDeliveries = computed(() => userStore.hasPermission('read_deliveries'))
   const canAccessExpenses = computed(() => userStore.hasPermission('read_expenses'))
@@ -110,13 +143,30 @@ export function useDashboardData() {
 
       console.log(`Loading ${section} data with params:`, fetchParams)
 
+      // Check cache first
+      const cachedData = getCachedData(section, currentScope.value, currentPeriod.value)
+      if (cachedData) {
+        switch (section) {
+          case 'deliveries':
+            deliveryStats.value = cachedData
+            break
+          case 'expenses':
+            expenseStats.value = cachedData
+            break
+          case 'vehicles':
+            vehicleStats.value = cachedData
+            break
+        }
+        return
+      }
+
       // Fetch current and previous period data for trend calculation
       const [currentResult, previousResult] = await Promise.all([
         dataProviderFactory.getData(section, currentScope.value, fetchParams),
         loadPreviousPeriodData(section, dateRange, currentScope.value),
       ])
 
-      // Process stats with trend calculations
+      // Process stats with trend calculations and cache
       let stats
       switch (section) {
         case 'deliveries':
@@ -126,6 +176,7 @@ export function useDashboardData() {
             calculateDeliveryTrends(stats, prevStats)
           }
           deliveryStats.value = stats
+          setCachedData(section, currentScope.value, currentPeriod.value, stats)
           break
 
         case 'expenses':
@@ -135,6 +186,7 @@ export function useDashboardData() {
             calculateExpenseTrends(stats, prevStats)
           }
           expenseStats.value = stats
+          setCachedData(section, currentScope.value, currentPeriod.value, stats)
           break
 
         case 'vehicles':
@@ -144,6 +196,7 @@ export function useDashboardData() {
             calculateVehicleTrends(stats, prevStats)
           }
           vehicleStats.value = stats
+          setCachedData(section, currentScope.value, currentPeriod.value, stats)
           break
       }
     } catch (e) {
@@ -239,10 +292,16 @@ export function useDashboardData() {
   }
 
   async function loadDashboardData() {
+    if (isLoading.value) {
+      console.log('Already loading dashboard data, skipping')
+      return
+    }
+
     isLoading.value = true
     error.value = null
 
     try {
+      console.log('Loading dashboard data for period:', currentPeriod.value)
       const loadPromises = []
 
       if (canAccessDeliveries.value) {
@@ -256,6 +315,7 @@ export function useDashboardData() {
       }
 
       await Promise.all(loadPromises)
+      console.log('Dashboard data loaded successfully')
     } catch (e) {
       error.value = e.message
       console.error('Error loading dashboard data:', e)
@@ -276,10 +336,47 @@ export function useDashboardData() {
     }),
     (newScope, oldScope) => {
       if (newScope.type !== oldScope?.type || newScope.value !== oldScope?.value) {
+        clearCache() // Clear cache when scope changes
         loadDashboardData()
       }
     },
     { immediate: true, deep: true },
+  )
+
+  // Initialize with today's data and watch for user/scope changes
+  onMounted(async () => {
+    // Set initial period to today
+    currentPeriod.value = PERIODS.TODAY
+
+    // Initial data load
+    await loadDashboardData()
+
+    // Set up auto-refresh interval for cache
+    const refreshInterval = setInterval(
+      () => {
+        if (document.visibilityState === 'visible') {
+          console.log('Auto-refreshing dashboard data')
+          dataProviderFactory.clearCache()
+          loadDashboardData()
+        }
+      },
+      5 * 60 * 1000,
+    ) // 5 minutes
+
+    // Clean up interval on unmount
+    onUnmounted(() => {
+      clearInterval(refreshInterval)
+    })
+  })
+
+  // Watch for user changes
+  watch(
+    () => userStore.currentUser?.id,
+    () => {
+      console.log('User changed, reloading dashboard data')
+      dataProviderFactory.clearCache()
+      loadDashboardData()
+    },
   )
 
   // Watch for period changes

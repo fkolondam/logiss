@@ -6,6 +6,36 @@ export class GoogleSheetsProvider extends DataProvider {
     super()
     this.config = config
     this.transformer = new GoogleSheetsTransformer()
+    this.cache = new Map()
+    this.CACHE_DURATION = 5 * 60 * 1000 // 5 minutes cache
+  }
+
+  getCacheKey(resource, params = {}) {
+    return `${resource}:${JSON.stringify(params)}`
+  }
+
+  getCachedData(resource, params = {}) {
+    const key = this.getCacheKey(resource, params)
+    const cached = this.cache.get(key)
+    if (cached && Date.now() - cached.timestamp < this.CACHE_DURATION) {
+      console.log(`Using cached data for ${key}`)
+      return cached.data
+    }
+    return null
+  }
+
+  setCachedData(resource, params = {}, data) {
+    const key = this.getCacheKey(resource, params)
+    this.cache.set(key, {
+      data,
+      timestamp: Date.now(),
+    })
+    console.log(`Cached data for ${key}`)
+  }
+
+  clearCache() {
+    this.cache.clear()
+    console.log('Provider cache cleared')
   }
 
   async initialize() {
@@ -29,8 +59,21 @@ export class GoogleSheetsProvider extends DataProvider {
   async fetch(resource, params = {}) {
     try {
       console.log(`Fetching ${resource} with params:`, params)
-      let data = []
 
+      // Check cache first
+      const cachedData = this.getCachedData(resource, params)
+      if (cachedData) {
+        return {
+          data: cachedData,
+          total: cachedData.length,
+          metadata: {
+            totalCount: cachedData.length,
+            fromCache: true,
+          },
+        }
+      }
+
+      let data = []
       switch (resource) {
         case 'deliveries':
           data = await this.fetchDeliveries(params)
@@ -39,17 +82,20 @@ export class GoogleSheetsProvider extends DataProvider {
           data = await this.fetchBranches()
           break
         case 'expenses':
-          data = await this.fetchExpenses()
+          data = await this.fetchExpenses(params)
           break
         case 'vehicles':
-          data = await this.fetchVehicles()
+          data = await this.fetchVehicles(params)
           break
         case 'invoices':
-          data = await this.fetchInvoices()
+          data = await this.fetchInvoices(params)
           break
         default:
           throw new Error('Unsupported resource: ' + resource)
       }
+
+      // Cache the fetched data
+      this.setCachedData(resource, params, data)
 
       // Log the fetched data for debugging
       console.log(`Fetched ${resource} data:`, {
@@ -192,13 +238,39 @@ export class GoogleSheetsProvider extends DataProvider {
         filtered = filtered.filter((d) => d.branchId === branchId)
       }
 
-      if (date) {
-        filtered = filtered.filter((d) => d.date === date)
-      }
-
       if (status) {
         filtered = filtered.filter((d) => d.status === status)
       }
+    }
+
+    // Apply date range filtering
+    if (params.dateRange) {
+      const { start, end } = params.dateRange
+      const startDate = new Date(start)
+      const endDate = new Date(end)
+
+      filtered = filtered.filter((delivery) => {
+        const deliveryDate = new Date(delivery.date)
+        return deliveryDate >= startDate && deliveryDate <= endDate
+      })
+    }
+
+    return filtered
+  }
+
+  filterExpenses(expenses, params) {
+    let filtered = [...expenses]
+
+    // Apply date range filtering
+    if (params.dateRange) {
+      const { start, end } = params.dateRange
+      const startDate = new Date(start)
+      const endDate = new Date(end)
+
+      filtered = filtered.filter((expense) => {
+        const expenseDate = new Date(expense.date)
+        return expenseDate >= startDate && expenseDate <= endDate
+      })
     }
 
     return filtered

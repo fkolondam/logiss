@@ -7,6 +7,7 @@ import {
   dashboardConfig,
   regionBranches,
 } from '../config/users'
+import { dataProviderFactory } from '../services/DataProviderFactory'
 
 export const useUserStore = defineStore('user', {
   state() {
@@ -18,6 +19,7 @@ export const useUserStore = defineStore('user', {
       regions: [],
       currentBranch: null,
       currentRegion: null,
+      initialized: false,
     }
   },
 
@@ -97,7 +99,17 @@ export const useUserStore = defineStore('user', {
       }
 
       this.currentUser = user
-      this.selectedScope = null
+
+      // Set initial scope based on user role
+      if (!this.initialized) {
+        this.selectedScope = user.scope
+        this.initialized = true
+      } else {
+        this.selectedScope = null
+      }
+
+      // Clear cache when switching users
+      dataProviderFactory.clearCache()
       this.error = null
     },
     setBranches(branches) {
@@ -112,13 +124,66 @@ export const useUserStore = defineStore('user', {
     setCurrentRegion(region) {
       this.currentRegion = region
     },
-    clearScope() {
-      this.selectedScope = null
+    async setScope(scope) {
+      // Validate scope before setting
+      if (this.canSelectScope(scope)) {
+        console.log('Setting scope:', scope)
+
+        // Store previous scope for comparison
+        const prevScope = this.selectedScope
+        this.selectedScope = scope
+
+        // Clear cache if scope type or value changed
+        if (!prevScope || prevScope.type !== scope.type || prevScope.value !== scope.value) {
+          console.log('Scope changed, clearing cache')
+          dataProviderFactory.clearCache()
+        }
+
+        return true
+      } else {
+        console.warn('Invalid scope selection:', scope)
+        return false
+      }
     },
+
+    async clearScope() {
+      console.log('Clearing scope')
+      if (this.selectedScope) {
+        this.selectedScope = null
+        // Clear cache when scope is cleared
+        dataProviderFactory.clearCache()
+      }
+    },
+
     clearUser() {
       this.currentUser = null
       this.selectedScope = null
       this.error = null
+    },
+
+    canSelectScope(scope) {
+      if (!this.currentUser) return false
+
+      switch (this.currentUser.role) {
+        case 'admin':
+          return true // Admin can select any scope
+        case 'regional_manager':
+          // Can select global, their region, or branches in their region
+          return (
+            scope.type === 'global' ||
+            (scope.type === 'region' && scope.value === this.currentUser.scope.value) ||
+            (scope.type === 'branch' && this.accessibleBranches.includes(scope.value))
+          )
+        case 'branch_manager':
+        case 'staff':
+          // Can only select their branch
+          return scope.type === 'branch' && scope.value === this.currentUser.scope.value
+        case 'operational':
+          // Can only select personal scope
+          return scope.type === 'personal' && scope.value === this.currentUser.scope.value
+        default:
+          return false
+      }
     },
   },
 })

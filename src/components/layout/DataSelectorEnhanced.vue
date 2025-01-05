@@ -306,19 +306,46 @@ const currentScopeLabel = computed(() => {
   }
 })
 
+const emit = defineEmits(['scope-changed'])
+
 // Handle scope selection
-const selectScope = (scope) => {
+const selectScope = async (scope) => {
   if (userStore.canSelectScope(scope)) {
-    userStore.setScope(scope)
+    console.log('Setting scope:', scope)
+    await userStore.setScope(scope)
+
+    // Force data refresh
+    dataProviderFactory.clearCache()
+    emit('scope-changed', scope)
+
     isOpen.value = false
   }
 }
 
 // Clear scope selection
-const clearScope = () => {
-  userStore.clearScope()
+const clearScope = async () => {
+  console.log('Clearing scope')
+  await userStore.clearScope()
+
+  // Force data refresh
+  dataProviderFactory.clearCache()
+  emit('scope-changed', null)
+
   isOpen.value = false
 }
+
+// Watch for scope changes
+watch(
+  () => userStore.scope,
+  (newScope, oldScope) => {
+    if (JSON.stringify(newScope) !== JSON.stringify(oldScope)) {
+      console.log('Scope changed:', newScope)
+      // Refresh data when scope changes
+      dataProviderFactory.clearCache()
+    }
+  },
+  { deep: true },
+)
 
 // Toggle quick filters
 const toggleFilter = (filterId) => {
