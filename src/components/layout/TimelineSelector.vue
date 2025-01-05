@@ -248,7 +248,7 @@ const emit = defineEmits(['update:modelValue', 'update:customRange'])
 const { t } = useTranslations()
 
 const isOpen = ref(false)
-const selectedPeriod = ref(props.modelValue)
+const selectedPeriod = ref(props.modelValue || PERIODS.TODAY)
 const today = new Date().toISOString().split('T')[0]
 
 // Initialize dates if custom range exists
@@ -267,12 +267,13 @@ const formatDate = (date) => {
 watch(
   () => props.modelValue,
   (newValue) => {
-    selectedPeriod.value = newValue
+    selectedPeriod.value = newValue || PERIODS.TODAY
     if (newValue !== PERIODS.CUSTOM_RANGE) {
       startDate.value = ''
       endDate.value = ''
     }
   },
+  { immediate: true },
 )
 
 watch(

@@ -190,7 +190,7 @@ import {
 } from 'lucide-vue-next'
 import { useUserStore } from '../../stores/user'
 import { useTranslations } from '../../composables/useTranslations'
-import { branchConfig } from '../../services/mockdata/generators/branchData'
+import { dataProviderFactory } from '../../services/DataProviderFactory'
 
 const userStore = useUserStore()
 const { t } = useTranslations()
@@ -226,12 +226,26 @@ const getCurrentScopeIcon = computed(() => {
   }
 })
 
-// Available regions and branches with filtering
-const availableRegions = computed(() => [
-  ...new Set(Object.values(branchConfig).map((b) => b.region)),
-])
+// Data provider setup
+const dataProvider = dataProviderFactory.getCurrentProvider()
+const branches = ref([])
+const regions = ref([])
 
-const availableBranches = computed(() => Object.keys(branchConfig))
+// Fetch branch data on mount
+onMounted(async () => {
+  try {
+    const response = await dataProvider.fetch('branches')
+    const branchData = response.data
+    branches.value = branchData
+    regions.value = [...new Set(branchData.map((b) => b.region))]
+  } catch (error) {
+    console.error('Error fetching branch data:', error)
+  }
+})
+
+// Available regions and branches with filtering
+const availableRegions = computed(() => regions.value)
+const availableBranches = computed(() => branches.value.map((b) => b.branchName))
 
 // Filtered regions based on search and active filters
 const filteredRegions = computed(() => {
@@ -267,14 +281,13 @@ const filteredBranches = computed(() => {
 })
 
 // Helper functions
-const getBranchRegion = (branch) => {
-  return branchConfig[branch]?.region || ''
+const getBranchRegion = (branchName) => {
+  const branch = branches.value.find((b) => b.branchName === branchName)
+  return branch?.region || ''
 }
 
 const getBranchesForRegion = (region) => {
-  return Object.entries(branchConfig)
-    .filter(([_, config]) => config.region === region)
-    .map(([branch]) => branch)
+  return branches.value.filter((b) => b.region === region).map((b) => b.branchName)
 }
 
 // Computed label for current scope

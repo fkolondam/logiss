@@ -357,7 +357,7 @@ import {
 } from 'lucide-vue-next'
 import { useUserStore } from '../../stores/user'
 import { predefinedUsers, roles } from '../../config/users'
-import { branchConfig } from '../../services/mockdata/generators/branchData'
+import { dataProviderFactory } from '../../services/DataProviderFactory'
 import { useTranslations } from '../../composables/useTranslations'
 
 const userStore = useUserStore()
@@ -390,10 +390,25 @@ const checkMobile = () => {
   isMobile.value = window.innerWidth < 768
 }
 
-// Available regions from branch config
-const availableRegions = computed(() => [
-  ...new Set(Object.values(branchConfig).map((b) => b.region)),
-])
+// Data provider setup
+const dataProvider = dataProviderFactory.getCurrentProvider()
+const branches = ref([])
+const regions = ref([])
+
+// Fetch branch data on mount
+onMounted(async () => {
+  try {
+    const response = await dataProvider.fetch('branches')
+    const branchData = response.data
+    branches.value = branchData
+    regions.value = [...new Set(branchData.map((b) => b.region))]
+  } catch (error) {
+    console.error('Error fetching branch data:', error)
+  }
+})
+
+// Available regions from branch data
+const availableRegions = computed(() => regions.value)
 
 // Scope filters configuration
 const scopeFilters = [
@@ -442,8 +457,8 @@ const filteredUsersByRole = computed(() => {
         return activeRegionFilters.value.includes(user.scope.value)
       }
       if (user.scope.type === 'branch') {
-        const region = branchConfig[user.scope.value]?.region
-        return activeRegionFilters.value.includes(region)
+        const branch = branches.value.find((b) => b.branchName === user.scope.value)
+        return activeRegionFilters.value.includes(branch?.region)
       }
       return true
     })
@@ -470,7 +485,7 @@ const getUserPermissions = (user) => {
 }
 
 const getBranchCount = (region) => {
-  return Object.values(branchConfig).filter((b) => b.region === region).length
+  return branches.value.filter((b) => b.region === region).length
 }
 
 const getScopeIcon = (type) => {
