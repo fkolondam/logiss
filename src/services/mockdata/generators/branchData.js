@@ -1028,13 +1028,13 @@ const amountRanges = {
 }
 
 const deliveryStatusConfig = {
-  'DITERIMA - SEMUA': 0.7,
-  'DITERIMA - SEBAGIAN': 0.15,
-  'KIRIM ULANG': 0.05,
-  'BATAL - TOKO TUTUP': 0.025,
-  'BATAL - TIDAK ADA UANG': 0.025,
-  'BATAL - SALAH ORDER': 0.025,
-  'BATAL - TOKO TIDAK DAPAT DIAKSES': 0.025,
+  'diterima - semua': 0.7,
+  'diterima - sebagian': 0.15,
+  'minta kirim ulang': 0.05,
+  'batal - toko tutup': 0.025,
+  'batal - tidak ada uang': 0.025,
+  'batal - salah order': 0.025,
+  'batal - toko tidak dapat diakses': 0.025,
 }
 
 const paymentMethodConfig = {

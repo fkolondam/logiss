@@ -37,14 +37,7 @@ onMounted(async () => {
     isReady.value = true
   } catch (error) {
     console.error('Error initializing app:', error)
-    // If Google Sheets fails, try to fall back to mock data
-    try {
-      console.log('Falling back to mock data...')
-      await dataSourceStore.switchDataSource(DataSourceType.MOCK)
-      isReady.value = true
-    } catch (fallbackError) {
-      console.error('Failed to fall back to mock data:', fallbackError)
-    }
+    throw error
   }
 })
 </script>

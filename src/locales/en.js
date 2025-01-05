@@ -91,7 +91,7 @@ export default {
       pending: 'In Progress',
       cancelled: 'Cancelled',
       deliveryStatus: 'Delivery Status',
-      todayDeliveries: "Today's Deliveries",
+      todayDeliveries: 'Count of Deliveries',
     },
   },
   deliveries: {
@@ -170,7 +170,7 @@ export default {
       proof: 'Proof',
     },
     stats: {
-      todayDeliveries: "Today's Deliveries",
+      todayDeliveries: 'Count of Deliveries',
       completionRate: 'Completion Rate',
       thisWeek: 'This Week',
       fromLastWeek: 'from last week',

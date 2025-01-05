@@ -1,4 +1,4 @@
-import { ref, computed, watch, onMounted } from 'vue'
+import { ref, computed, watch, onMounted, onUnmounted } from 'vue'
 import { storeToRefs } from 'pinia'
 import { dataProviderFactory } from '../services/DataProviderFactory'
 import { useUserStore } from '../stores/user'
@@ -8,7 +8,6 @@ import {
   processExpenseStats,
   processVehicleStats,
 } from './useStatsProcessing'
-import { GoogleSheetsProvider } from '../services/providers/GoogleSheetsProvider'
 
 export function useDashboardData() {
   const userStore = useUserStore()
@@ -343,6 +342,15 @@ export function useDashboardData() {
     { immediate: true, deep: true },
   )
 
+  let refreshInterval = null
+
+  // Clean up interval on unmount
+  onUnmounted(() => {
+    if (refreshInterval) {
+      clearInterval(refreshInterval)
+    }
+  })
+
   // Initialize with today's data and watch for user/scope changes
   onMounted(async () => {
     // Set initial period to today
@@ -352,7 +360,7 @@ export function useDashboardData() {
     await loadDashboardData()
 
     // Set up auto-refresh interval for cache
-    const refreshInterval = setInterval(
+    refreshInterval = setInterval(
       () => {
         if (document.visibilityState === 'visible') {
           console.log('Auto-refreshing dashboard data')
@@ -362,11 +370,6 @@ export function useDashboardData() {
       },
       5 * 60 * 1000,
     ) // 5 minutes
-
-    // Clean up interval on unmount
-    onUnmounted(() => {
-      clearInterval(refreshInterval)
-    })
   })
 
   // Watch for user changes

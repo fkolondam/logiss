@@ -9,7 +9,7 @@ export function processDeliveryStats(result) {
       total: 0,
       'diterima - semua': 0,
       'diterima - sebagian': 0,
-      'kirim ulang': 0,
+      'minta kirim ulang': 0,
       batal: 0,
       'batal - toko tutup': 0,
       'batal - toko tidak dapat diakses': 0,

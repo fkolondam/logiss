@@ -1,25 +1,25 @@
 import { defineStore } from 'pinia'
-import { dataProviderFactory, DataSourceType } from '@/services/DataProviderFactory'
+import { dataProviderFactory, DataSourceType } from '../services/DataProviderFactory'
 
 export const useDataSourceStore = defineStore('dataSource', {
   state: () => ({
-    currentSource: DataSourceType.MOCK,
+    currentSource: null,
     loading: false,
-    error: null
+    error: null,
   }),
 
   getters: {
     provider: (state) => dataProviderFactory.getProvider(state.currentSource),
     isLoading: (state) => state.loading,
     hasError: (state) => !!state.error,
-    errorMessage: (state) => state.error
+    errorMessage: (state) => state.error,
   },
 
   actions: {
     async switchDataSource(sourceType) {
       this.loading = true
       this.error = null
-      
+
       try {
         // Validate source type
         if (!Object.values(DataSourceType).includes(sourceType)) {
@@ -28,15 +28,13 @@ export const useDataSourceStore = defineStore('dataSource', {
 
         // Switch the data source
         this.currentSource = sourceType
-        dataProviderFactory.setDataSource(sourceType)
+        await dataProviderFactory.setDataSource(sourceType)
 
         // Test the connection
         await this.testConnection()
       } catch (error) {
         this.error = error.message
-        // Fallback to mock data if connection fails
-        this.currentSource = DataSourceType.MOCK
-        dataProviderFactory.setDataSource(DataSourceType.MOCK)
+        throw error
       } finally {
         this.loading = false
       }
@@ -53,6 +51,6 @@ export const useDataSourceStore = defineStore('dataSource', {
 
     clearError() {
       this.error = null
-    }
-  }
+    },
+  },
 })

@@ -76,8 +76,12 @@ class DataProviderFactory extends DataProvider {
    * @param {string} sourceType - Type of data source to switch to
    */
   async setDataSource(sourceType) {
-    console.log(`Switching data source to: ${sourceType}`)
     try {
+      // Dispose of current provider if it exists
+      if (this.currentProvider?.dispose) {
+        this.currentProvider.dispose()
+      }
+
       const provider = this.getProvider(sourceType)
 
       // Initialize provider if not already initialized
@@ -87,17 +91,8 @@ class DataProviderFactory extends DataProvider {
       }
 
       this.currentProvider = provider
-      this.clearCache() // Clear cache when switching providers
-      console.log(`Successfully switched to ${sourceType} data source`)
     } catch (error) {
-      console.error(`Failed to switch to ${sourceType} data source:`, error)
-      // Fallback to mock data in development
-      if (process.env.NODE_ENV === 'development') {
-        console.log('Falling back to mock data provider')
-        this.currentProvider = this.getProvider(DataSourceType.MOCK)
-      } else {
-        throw error
-      }
+      throw error
     }
   }
 
@@ -107,8 +102,7 @@ class DataProviderFactory extends DataProvider {
    */
   getCurrentProvider() {
     if (!this.currentProvider) {
-      // Default to mock data if no provider is set
-      this.currentProvider = this.getProvider(DataSourceType.MOCK)
+      throw new Error('No data provider has been set. Please call setDataSource first.')
     }
     return this.currentProvider
   }
@@ -154,40 +148,39 @@ class DataProviderFactory extends DataProvider {
       throw new Error('No data provider available')
     }
 
-    console.log(`Getting ${resource} data with scope:`, scope, 'params:', params)
-
     if (!this.validateScopeAccess(resource, scope)) {
       throw new Error(`Access denied: Invalid scope for resource ${resource}`)
     }
 
     const requestKey = this.getPendingKey(resource, scope, params)
     if (this.pendingRequests.has(requestKey)) {
-      console.log(`Reusing pending request for ${requestKey}`)
       return this.pendingRequests.get(requestKey)
     }
 
     const requestPromise = (async () => {
       try {
-        // Build scoped parameters
+        console.log(`Fetching ${resource} data with scope:`, scope)
         const scopedParams = this.buildScopedParams(params, scope)
-        console.log(`Built scoped params for ${resource}:`, scopedParams)
+        console.log('Built scoped params:', scopedParams)
 
-        // Fetch data from provider
         const result = await provider.fetch(resource, scopedParams)
-        console.log(`Received ${resource} data:`, {
-          total: result.data?.length || 0,
-          sample: result.data?.[0] || null,
-          source: provider.constructor.name,
-        })
+        console.log(`Raw ${resource} data:`, result)
 
-        // Apply access control filtering
+        if (!result || !result.data) {
+          console.error(`No data returned for ${resource}`)
+          return {
+            data: [],
+            total: 0,
+            metadata: {
+              source: provider.constructor.name,
+              timestamp: new Date().toISOString(),
+              error: 'No data returned from provider',
+            },
+          }
+        }
+
         const filteredData = AccessControlWrapper.filterByScope(result.data, scope)
-        console.log(`Filtered ${resource} data:`, {
-          total: result.data?.length || 0,
-          filtered: filteredData.length,
-          scope,
-          params: scopedParams,
-        })
+        console.log(`Filtered ${resource} data:`, filteredData)
 
         return {
           ...result,

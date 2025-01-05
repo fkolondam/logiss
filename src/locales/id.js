@@ -91,7 +91,7 @@ export default {
       pending: 'Dalam Proses',
       cancelled: 'Dibatalkan',
       deliveryStatus: 'Status Pengiriman',
-      todayDeliveries: 'Pengiriman Hari Ini',
+      todayDeliveries: 'Jumlah Pengiriman',
     },
   },
   deliveries: {
@@ -170,7 +170,7 @@ export default {
       proof: 'Bukti',
     },
     stats: {
-      todayDeliveries: 'Pengiriman Hari Ini',
+      todayDeliveries: 'Jumlah Pengiriman',
       completionRate: 'Tingkat Penyelesaian',
       thisWeek: 'Minggu Ini',
       fromLastWeek: 'dari minggu lalu',
@@ -235,6 +235,10 @@ export default {
       this_month: 'Bulan ini',
       last_month: 'Bulan lalu',
       custom: 'Kustom',
+      month: 'Bulan',
+      week: 'Minggu',
+      thisMonth: 'Bulan ini',
+      thisWeek: 'Minggu ini',
     },
   },
   vehicles: {
