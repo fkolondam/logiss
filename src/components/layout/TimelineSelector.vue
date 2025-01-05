@@ -1,11 +1,11 @@
 <template>
   <div class="flex flex-col sm:flex-row sm:items-center sm:gap-4">
     <!-- Date Range Label -->
-    <div class="mb-3 sm:mb-0 max-w-full sm:max-w-[60%]">
+    <div class="mb-3 sm:mb-0 max-w-full sm:max-w-[70%]">
       <div class="flex items-center gap-1.5 mb-0.5">
         <div class="h-1 w-1 bg-indigo-400 rounded-full"></div>
         <div class="text-[10px] uppercase tracking-wider text-indigo-500/80 font-medium">
-          Current Range
+          {{ t('common.timeline.select_period') }}
         </div>
       </div>
       <div
@@ -22,7 +22,7 @@
         @click="toggleDatePicker"
         class="p-3 sm:p-2.5 text-sm font-medium transition-all duration-200 rounded-lg hover:bg-gray-50 flex items-center gap-2 border border-gray-200 w-full sm:w-auto bg-white"
         :class="[isOpen ? 'bg-blue-50 !border-blue-200 text-blue-600 shadow-sm' : 'text-gray-600']"
-        title="Select Period"
+        :title="t('common.timeline.select_period')"
       >
         <CalendarRange
           class="w-5 h-5 sm:w-4 sm:h-4"
@@ -76,7 +76,7 @@
                     : 'bg-gray-50 text-gray-700 hover:bg-gray-100',
                 ]"
               >
-                {{ label }}
+                {{ t(`common.periods.${period}`) }}
               </button>
             </div>
 
@@ -306,7 +306,7 @@ const closeDatePicker = () => {
 const dateRangeInfo = computed(() => {
   if (selectedPeriod.value === PERIODS.CUSTOM_RANGE && props.customRange?.length === 2) {
     const [start, end] = props.customRange
-    return `Showing data range from ${formatDate(start)} until ${formatDate(end)}`
+    return `${t('common.timeline.from')} ${formatDate(start)} ${t('common.timeline.to')} ${formatDate(end)}`
   }
 
   // Calculate date range based on selected period
@@ -341,7 +341,7 @@ const dateRangeInfo = computed(() => {
       return ''
   }
 
-  return `Showing data range from ${formatDate(start)} until ${formatDate(end)}`
+  return `${t('common.timeline.from')} ${formatDate(start)} ${t('common.timeline.to')} ${formatDate(end)}`
 })
 
 const currentPeriodLabel = computed(() => {
