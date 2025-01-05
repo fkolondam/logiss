@@ -191,10 +191,12 @@ export class GoogleSheetsProvider extends DataProvider {
     if (params.dateRange) {
       const { start, end } = params.dateRange
       const startDate = new Date(start)
+      startDate.setHours(0, 0, 0, 0)
       const endDate = new Date(end)
+      endDate.setHours(23, 59, 59, 999)
 
       filtered = filtered.filter((delivery) => {
-        const deliveryDate = new Date(delivery.date)
+        const deliveryDate = new Date(delivery.date + ' ' + (delivery.time || '00:00:00'))
         return deliveryDate >= startDate && deliveryDate <= endDate
       })
     }
@@ -209,10 +211,12 @@ export class GoogleSheetsProvider extends DataProvider {
     if (params.dateRange) {
       const { start, end } = params.dateRange
       const startDate = new Date(start)
+      startDate.setHours(0, 0, 0, 0)
       const endDate = new Date(end)
+      endDate.setHours(23, 59, 59, 999)
 
       filtered = filtered.filter((expense) => {
-        const expenseDate = new Date(expense.date)
+        const expenseDate = new Date(expense.date + ' ' + (expense.time || '00:00:00'))
         return expenseDate >= startDate && expenseDate <= endDate
       })
     }

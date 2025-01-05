@@ -1,7 +1,3 @@
-/**
- * Process delivery stats from raw data
- * Status comes directly from Google Sheets column 'STATUS'
- */
 export function processDeliveryStats(result) {
   if (!result?.data) {
     console.warn('No delivery data available')
@@ -11,10 +7,6 @@ export function processDeliveryStats(result) {
       'diterima - sebagian': 0,
       'minta kirim ulang': 0,
       batal: 0,
-      'batal - toko tutup': 0,
-      'batal - toko tidak dapat diakses': 0,
-      'batal - tidak ada uang': 0,
-      'batal - salah order': 0,
       byStatus: {},
       byPaymentMethod: {
         tunai: 0,
@@ -27,17 +19,12 @@ export function processDeliveryStats(result) {
     }
   }
 
-  // Initialize counters with proper typing
   const stats = {
     total: result.total || result.data.length,
     'diterima - semua': 0,
     'diterima - sebagian': 0,
     'minta kirim ulang': 0,
     batal: 0,
-    'batal - toko tutup': 0,
-    'batal - toko tidak dapat diakses': 0,
-    'batal - tidak ada uang': 0,
-    'batal - salah order': 0,
     byStatus: {},
     byPaymentMethod: {
       tunai: 0,
@@ -49,30 +36,21 @@ export function processDeliveryStats(result) {
     period: result.period || null,
   }
 
-  // Process each delivery with error handling
   result.data.forEach((delivery) => {
     try {
-      // Count by status with validation
       const status = delivery.status?.trim().toLowerCase()
       if (status) {
-        // Handle 'MINTA KIRIM ULANG' case specifically
         if (status === 'minta kirim ulang') {
           stats['minta kirim ulang']++
-        }
-        // Handle other statuses
-        else if (stats.hasOwnProperty(status)) {
+        } else if (stats.hasOwnProperty(status)) {
           stats[status]++
         }
-        // Track raw status counts
         stats.byStatus[status] = (stats.byStatus[status] || 0) + 1
-
-        // Update total batal count for all cancellation types
         if (status.startsWith('batal')) {
           stats['batal']++
         }
       }
 
-      // Count by payment method with validation
       const paymentMethod = delivery.paymentMethod?.trim().toLowerCase()
       if (paymentMethod === 'tunai') {
         stats.byPaymentMethod.tunai++
@@ -80,31 +58,31 @@ export function processDeliveryStats(result) {
         stats.byPaymentMethod.kredit++
       }
     } catch (error) {
-      console.error('Error processing delivery:', error, delivery)
+      console.error('Error processing delivery:', error)
     }
   })
 
-  // Calculate completion rate
   stats.completionRate =
     stats.total > 0 ? Math.round((stats['diterima - semua'] / stats.total) * 100) : 0
-
-  // Add metadata
   stats.metadata = {
     ...result.metadata,
     timestamp: new Date().toISOString(),
   }
 
-  console.log('Processed delivery stats:', stats)
+  // Log only summary statistics
+  console.log('Delivery stats summary:', {
+    total: stats.total,
+    'diterima - semua': stats['diterima - semua'],
+    'diterima - sebagian': stats['diterima - sebagian'],
+    'minta kirim ulang': stats['minta kirim ulang'],
+    batal: stats.batal,
+    dateRange: result.metadata?.dateRange,
+  })
+
   return stats
 }
 
-/**
- * Process expense stats from raw data
- * Components are taken directly from the 'Komponen' column
- */
 export function processExpenseStats(result) {
-  console.log('Processing expense data:', result)
-
   if (!result?.data) {
     console.warn('No expense data available')
     return {
@@ -116,7 +94,6 @@ export function processExpenseStats(result) {
     }
   }
 
-  // Initialize stats with component categories matching Google Sheets
   const stats = {
     total: result.total || result.data.length,
     totalAmount: 0,
@@ -128,19 +105,12 @@ export function processExpenseStats(result) {
     },
   }
 
-  // Process each expense with error handling
-  result.data.forEach((expense, index) => {
+  result.data.forEach((expense) => {
     try {
-      console.log(`Processing expense ${index}:`, expense)
-
-      // Add to total amount
       const amount = expense.amount || 0
       stats.totalAmount += amount
 
-      // Group by component with validation
       const component = expense.component?.trim() || 'Uncategorized'
-      console.log(`Expense component: ${component}, amount: ${amount}`)
-
       if (!stats.byCategory[component]) {
         stats.byCategory[component] = {
           count: 0,
@@ -151,59 +121,50 @@ export function processExpenseStats(result) {
       stats.byCategory[component].count++
       stats.byCategory[component].amount += amount
     } catch (error) {
-      console.error('Error processing expense:', error, expense)
+      console.error('Error processing expense:', error)
     }
   })
 
-  console.log('Final processed expense stats:', stats)
+  // Log only summary statistics
+  console.log('Expense stats summary:', {
+    total: stats.total,
+    totalAmount: stats.totalAmount,
+    categoryCount: Object.keys(stats.byCategory).length,
+    dateRange: result.metadata?.dateRange,
+  })
+
   return stats
 }
 
-/**
- * Process vehicle stats from raw data
- */
 export function processVehicleStats(result) {
   if (!result?.data) {
     console.warn('No vehicle data available')
     return {
       total: 0,
+      active: 0,
+      maintenance: 0,
       byFunction: {},
       byLogisticType: {},
       byOwnership: {},
       documentExpiry: {
-        stnk: {
-          thisMonth: 0,
-          nextThreeMonths: 0,
-          expiringSoon: [],
-        },
-        tax: {
-          thisMonth: 0,
-          nextThreeMonths: 0,
-          expiringSoon: [],
-        },
+        stnk: { thisMonth: 0, nextThreeMonths: 0, expiringSoon: [] },
+        tax: { thisMonth: 0, nextThreeMonths: 0, expiringSoon: [] },
       },
       needsAttention: [],
       metadata: {},
     }
   }
 
-  // Initialize stats
   const stats = {
     total: result.total || result.data.length,
+    active: 0,
+    maintenance: 0,
     byFunction: {},
     byLogisticType: {},
     byOwnership: {},
     documentExpiry: {
-      stnk: {
-        thisMonth: 0,
-        nextThreeMonths: 0,
-        expiringSoon: [],
-      },
-      tax: {
-        thisMonth: 0,
-        nextThreeMonths: 0,
-        expiringSoon: [],
-      },
+      stnk: { thisMonth: 0, nextThreeMonths: 0, expiringSoon: [] },
+      tax: { thisMonth: 0, nextThreeMonths: 0, expiringSoon: [] },
     },
     needsAttention: [],
     metadata: {
@@ -212,86 +173,33 @@ export function processVehicleStats(result) {
     },
   }
 
-  const now = new Date()
-  const thisMonth = new Date(now.getFullYear(), now.getMonth(), 1)
-  const nextMonth = new Date(now.getFullYear(), now.getMonth() + 1, 1)
-  const threeMonthsLater = new Date(now.getFullYear(), now.getMonth() + 3, 1)
-
-  // Process each vehicle with error handling
   result.data.forEach((vehicle) => {
     try {
-      // Count by vehicle function (passenger vs logistic)
+      if (vehicle.status === 'active') stats.active++
+      else if (vehicle.status === 'maintenance') stats.maintenance++
+
       const vehicleFunction = vehicle.vehicleFunction?.trim() || 'Unknown'
       stats.byFunction[vehicleFunction] = (stats.byFunction[vehicleFunction] || 0) + 1
 
-      // Count by logistic type (4 RODA L, etc)
       const logisticType = vehicle.logisticType?.trim() || 'Unknown'
       stats.byLogisticType[logisticType] = (stats.byLogisticType[logisticType] || 0) + 1
 
-      // Count by ownership type
       const ownership = vehicle.ownership?.trim() || 'Unknown'
       stats.byOwnership[ownership] = (stats.byOwnership[ownership] || 0) + 1
-
-      // Check STNK expiry
-      if (vehicle.stnkExpiry) {
-        const stnkExpiryDate = new Date(vehicle.stnkExpiry)
-        if (stnkExpiryDate >= thisMonth && stnkExpiryDate < nextMonth) {
-          stats.documentExpiry.stnk.thisMonth++
-          stats.documentExpiry.stnk.expiringSoon.push({
-            vehicleNumber: vehicle.vehicleNumber,
-            expiryDate: vehicle.stnkExpiry,
-            type: 'STNK',
-          })
-        } else if (stnkExpiryDate >= nextMonth && stnkExpiryDate < threeMonthsLater) {
-          stats.documentExpiry.stnk.nextThreeMonths++
-          stats.documentExpiry.stnk.expiringSoon.push({
-            vehicleNumber: vehicle.vehicleNumber,
-            expiryDate: vehicle.stnkExpiry,
-            type: 'STNK',
-          })
-        }
-      }
-
-      // Check Tax expiry
-      if (vehicle.taxExpiry) {
-        const taxExpiryDate = new Date(vehicle.taxExpiry)
-        if (taxExpiryDate >= thisMonth && taxExpiryDate < nextMonth) {
-          stats.documentExpiry.tax.thisMonth++
-          stats.documentExpiry.tax.expiringSoon.push({
-            vehicleNumber: vehicle.vehicleNumber,
-            expiryDate: vehicle.taxExpiry,
-            type: 'Tax',
-          })
-        } else if (taxExpiryDate >= nextMonth && taxExpiryDate < threeMonthsLater) {
-          stats.documentExpiry.tax.nextThreeMonths++
-          stats.documentExpiry.tax.expiringSoon.push({
-            vehicleNumber: vehicle.vehicleNumber,
-            expiryDate: vehicle.taxExpiry,
-            type: 'Tax',
-          })
-        }
-      }
-
-      // Check additional information for actions needed
-      if (vehicle.additionalInfo?.trim()) {
-        stats.needsAttention.push({
-          vehicleNumber: vehicle.vehicleNumber,
-          info: vehicle.additionalInfo.trim(),
-        })
-      }
     } catch (error) {
-      console.error('Error processing vehicle:', error, vehicle)
+      console.error('Error processing vehicle:', error)
     }
   })
 
-  // Sort expiring documents by date
-  stats.documentExpiry.stnk.expiringSoon.sort(
-    (a, b) => new Date(a.expiryDate) - new Date(b.expiryDate),
-  )
-  stats.documentExpiry.tax.expiringSoon.sort(
-    (a, b) => new Date(a.expiryDate) - new Date(b.expiryDate),
-  )
+  // Log only summary statistics
+  console.log('Vehicle stats summary:', {
+    total: stats.total,
+    active: stats.active,
+    maintenance: stats.maintenance,
+    utilization: `${Math.round((stats.active / stats.total) * 100)}%`,
+    logisticTypes: Object.keys(stats.byLogisticType).length,
+    ownership: Object.keys(stats.byOwnership).length,
+  })
 
-  console.log('Processed vehicle stats:', stats)
   return stats
 }

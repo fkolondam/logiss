@@ -4,19 +4,12 @@ import { AccessControlWrapper } from './AccessControlWrapper'
 import { sheetsConfig } from './config/googleSheets'
 import { DataProvider } from './interfaces/DataProvider'
 
-/**
- * Available data source types
- */
 export const DataSourceType = {
   MOCK: 'mock',
   GOOGLE_SHEETS: 'google_sheets',
   MYSQL: 'mysql',
 }
 
-/**
- * Factory class for managing and switching between different data providers
- * @extends {DataProvider}
- */
 class DataProviderFactory extends DataProvider {
   constructor() {
     super()
@@ -30,12 +23,10 @@ class DataProviderFactory extends DataProvider {
   }
 
   setupCacheRefresh() {
-    // Clear any existing interval
     if (this.cacheRefreshInterval) {
       clearInterval(this.cacheRefreshInterval)
     }
 
-    // Set up periodic cache refresh
     this.cacheRefreshInterval = setInterval(() => {
       console.log('Performing periodic cache refresh')
       this.clearCache()
@@ -49,11 +40,6 @@ class DataProviderFactory extends DataProvider {
     }
   }
 
-  /**
-   * Get provider instance for a specific data source type
-   * @param {string} sourceType - Type of data source
-   * @returns {DataProvider} Provider instance
-   */
   getProvider(sourceType) {
     if (!this.providers.has(sourceType)) {
       switch (sourceType) {
@@ -63,7 +49,6 @@ class DataProviderFactory extends DataProvider {
         case DataSourceType.GOOGLE_SHEETS:
           this.providers.set(sourceType, new GoogleSheetsProvider(sheetsConfig))
           break
-        // Add other providers here as needed
         default:
           throw new Error(`Unsupported data source type: ${sourceType}`)
       }
@@ -71,20 +56,14 @@ class DataProviderFactory extends DataProvider {
     return this.providers.get(sourceType)
   }
 
-  /**
-   * Switch to a different data source
-   * @param {string} sourceType - Type of data source to switch to
-   */
   async setDataSource(sourceType) {
     try {
-      // Dispose of current provider if it exists
       if (this.currentProvider?.dispose) {
         this.currentProvider.dispose()
       }
 
       const provider = this.getProvider(sourceType)
 
-      // Initialize provider if not already initialized
       if (!this.initialized.has(sourceType)) {
         await provider.initialize()
         this.initialized.add(sourceType)
@@ -96,10 +75,6 @@ class DataProviderFactory extends DataProvider {
     }
   }
 
-  /**
-   * Get the current active provider
-   * @returns {DataProvider} Current provider instance
-   */
   getCurrentProvider() {
     if (!this.currentProvider) {
       throw new Error('No data provider has been set. Please call setDataSource first.')
@@ -107,17 +82,11 @@ class DataProviderFactory extends DataProvider {
     return this.currentProvider
   }
 
-  /**
-   * Generate a unique key for caching requests
-   */
   getPendingKey(resource, scope, params) {
     const scopeKey = scope ? `${scope.type}:${scope.value || 'all'}` : 'global'
     return `${resource}:${scopeKey}:${JSON.stringify(params)}`
   }
 
-  /**
-   * Build parameters with scope-based filtering
-   */
   buildScopedParams(params, scope) {
     const scopedParams = { ...params }
     if (scope && scope.type !== 'global') {
@@ -139,9 +108,6 @@ class DataProviderFactory extends DataProvider {
     return scopedParams
   }
 
-  /**
-   * Legacy method for getting data with scope-based filtering
-   */
   async getData(resource, scope, params = {}) {
     const provider = this.getCurrentProvider()
     if (!provider) {
@@ -159,12 +125,8 @@ class DataProviderFactory extends DataProvider {
 
     const requestPromise = (async () => {
       try {
-        console.log(`Fetching ${resource} data with scope:`, scope)
         const scopedParams = this.buildScopedParams(params, scope)
-        console.log('Built scoped params:', scopedParams)
-
         const result = await provider.fetch(resource, scopedParams)
-        console.log(`Raw ${resource} data:`, result)
 
         if (!result || !result.data) {
           console.error(`No data returned for ${resource}`)
@@ -180,7 +142,20 @@ class DataProviderFactory extends DataProvider {
         }
 
         const filteredData = AccessControlWrapper.filterByScope(result.data, scope)
-        console.log(`Filtered ${resource} data:`, filteredData)
+
+        // Log only summary statistics
+        console.log(`${resource} data stats:`, {
+          total: filteredData.length,
+          dateRange: params.dateRange,
+          lastRecord:
+            filteredData.length > 0
+              ? {
+                  id: filteredData[filteredData.length - 1].id,
+                  date: filteredData[filteredData.length - 1].date,
+                  timestamp: filteredData[filteredData.length - 1].timestamp,
+                }
+              : null,
+        })
 
         return {
           ...result,
@@ -204,26 +179,14 @@ class DataProviderFactory extends DataProvider {
     return requestPromise
   }
 
-  /**
-   * @inheritdoc
-   */
   async fetchWithScope(resource, scope, params = {}) {
-    // For now, use the existing getData method
-    // This ensures backward compatibility while we transition to the new interface
     return this.getData(resource, scope, params)
   }
 
-  /**
-   * @inheritdoc
-   */
   async fetch(resource, params = {}) {
-    // For backward compatibility, fetch without scope defaults to global scope
     return this.fetchWithScope(resource, { type: 'global' }, params)
   }
 
-  /**
-   * @inheritdoc
-   */
   async getStats(resource, scope, options = {}) {
     const provider = this.getCurrentProvider()
     return provider.getStats(resource, scope, options)
@@ -244,26 +207,19 @@ class DataProviderFactory extends DataProvider {
 
   clearCache() {
     console.log('Clearing cache for all providers')
-    // Clear cache for all providers
     for (const provider of this.providers.values()) {
       if (provider.clearCache) {
         provider.clearCache()
       }
     }
     this.pendingRequests.clear()
-
-    // Emit cache clear event for debugging
     console.log('Cache cleared at:', new Date().toISOString())
   }
 
-  /**
-   * Force an immediate cache refresh
-   */
   async refreshCache() {
     console.log('Forcing immediate cache refresh')
     this.clearCache()
 
-    // Re-fetch data for the current provider if any
     if (this.currentProvider) {
       try {
         await this.currentProvider.initialize()
@@ -275,9 +231,6 @@ class DataProviderFactory extends DataProvider {
     }
   }
 
-  /**
-   * Clean up resources when factory is no longer needed
-   */
   dispose() {
     this.stopCacheRefresh()
     this.clearCache()

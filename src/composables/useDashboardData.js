@@ -84,9 +84,13 @@ export function useDashboardData() {
 
     switch (period) {
       case PERIODS.TODAY:
+        const todayStart = new Date(today)
+        todayStart.setHours(0, 0, 0, 0)
+        const todayEnd = new Date(today)
+        todayEnd.setHours(23, 59, 59, 999)
         return {
-          start: today,
-          end: new Date(today.getTime() + 24 * 60 * 60 * 1000 - 1),
+          start: todayStart,
+          end: todayEnd,
         }
       case PERIODS.THIS_WEEK:
         const monday = new Date(today)
@@ -129,22 +133,32 @@ export function useDashboardData() {
     error.value = null
 
     try {
+      // Get date range and ensure it's in local timezone
       const dateRange = getDateRange(currentPeriod.value)
       const fetchParams = {
         ...params,
         dateRange: {
-          start: dateRange.start.toISOString().split('T')[0],
-          end: dateRange.end.toISOString().split('T')[0],
+          start: dateRange.start.toLocaleDateString('en-CA'), // YYYY-MM-DD format
+          end: dateRange.end.toLocaleDateString('en-CA'),
         },
         period: currentPeriod.value,
         scope: currentScope.value,
       }
 
-      console.log(`Loading ${section} data with params:`, fetchParams)
+      console.log('Fetching data with params:', {
+        section,
+        period: currentPeriod.value,
+        dateRange: fetchParams.dateRange,
+      })
 
       // Check cache first
       const cachedData = getCachedData(section, currentScope.value, currentPeriod.value)
       if (cachedData) {
+        console.log(`Using cached ${section} data:`, {
+          total: cachedData.total,
+          period: currentPeriod.value,
+          dateRange: fetchParams.dateRange,
+        })
         switch (section) {
           case 'deliveries':
             deliveryStats.value = cachedData
@@ -159,11 +173,18 @@ export function useDashboardData() {
         return
       }
 
-      // Fetch current and previous period data for trend calculation
-      const [currentResult, previousResult] = await Promise.all([
-        dataProviderFactory.getData(section, currentScope.value, fetchParams),
-        loadPreviousPeriodData(section, dateRange, currentScope.value),
-      ])
+      // First fetch current period data
+      const currentResult = await dataProviderFactory.getData(
+        section,
+        currentScope.value,
+        fetchParams,
+      )
+
+      // Only fetch previous period if we have current data
+      let previousResult = null
+      if (currentResult?.data?.length > 0) {
+        previousResult = await loadPreviousPeriodData(section, dateRange, currentScope.value)
+      }
 
       // Process stats with trend calculations and cache
       let stats
@@ -212,8 +233,8 @@ export function useDashboardData() {
     try {
       return await dataProviderFactory.getData(section, scope, {
         dateRange: {
-          start: previousDateRange.start.toISOString().split('T')[0],
-          end: previousDateRange.end.toISOString().split('T')[0],
+          start: previousDateRange.start.toLocaleDateString('en-CA'),
+          end: previousDateRange.end.toLocaleDateString('en-CA'),
         },
       })
     } catch (error) {
@@ -327,6 +348,42 @@ export function useDashboardData() {
     isLoading.value = Object.values(loadingStates.value).some(Boolean)
   }
 
+  let refreshInterval = null
+
+  // Clean up interval on unmount
+  onUnmounted(() => {
+    if (refreshInterval) {
+      clearInterval(refreshInterval)
+    }
+  })
+
+  // Initialize with today's data and watch for user/scope changes
+  onMounted(async () => {
+    try {
+      // Set initial period to today
+      currentPeriod.value = PERIODS.TODAY
+
+      // Initial data load - only if scope is set
+      if (currentScope.value) {
+        await loadDashboardData()
+      }
+
+      // Set up auto-refresh interval for cache
+      refreshInterval = setInterval(
+        () => {
+          if (document.visibilityState === 'visible') {
+            console.log('Auto-refreshing dashboard data')
+            dataProviderFactory.clearCache()
+            loadDashboardData()
+          }
+        },
+        5 * 60 * 1000,
+      ) // 5 minutes
+    } catch (error) {
+      console.error('Error during initialization:', error)
+    }
+  })
+
   // Watch for scope changes
   watch(
     () => ({
@@ -339,38 +396,8 @@ export function useDashboardData() {
         loadDashboardData()
       }
     },
-    { immediate: true, deep: true },
+    { deep: true }, // Remove immediate flag to prevent double loading
   )
-
-  let refreshInterval = null
-
-  // Clean up interval on unmount
-  onUnmounted(() => {
-    if (refreshInterval) {
-      clearInterval(refreshInterval)
-    }
-  })
-
-  // Initialize with today's data and watch for user/scope changes
-  onMounted(async () => {
-    // Set initial period to today
-    currentPeriod.value = PERIODS.TODAY
-
-    // Initial data load
-    await loadDashboardData()
-
-    // Set up auto-refresh interval for cache
-    refreshInterval = setInterval(
-      () => {
-        if (document.visibilityState === 'visible') {
-          console.log('Auto-refreshing dashboard data')
-          dataProviderFactory.clearCache()
-          loadDashboardData()
-        }
-      },
-      5 * 60 * 1000,
-    ) // 5 minutes
-  })
 
   // Watch for user changes
   watch(
