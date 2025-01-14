@@ -7,7 +7,6 @@ import {
   dashboardConfig,
   regionBranches,
 } from '../config/users'
-import { dataProviderFactory } from '../services/DataProviderFactory'
 
 export const useUserStore = defineStore('user', {
   state() {
@@ -108,8 +107,6 @@ export const useUserStore = defineStore('user', {
         this.selectedScope = null
       }
 
-      // Clear cache when switching users
-      dataProviderFactory.clearCache()
       this.error = null
     },
     setBranches(branches) {
@@ -128,17 +125,7 @@ export const useUserStore = defineStore('user', {
       // Validate scope before setting
       if (this.canSelectScope(scope)) {
         console.log('Setting scope:', scope)
-
-        // Store previous scope for comparison
-        const prevScope = this.selectedScope
         this.selectedScope = scope
-
-        // Clear cache if scope type or value changed
-        if (!prevScope || prevScope.type !== scope.type || prevScope.value !== scope.value) {
-          console.log('Scope changed, clearing cache')
-          dataProviderFactory.clearCache()
-        }
-
         return true
       } else {
         console.warn('Invalid scope selection:', scope)
@@ -150,8 +137,6 @@ export const useUserStore = defineStore('user', {
       console.log('Clearing scope')
       if (this.selectedScope) {
         this.selectedScope = null
-        // Clear cache when scope is cleared
-        dataProviderFactory.clearCache()
       }
     },
 

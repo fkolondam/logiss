@@ -1,24 +1,21 @@
 export class GoogleSheetsTransformer {
   constructor() {
-    this.branchesCache = new Map()
+    this.branches = []
   }
 
   setBranchesData(branchesData) {
-    this.branchesCache.clear()
-    branchesData.forEach((branch) => {
-      if (branch && branch[1]) {
-        this.branchesCache.set(branch[1], {
-          branchId: branch[0],
-          branchName: branch[1],
-          region: branch[2],
-          address: branch[3],
-          coordinates: {
-            lat: Number(branch[4]) || 0,
-            lng: Number(branch[5]) || 0,
-          },
-        })
-      }
-    })
+    this.branches = branchesData
+      .filter((branch) => branch && branch[1])
+      .map((branch) => ({
+        branchId: branch[0],
+        branchName: branch[1],
+        region: branch[2],
+        address: branch[3],
+        coordinates: {
+          lat: Number(branch[4]) || 0,
+          lng: Number(branch[5]) || 0,
+        },
+      }))
   }
 
   parseDatetime(datetimeStr) {
@@ -78,7 +75,7 @@ export class GoogleSheetsTransformer {
     try {
       const { date, time } = this.parseDatetime(row[5])
       const branchName = (row[1] || '').trim()
-      const branchInfo = this.branchesCache.get(branchName)
+      const branchInfo = this.branches.find((b) => b.branchName === branchName)
       const amount = row[9] ? Number(row[9].toString().replace(/[^0-9.-]+/g, '')) || 0 : 0
 
       return {

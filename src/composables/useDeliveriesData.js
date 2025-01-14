@@ -4,91 +4,6 @@ import { dataProviderFactory } from '../services/DataProviderFactory'
 import { useUserStore } from '../stores/user'
 import { PERIODS } from '../constants/periods'
 
-// Cache implementation
-const CACHE_DURATION = 5 * 60 * 1000 // 5 minutes
-const cache = new Map()
-
-function getCacheKey(resource, scope, params = {}) {
-  // Generate scope key based on hierarchy
-  let scopeKey = 'global'
-  if (scope) {
-    switch (scope.type) {
-      case 'region':
-        scopeKey = `region-${scope.value}`
-        break
-      case 'branch':
-        // Include region in branch cache key for proper invalidation
-        const region = scope.value.split(' ')[1] // Extract region from branch name (e.g., "RDA SUMEDANG" -> "SUMEDANG")
-        scopeKey = `branch-${scope.value}-region-${region}`
-        break
-      case 'personal':
-        scopeKey = `personal-${scope.value}`
-        break
-      default:
-        scopeKey = 'global'
-    }
-  }
-
-  // Include period and role in cache key
-  const userStore = useUserStore()
-  const roleKey = userStore.currentUser?.role || 'none'
-  const periodKey = params.period || 'all'
-
-  // Sort and stringify params
-  const paramsKey = Object.entries(params)
-    .sort(([a], [b]) => a.localeCompare(b))
-    .map(([key, value]) => `${key}=${value}`)
-    .join('&')
-
-  return `${resource}:${scopeKey}:${roleKey}:${periodKey}:${paramsKey}`
-}
-
-function clearScopedCache(scope) {
-  // Clear all cache entries that match the scope hierarchy
-  for (const key of cache.keys()) {
-    if (scope.type === 'region') {
-      // Clear all cache entries for this region and its branches
-      if (key.includes(`region-${scope.value}`) || key.includes(`branch-RDA ${scope.value}`)) {
-        cache.delete(key)
-      }
-    } else if (scope.type === 'branch') {
-      // Clear branch cache and related personal caches
-      if (key.includes(`branch-${scope.value}`) || key.startsWith('personal-')) {
-        cache.delete(key)
-      }
-    } else if (scope.type === 'personal') {
-      // Clear only personal cache
-      if (key.includes(`personal-${scope.value}`)) {
-        cache.delete(key)
-      }
-    } else {
-      // Global scope change clears everything
-      cache.clear()
-      break
-    }
-  }
-}
-
-function getCachedData(key) {
-  const cached = cache.get(key)
-  if (!cached) return null
-
-  const isExpired = Date.now() - cached.timestamp > CACHE_DURATION
-  if (isExpired) {
-    cache.delete(key)
-    return null
-  }
-
-  return cached.data
-}
-
-function setCachedData(key, data) {
-  cache.set(key, {
-    data,
-    timestamp: Date.now(),
-  })
-}
-
 export function useDeliveriesData() {
   const userStore = useUserStore()
   const {
@@ -173,27 +88,19 @@ export function useDeliveriesData() {
         fetchParams.personalView = true
       }
 
-      // Check cache first
-      const cacheKey = getCacheKey('deliveries', currentScope.value, fetchParams)
-      let data = getCachedData(cacheKey)
+      console.log(
+        'Fetching deliveries for period:',
+        currentPeriod.value,
+        'with params:',
+        fetchParams,
+      )
+      const result = await dataProviderFactory.getData('deliveries', currentScope.value, {
+        ...fetchParams,
+        includeTrends: true,
+        includeDetailedStats: true,
+      })
 
-      if (!data) {
-        console.log(
-          'Fetching deliveries for period:',
-          currentPeriod.value,
-          'with params:',
-          fetchParams,
-        )
-        const result = await dataProviderFactory.getData('deliveries', currentScope.value, {
-          ...fetchParams,
-          includeTrends: true,
-          includeDetailedStats: true,
-        })
-        data = result.data
-        setCachedData(cacheKey, data)
-      }
-
-      deliveries.value = data
+      deliveries.value = result.data
     } catch (e) {
       error.value = e.message
       console.error('Error fetching deliveries:', e)
@@ -230,18 +137,11 @@ export function useDeliveriesData() {
         fetchParams.focusOnVehicle = true
       }
 
-      // Check cache first
-      const cacheKey = getCacheKey('stats', currentScope.value, fetchParams)
-      let data = getCachedData(cacheKey)
-
-      if (!data) {
-        console.log('Fetching stats for period:', currentPeriod.value, 'with params:', fetchParams)
-        data = await dataProviderFactory.getStats('deliveries', currentScope.value, {
-          ...fetchParams,
-          includeTrends: true,
-        })
-        setCachedData(cacheKey, data)
-      }
+      console.log('Fetching stats for period:', currentPeriod.value, 'with params:', fetchParams)
+      const data = await dataProviderFactory.getStats('deliveries', currentScope.value, {
+        ...fetchParams,
+        includeTrends: true,
+      })
 
       stats.value = data
     } catch (e) {
@@ -260,21 +160,6 @@ export function useDeliveriesData() {
     loadingStates.value[currentPeriod.value] = true
 
     try {
-      // Clear cache for current period
-      const periodParams = {
-        dateRange: {
-          start: dateRange.start.toISOString().split('T')[0],
-          end: dateRange.end.toISOString().split('T')[0],
-        },
-        period: currentPeriod.value,
-      }
-
-      // Clear cache for both deliveries and stats
-      const deliveriesCacheKey = getCacheKey('deliveries', currentScope.value, periodParams)
-      const statsCacheKey = getCacheKey('stats', currentScope.value, periodParams)
-      cache.delete(deliveriesCacheKey)
-      cache.delete(statsCacheKey)
-
       console.log('Refreshing data for period:', currentPeriod.value)
       await Promise.all([
         fetchDeliveries({ ...params, dateRange }),
@@ -298,9 +183,7 @@ export function useDeliveriesData() {
     }),
     (newScope, oldScope) => {
       const scopeChanged = newScope.type !== oldScope?.type || newScope.value !== oldScope?.value
-
       if (scopeChanged) {
-        clearScopedCache(currentScope.value)
         refreshData()
       }
     },
@@ -330,6 +213,5 @@ export function useDeliveriesData() {
     fetchStats,
     refreshData,
     getDateRange,
-    clearCache: clearScopedCache,
   }
 }

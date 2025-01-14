@@ -3,66 +3,7 @@
  * @typedef {import('./interfaces/DataProvider').QueryParams} QueryParams
  */
 
-// Cache implementation
-const cache = new Map()
-const CACHE_DURATION = 5 * 60 * 1000 // 5 minutes
-
-class ScopeCache {
-  constructor() {
-    this.cache = new Map()
-  }
-
-  getCacheKey(resource, scope, params = {}) {
-    const scopeKey = scope ? `${scope.type}-${scope.value || 'all'}` : 'global'
-    const paramsKey = Object.entries(params)
-      .sort(([a], [b]) => a.localeCompare(b))
-      .map(([key, value]) => `${key}=${value}`)
-      .join('&')
-    return `${resource}:${scopeKey}:${paramsKey}`
-  }
-
-  get(resource, scope, params = {}) {
-    const key = this.getCacheKey(resource, scope, params)
-    const cached = this.cache.get(key)
-    if (!cached) return null
-
-    const isExpired = Date.now() - cached.timestamp > CACHE_DURATION
-    if (isExpired) {
-      this.cache.delete(key)
-      return null
-    }
-
-    return cached.data
-  }
-
-  set(resource, scope, params = {}, data) {
-    const key = this.getCacheKey(resource, scope, params)
-    this.cache.set(key, {
-      data,
-      timestamp: Date.now(),
-    })
-  }
-
-  invalidate(resource, scope) {
-    const prefix = scope ? `${resource}:${scope.type}-${scope.value || 'all'}` : `${resource}:`
-
-    for (const key of this.cache.keys()) {
-      if (key.startsWith(prefix)) {
-        this.cache.delete(key)
-      }
-    }
-  }
-
-  clear() {
-    this.cache.clear()
-  }
-}
-
 export class AccessControlWrapperEnhanced {
-  constructor() {
-    this.scopeCache = new ScopeCache()
-  }
-
   /**
    * Filter data based on scope with enhanced rules
    * @param {Array} data - Raw data array
@@ -225,28 +166,21 @@ export class AccessControlWrapperEnhanced {
   }
 
   /**
-   * Wrap a data provider to add enhanced scope-based filtering and caching
+   * Wrap a data provider to add enhanced scope-based filtering
    * @param {Object} provider - Data provider instance
-   * @returns {Object} - Wrapped provider with scope filtering and caching
+   * @returns {Object} - Wrapped provider with scope filtering
    */
   wrapProvider(provider) {
     return {
       ...provider,
 
       /**
-       * Fetch data with scope-based filtering and caching
+       * Fetch data with scope-based filtering
        * @param {string} resource
        * @param {Scope} scope
        * @param {QueryParams} params
        */
       async fetchWithScope(resource, scope, params = {}) {
-        // Check cache first
-        const cached = this.scopeCache.get(resource, scope, params)
-        if (cached) {
-          console.log('Cache hit for:', resource, scope, params)
-          return cached
-        }
-
         // Get data using original fetch
         const result = await provider.fetch(resource, params)
 
@@ -254,7 +188,7 @@ export class AccessControlWrapperEnhanced {
         const filteredData = this.filterByScope(result.data, scope, params)
 
         // Prepare result with metadata
-        const finalResult = {
+        return {
           ...result,
           data: filteredData,
           total: filteredData.length,
@@ -265,15 +199,10 @@ export class AccessControlWrapperEnhanced {
             originalTotal: result.data.length,
           },
         }
-
-        // Cache the result
-        this.scopeCache.set(resource, scope, params, finalResult)
-
-        return finalResult
       },
 
       /**
-       * Get stats with scope-based filtering and caching
+       * Get stats with scope-based filtering
        * @param {string} resource
        * @param {Scope} scope
        * @param {Object} options
@@ -308,22 +237,6 @@ export class AccessControlWrapperEnhanced {
             period: options.period || 'all',
           },
         }
-      },
-
-      /**
-       * Invalidate cache for a specific resource and scope
-       * @param {string} resource
-       * @param {Scope} scope
-       */
-      invalidateCache(resource, scope) {
-        this.scopeCache.invalidate(resource, scope)
-      },
-
-      /**
-       * Clear all cache
-       */
-      clearCache() {
-        this.scopeCache.clear()
       },
     }
   }

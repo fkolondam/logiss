@@ -24,7 +24,6 @@ class DataProviderFactory extends DataProvider {
     super()
     this.providers = new Map()
     this.currentProvider = null
-    this.pendingRequests = new Map()
     this.initialized = new Set()
   }
 
@@ -70,11 +69,6 @@ class DataProviderFactory extends DataProvider {
     return this.currentProvider
   }
 
-  getPendingKey(resource, scope, params) {
-    const scopeKey = scope ? `${scope.type}:${scope.value || 'all'}` : 'global'
-    return `${resource}:${scopeKey}:${JSON.stringify(params)}`
-  }
-
   buildScopedParams(params, scope) {
     const scopedParams = { ...params }
     if (scope && scope.type !== 'global') {
@@ -114,72 +108,55 @@ class DataProviderFactory extends DataProvider {
         }
       : undefined
 
-    // Create a stable key for caching that includes the date range
-    const requestKey = this.getPendingKey(resource, scope, {
-      ...params,
-      dateRange,
-    })
+    try {
+      const scopedParams = this.buildScopedParams({ ...params, dateRange }, scope)
+      const result = await provider.fetch(resource, scopedParams)
 
-    if (this.pendingRequests.has(requestKey)) {
-      return this.pendingRequests.get(requestKey)
-    }
-
-    const requestPromise = (async () => {
-      try {
-        const scopedParams = this.buildScopedParams({ ...params, dateRange }, scope)
-        const result = await provider.fetch(resource, scopedParams)
-
-        if (!result || !result.data) {
-          console.error(`No data returned for ${resource}`)
-          return {
-            data: [],
-            total: 0,
-            metadata: {
-              source: provider.constructor.name,
-              timestamp: getJakartaDate().toISOString(),
-              error: 'No data returned from provider',
-            },
-          }
-        }
-
-        const filteredData = AccessControlWrapper.filterByScope(result.data, scope)
-
-        // Log only summary statistics
-        console.log(`${resource} data stats:`, {
-          total: filteredData.length,
-          dateRange: scopedParams.dateRange,
-          lastRecord:
-            filteredData.length > 0
-              ? {
-                  id: filteredData[filteredData.length - 1].id,
-                  date: filteredData[filteredData.length - 1].date,
-                  timestamp: filteredData[filteredData.length - 1].timestamp,
-                }
-              : null,
-          jakartaTime: getJakartaDate().toISOString(),
-        })
-
+      if (!result || !result.data) {
+        console.error(`No data returned for ${resource}`)
         return {
-          ...result,
-          data: filteredData,
-          total: filteredData.length,
+          data: [],
+          total: 0,
           metadata: {
-            ...result.metadata,
             source: provider.constructor.name,
             timestamp: getJakartaDate().toISOString(),
-            dateRange: scopedParams.dateRange,
+            error: 'No data returned from provider',
           },
         }
-      } catch (error) {
-        console.error(`Error fetching ${resource} data:`, error)
-        throw new Error(`Failed to fetch ${resource} data: ${error.message}`)
-      } finally {
-        this.pendingRequests.delete(requestKey)
       }
-    })()
 
-    this.pendingRequests.set(requestKey, requestPromise)
-    return requestPromise
+      const filteredData = AccessControlWrapper.filterByScope(result.data, scope)
+
+      // Log only summary statistics
+      console.log(`${resource} data stats:`, {
+        total: filteredData.length,
+        dateRange: scopedParams.dateRange,
+        lastRecord:
+          filteredData.length > 0
+            ? {
+                id: filteredData[filteredData.length - 1].id,
+                date: filteredData[filteredData.length - 1].date,
+                timestamp: filteredData[filteredData.length - 1].timestamp,
+              }
+            : null,
+        jakartaTime: getJakartaDate().toISOString(),
+      })
+
+      return {
+        ...result,
+        data: filteredData,
+        total: filteredData.length,
+        metadata: {
+          ...result.metadata,
+          source: provider.constructor.name,
+          timestamp: getJakartaDate().toISOString(),
+          dateRange: scopedParams.dateRange,
+        },
+      }
+    } catch (error) {
+      console.error(`Error fetching ${resource} data:`, error)
+      throw new Error(`Failed to fetch ${resource} data: ${error.message}`)
+    }
   }
 
   async fetchWithScope(resource, scope, params = {}) {
@@ -208,36 +185,7 @@ class DataProviderFactory extends DataProvider {
     return accessRules[resource]?.includes(scope.type) || false
   }
 
-  clearCache() {
-    if (document.visibilityState === 'visible') {
-      console.log('Clearing cache for all providers')
-      for (const provider of this.providers.values()) {
-        if (provider.clearCache) {
-          provider.clearCache()
-        }
-      }
-      this.pendingRequests.clear()
-      console.log('Cache cleared at:', getJakartaDate().toISOString())
-    }
-  }
-
-  async refreshCache() {
-    console.log('Forcing immediate cache refresh')
-    this.clearCache()
-
-    if (this.currentProvider) {
-      try {
-        await this.currentProvider.initialize()
-        console.log('Cache refreshed successfully')
-      } catch (error) {
-        console.error('Error refreshing cache:', error)
-        throw error
-      }
-    }
-  }
-
   dispose() {
-    this.clearCache()
     this.providers.clear()
     this.currentProvider = null
   }
