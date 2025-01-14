@@ -3,15 +3,13 @@ export class GoogleSheetsTransformer {
     this.branchesCache = new Map()
   }
 
-  // Set branches data in cache
   setBranchesData(branchesData) {
     this.branchesCache.clear()
     branchesData.forEach((branch) => {
       if (branch && branch[1]) {
-        // branch[1] is Branch Name
         this.branchesCache.set(branch[1], {
           branchId: branch[0],
-          branchName: branch[1], // Store full branch name
+          branchName: branch[1],
           region: branch[2],
           address: branch[3],
           coordinates: {
@@ -23,7 +21,6 @@ export class GoogleSheetsTransformer {
     })
   }
 
-  // Parse datetime string from Google Sheets
   parseDatetime(datetimeStr) {
     try {
       if (!datetimeStr) return { date: '', time: '' }
@@ -31,17 +28,42 @@ export class GoogleSheetsTransformer {
       const [datePart, timePart] = datetimeStr.split(' ')
       if (!datePart) return { date: '', time: '' }
 
-      let month, day, year
+      // Always convert to YYYY-MM-DD format
+      let year, month, day
       if (datePart.includes('/')) {
-        ;[month, day, year] = datePart.split('/')
+        // Input format: MM/DD/YYYY or DD/MM/YYYY
+        const parts = datePart.split('/')
+        if (parts[2].length === 4) {
+          // If year is 4 digits, assume MM/DD/YYYY
+          ;[month, day, year] = parts
+        } else {
+          // If year is 2 digits, assume DD/MM/YY
+          ;[day, month, year] = parts
+          year = year.length === 2 ? '20' + year : year
+        }
       } else if (datePart.includes('-')) {
+        // Input format: YYYY-MM-DD
         ;[year, month, day] = datePart.split('-')
       } else {
         return { date: '', time: '' }
       }
 
-      year = year.length === 2 ? '20' + year : year
-      const formattedDate = `${parseInt(month)}/${parseInt(day)}/${year}`
+      // Ensure all parts are valid numbers
+      year = parseInt(year)
+      month = parseInt(month)
+      day = parseInt(day)
+
+      if (isNaN(year) || isNaN(month) || isNaN(day)) {
+        return { date: '', time: '' }
+      }
+
+      // Validate date parts
+      if (month < 1 || month > 12 || day < 1 || day > 31 || year < 2000 || year > 2100) {
+        return { date: '', time: '' }
+      }
+
+      // Format to YYYY-MM-DD
+      const formattedDate = `${year}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`
       const formattedTime = timePart || ''
 
       return { date: formattedDate, time: formattedTime }
@@ -50,7 +72,6 @@ export class GoogleSheetsTransformer {
     }
   }
 
-  // Transform delivery data and enrich with branch information
   transformDelivery(row) {
     if (!row || row.length < 17) return null
 
@@ -93,7 +114,6 @@ export class GoogleSheetsTransformer {
     }
   }
 
-  // Transform branch data
   transformBranch(row) {
     if (!row || row.length < 6) return null
 
@@ -109,24 +129,13 @@ export class GoogleSheetsTransformer {
     }
   }
 
-  // Validate delivery data
   validateDelivery(data) {
     if (!data) return false
-
-    // Required fields
-    if (!data.id || !data.branchName) {
-      return false
-    }
-
-    // Amount validation
-    if (typeof data.amount !== 'number' || isNaN(data.amount)) {
-      return false
-    }
-
+    if (!data.id || !data.branchName) return false
+    if (typeof data.amount !== 'number' || isNaN(data.amount)) return false
     return true
   }
 
-  // Validate branch data
   validateBranch(data) {
     if (!data) return false
     if (!data.branchId || !data.branchName || !data.region) return false
@@ -134,7 +143,6 @@ export class GoogleSheetsTransformer {
     return true
   }
 
-  // Transform expense data
   transformExpense(row) {
     if (!row || row.length < 12) return null
 
@@ -161,7 +169,6 @@ export class GoogleSheetsTransformer {
     }
   }
 
-  // Validate expense data
   validateExpense(data) {
     if (!data) return false
     if (!data.idjournal || !data.branch) return false
@@ -169,7 +176,6 @@ export class GoogleSheetsTransformer {
     return true
   }
 
-  // Transform vehicle data
   transformVehicle(row) {
     if (!row || row.length < 39) return null
 
@@ -223,7 +229,6 @@ export class GoogleSheetsTransformer {
     }
   }
 
-  // Validate vehicle data
   validateVehicle(data) {
     if (!data) return false
     if (!data.vehicleNumber || !data.branch) return false
@@ -231,7 +236,6 @@ export class GoogleSheetsTransformer {
     return true
   }
 
-  // Transform invoice data
   transformInvoice(row) {
     if (!row || row.length < 17) return null
 
@@ -265,7 +269,6 @@ export class GoogleSheetsTransformer {
     }
   }
 
-  // Validate invoice data
   validateInvoice(data) {
     if (!data) return false
     if (!data.invoiceNumber || !data.branch) return false

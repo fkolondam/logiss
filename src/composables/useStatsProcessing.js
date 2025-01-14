@@ -1,3 +1,12 @@
+// Timezone offset for Asia/Jakarta (GMT+7)
+const TIMEZONE_OFFSET = 7 * 60 * 60 * 1000 // 7 hours in milliseconds
+
+function getJakartaDate(date = new Date()) {
+  // Convert to Jakarta time
+  const utc = date.getTime() + date.getTimezoneOffset() * 60000
+  return new Date(utc + TIMEZONE_OFFSET)
+}
+
 export function processDeliveryStats(result) {
   if (!result?.data) {
     console.warn('No delivery data available')
@@ -66,7 +75,7 @@ export function processDeliveryStats(result) {
     stats.total > 0 ? Math.round((stats['diterima - semua'] / stats.total) * 100) : 0
   stats.metadata = {
     ...result.metadata,
-    timestamp: new Date().toISOString(),
+    timestamp: getJakartaDate().toISOString(),
   }
 
   // Log only summary statistics
@@ -77,6 +86,7 @@ export function processDeliveryStats(result) {
     'minta kirim ulang': stats['minta kirim ulang'],
     batal: stats.batal,
     dateRange: result.metadata?.dateRange,
+    period: result.period,
   })
 
   return stats
@@ -101,7 +111,7 @@ export function processExpenseStats(result) {
     trend: 0,
     metadata: {
       ...result.metadata,
-      timestamp: new Date().toISOString(),
+      timestamp: getJakartaDate().toISOString(),
     },
   }
 
@@ -131,6 +141,8 @@ export function processExpenseStats(result) {
     totalAmount: stats.totalAmount,
     categoryCount: Object.keys(stats.byCategory).length,
     dateRange: result.metadata?.dateRange,
+    period: result.period,
+    source: result.metadata?.source,
   })
 
   return stats
@@ -169,9 +181,13 @@ export function processVehicleStats(result) {
     needsAttention: [],
     metadata: {
       ...result.metadata,
-      timestamp: new Date().toISOString(),
+      timestamp: getJakartaDate().toISOString(),
     },
   }
+
+  const now = getJakartaDate()
+  const thisMonth = new Date(now.getFullYear(), now.getMonth(), 1)
+  const nextThreeMonths = new Date(now.getFullYear(), now.getMonth() + 3, 0)
 
   result.data.forEach((vehicle) => {
     try {
@@ -186,6 +202,35 @@ export function processVehicleStats(result) {
 
       const ownership = vehicle.ownership?.trim() || 'Unknown'
       stats.byOwnership[ownership] = (stats.byOwnership[ownership] || 0) + 1
+
+      // Check document expiry dates
+      if (vehicle.stnkExpiry) {
+        const stnkDate = new Date(vehicle.stnkExpiry)
+        if (stnkDate >= thisMonth && stnkDate <= nextThreeMonths) {
+          stats.documentExpiry.stnk.nextThreeMonths++
+          if (stnkDate.getMonth() === now.getMonth()) {
+            stats.documentExpiry.stnk.thisMonth++
+          }
+          stats.documentExpiry.stnk.expiringSoon.push({
+            vehicleNumber: vehicle.vehicleNumber,
+            expiryDate: vehicle.stnkExpiry,
+          })
+        }
+      }
+
+      if (vehicle.taxExpiry) {
+        const taxDate = new Date(vehicle.taxExpiry)
+        if (taxDate >= thisMonth && taxDate <= nextThreeMonths) {
+          stats.documentExpiry.tax.nextThreeMonths++
+          if (taxDate.getMonth() === now.getMonth()) {
+            stats.documentExpiry.tax.thisMonth++
+          }
+          stats.documentExpiry.tax.expiringSoon.push({
+            vehicleNumber: vehicle.vehicleNumber,
+            expiryDate: vehicle.taxExpiry,
+          })
+        }
+      }
     } catch (error) {
       console.error('Error processing vehicle:', error)
     }

@@ -228,10 +228,11 @@
 </template>
 
 <script setup>
-import { ref, computed, watch } from 'vue'
+import { ref, computed, watch, onMounted } from 'vue'
 import { CalendarRange, Calendar, X, ChevronDown } from 'lucide-vue-next'
 import { PERIODS, PERIOD_LABELS } from '../../constants/periods'
 import { useTranslations } from '../../composables/useTranslations'
+import { toDisplayFormat, getJakartaDate, getJakartaToday } from '../../config/dateFormat'
 
 const props = defineProps({
   modelValue: {
@@ -249,18 +250,25 @@ const { t } = useTranslations()
 
 const isOpen = ref(false)
 const selectedPeriod = ref(props.modelValue || PERIODS.TODAY)
-const today = new Date().toISOString().split('T')[0]
+
+// Get today's date in Jakarta timezone - make it reactive
+const jakartaToday = ref(getJakartaToday())
+const today = computed(() => jakartaToday.value.toISOString().split('T')[0])
+
+// Refresh Jakarta date every minute to ensure it's current
+setInterval(() => {
+  jakartaToday.value = getJakartaToday()
+}, 60000)
 
 // Initialize dates if custom range exists
 const startDate = ref(props.customRange[0]?.toISOString().split('T')[0] || '')
 const endDate = ref(props.customRange[1]?.toISOString().split('T')[0] || '')
 
 const formatDate = (date) => {
-  return new Intl.DateTimeFormat('en-US', {
-    month: 'numeric',
-    day: 'numeric',
-    year: 'numeric',
-  }).format(date)
+  // Ensure we have a Date object
+  const dateObj = date instanceof Date ? date : new Date(date)
+  // Pass the Date object directly to toDisplayFormat
+  return toDisplayFormat(dateObj)
 }
 
 // Watch for prop changes
@@ -309,34 +317,47 @@ const dateRangeInfo = computed(() => {
     return `${t('common.timeline.from')} ${formatDate(start)} ${t('common.timeline.to')} ${formatDate(end)}`
   }
 
-  // Calculate date range based on selected period
-  const now = new Date()
+  // Use the reactive jakartaToday ref
+  const today = jakartaToday.value
   let start, end
 
   switch (selectedPeriod.value) {
-    case PERIODS.TODAY:
-      start = end = now
+    case PERIODS.TODAY: {
+      // For TODAY, just show the date without "Dari ... Sampai ..."
+      return formatDate(today)
+    }
+    case PERIODS.THIS_WEEK: {
+      start = new Date(today)
+      // Get Monday (1) of current week in Jakarta timezone
+      const day = start.getDay() || 7
+      if (day !== 1) {
+        start.setDate(start.getDate() - (day - 1))
+      }
+      end = today
       break
-    case PERIODS.THIS_WEEK:
-      start = new Date(now.getFullYear(), now.getMonth(), now.getDate() - now.getDay())
-      end = new Date()
+    }
+    case PERIODS.THIS_MONTH: {
+      start = new Date(today.getFullYear(), today.getMonth(), 1)
+      end = today
       break
-    case PERIODS.THIS_MONTH:
-      start = new Date(now.getFullYear(), now.getMonth(), 1)
-      end = new Date()
+    }
+    case PERIODS.LAST_MONTH: {
+      start = new Date(today.getFullYear(), today.getMonth() - 1, 1)
+      end = new Date(today.getFullYear(), today.getMonth(), 0)
       break
-    case PERIODS.LAST_MONTH:
-      start = new Date(now.getFullYear(), now.getMonth() - 1, 1)
-      end = new Date(now.getFullYear(), now.getMonth(), 0)
+    }
+    case PERIODS.L3M: {
+      start = new Date(today)
+      start.setMonth(start.getMonth() - 3)
+      start.setDate(1)
+      end = today
       break
-    case PERIODS.L3M:
-      start = new Date(now.getFullYear(), now.getMonth() - 3, 1)
-      end = new Date()
+    }
+    case PERIODS.YTD: {
+      start = new Date(today.getFullYear(), 0, 1)
+      end = today
       break
-    case PERIODS.YTD:
-      start = new Date(now.getFullYear(), 0, 1)
-      end = new Date()
-      break
+    }
     default:
       return ''
   }
@@ -345,7 +366,7 @@ const dateRangeInfo = computed(() => {
 })
 
 const currentPeriodLabel = computed(() => {
-  return PERIOD_LABELS[selectedPeriod.value] || t('common.timeline.select_period')
+  return t(`common.periods.${selectedPeriod.value}`) || t('common.timeline.select_period')
 })
 
 const selectPeriod = (period) => {
@@ -368,16 +389,17 @@ const applyCustomRange = () => {
 // Mobile date picker data
 const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
 
-const currentYear = new Date().getFullYear()
-const years = Array.from({ length: 10 }, (_, i) => currentYear - i)
+// Mobile date picker data computed from reactive jakartaToday
+const jakartaYear = computed(() => jakartaToday.value.getFullYear())
+const years = computed(() => Array.from({ length: 10 }, (_, i) => jakartaYear.value - i))
 
-const mobileStartMonth = ref(new Date().getMonth())
-const mobileStartYear = ref(currentYear)
-const mobileStartDay = ref(new Date().getDate())
+const mobileStartMonth = ref(jakartaToday.value.getMonth())
+const mobileStartYear = ref(jakartaYear.value)
+const mobileStartDay = ref(jakartaToday.value.getDate())
 
-const mobileEndMonth = ref(new Date().getMonth())
-const mobileEndYear = ref(currentYear)
-const mobileEndDay = ref(new Date().getDate())
+const mobileEndMonth = ref(jakartaToday.value.getMonth())
+const mobileEndYear = ref(jakartaYear.value)
+const mobileEndDay = ref(jakartaToday.value.getDate())
 
 const daysInMonth = computed(() => {
   const year =
@@ -435,9 +457,16 @@ const cancelCustomRange = () => {
   }
   closeDatePicker()
 }
+
+// Initialize with Jakarta timezone on mount
+onMounted(() => {
+  const jakartaDate = getJakartaDate()
+  console.log('Mounted with Jakarta time:', jakartaDate.toISOString())
+})
 </script>
 
 <style>
+/* Previous styles remain the same */
 .animate-slideUp {
   animation: slideUp 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }

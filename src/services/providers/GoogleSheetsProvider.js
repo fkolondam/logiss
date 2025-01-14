@@ -1,62 +1,20 @@
 import { DataProvider } from '../interfaces/DataProvider'
 import { GoogleSheetsTransformer } from './GoogleSheetsTransformer'
 
+// Timezone offset for Asia/Jakarta (GMT+7)
+const TIMEZONE_OFFSET = 7 * 60 * 60 * 1000 // 7 hours in milliseconds
+
+function getJakartaDate(date = new Date()) {
+  // Convert to Jakarta time
+  const utc = date.getTime() + date.getTimezoneOffset() * 60000
+  return new Date(utc + TIMEZONE_OFFSET)
+}
+
 export class GoogleSheetsProvider extends DataProvider {
   constructor(config) {
     super()
     this.config = config
     this.transformer = new GoogleSheetsTransformer()
-    this.cache = new Map()
-    this.CACHE_DURATION = 5 * 60 * 1000 // 5 minutes cache
-    this.setupCacheRefresh()
-    this.cacheRefreshInterval = null
-  }
-
-  setupCacheRefresh() {
-    // Clear any existing interval
-    if (this.cacheRefreshInterval) {
-      clearInterval(this.cacheRefreshInterval)
-    }
-
-    // Set up periodic cache refresh
-    this.cacheRefreshInterval = setInterval(() => {
-      if (this.cache.size > 0) {
-        this.clearCache()
-      }
-    }, this.CACHE_DURATION)
-  }
-
-  dispose() {
-    if (this.cacheRefreshInterval) {
-      clearInterval(this.cacheRefreshInterval)
-      this.cacheRefreshInterval = null
-    }
-    this.clearCache()
-  }
-
-  getCacheKey(resource, params = {}) {
-    return `${resource}:${JSON.stringify(params)}`
-  }
-
-  getCachedData(resource, params = {}) {
-    const key = this.getCacheKey(resource, params)
-    const cached = this.cache.get(key)
-    if (cached && Date.now() - cached.timestamp < this.CACHE_DURATION) {
-      return cached.data
-    }
-    return null
-  }
-
-  setCachedData(resource, params = {}, data) {
-    const key = this.getCacheKey(resource, params)
-    this.cache.set(key, {
-      data,
-      timestamp: Date.now(),
-    })
-  }
-
-  clearCache() {
-    this.cache.clear()
   }
 
   async initialize() {
@@ -70,19 +28,6 @@ export class GoogleSheetsProvider extends DataProvider {
 
   async fetch(resource, params = {}) {
     try {
-      // Check cache first
-      const cachedData = this.getCachedData(resource, params)
-      if (cachedData) {
-        return {
-          data: cachedData,
-          total: cachedData.length,
-          metadata: {
-            totalCount: cachedData.length,
-            fromCache: true,
-          },
-        }
-      }
-
       let data = []
       switch (resource) {
         case 'deliveries':
@@ -104,14 +49,12 @@ export class GoogleSheetsProvider extends DataProvider {
           throw new Error('Unsupported resource: ' + resource)
       }
 
-      // Cache the fetched data
-      this.setCachedData(resource, params, data)
-
       return {
         data,
         total: data.length,
         metadata: {
           totalCount: data.length,
+          timestamp: getJakartaDate().toISOString(),
         },
       }
     } catch (error) {
@@ -176,7 +119,7 @@ export class GoogleSheetsProvider extends DataProvider {
     let filtered = [...deliveries]
 
     if (params.filter) {
-      const { branchId, date, status } = params.filter
+      const { branchId, status } = params.filter
 
       if (branchId) {
         filtered = filtered.filter((d) => d.branchId === branchId)
@@ -187,16 +130,18 @@ export class GoogleSheetsProvider extends DataProvider {
       }
     }
 
-    // Apply date range filtering
+    // Apply date range filtering in Jakarta timezone
     if (params.dateRange) {
       const { start, end } = params.dateRange
-      const startDate = new Date(start)
+      const startDate = getJakartaDate(new Date(start))
       startDate.setHours(0, 0, 0, 0)
-      const endDate = new Date(end)
+      const endDate = getJakartaDate(new Date(end))
       endDate.setHours(23, 59, 59, 999)
 
       filtered = filtered.filter((delivery) => {
-        const deliveryDate = new Date(delivery.date + ' ' + (delivery.time || '00:00:00'))
+        const deliveryDate = getJakartaDate(
+          new Date(delivery.date + ' ' + (delivery.time || '00:00:00')),
+        )
         return deliveryDate >= startDate && deliveryDate <= endDate
       })
     }
@@ -207,16 +152,18 @@ export class GoogleSheetsProvider extends DataProvider {
   filterExpenses(expenses, params) {
     let filtered = [...expenses]
 
-    // Apply date range filtering
+    // Apply date range filtering in Jakarta timezone
     if (params.dateRange) {
       const { start, end } = params.dateRange
-      const startDate = new Date(start)
+      const startDate = getJakartaDate(new Date(start))
       startDate.setHours(0, 0, 0, 0)
-      const endDate = new Date(end)
+      const endDate = getJakartaDate(new Date(end))
       endDate.setHours(23, 59, 59, 999)
 
       filtered = filtered.filter((expense) => {
-        const expenseDate = new Date(expense.date + ' ' + (expense.time || '00:00:00'))
+        const expenseDate = getJakartaDate(
+          new Date(expense.date + ' ' + (expense.time || '00:00:00')),
+        )
         return expenseDate >= startDate && expenseDate <= endDate
       })
     }

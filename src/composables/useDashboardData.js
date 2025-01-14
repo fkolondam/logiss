@@ -1,4 +1,4 @@
-import { ref, computed, watch, onMounted, onUnmounted } from 'vue'
+import { ref, computed, watch, onMounted } from 'vue'
 import { storeToRefs } from 'pinia'
 import { dataProviderFactory } from '../services/DataProviderFactory'
 import { useUserStore } from '../stores/user'
@@ -8,6 +8,21 @@ import {
   processExpenseStats,
   processVehicleStats,
 } from './useStatsProcessing'
+
+function getJakartaDate(date = new Date()) {
+  // Create a new date object to avoid modifying the input
+  const d = new Date(date)
+  // Add 7 hours to get Jakarta time
+  d.setHours(d.getHours() + 7)
+  return d
+}
+
+function getJakartaToday() {
+  const jakartaDate = getJakartaDate()
+  // Reset time to midnight
+  jakartaDate.setHours(0, 0, 0, 0)
+  return jakartaDate
+}
 
 export function useDashboardData() {
   const userStore = useUserStore()
@@ -28,44 +43,11 @@ export function useDashboardData() {
     [PERIODS.CUSTOM_RANGE]: false,
   })
 
-  // Cache configuration
-  const CACHE_DURATION = 5 * 60 * 1000 // 5 minutes
-  const cache = ref(new Map())
-
   const currentPeriod = ref(PERIODS.TODAY)
   const customDateRange = ref([])
   const deliveryStats = ref({})
   const expenseStats = ref({})
   const vehicleStats = ref({})
-
-  // Cache management
-  function getCacheKey(section, scope, period) {
-    return `${section}:${scope?.type}:${scope?.value}:${period}`
-  }
-
-  function getCachedData(section, scope, period) {
-    const key = getCacheKey(section, scope, period)
-    const cached = cache.value.get(key)
-    if (cached && Date.now() - cached.timestamp < CACHE_DURATION) {
-      console.log(`Using cached data for ${key}`)
-      return cached.data
-    }
-    return null
-  }
-
-  function setCachedData(section, scope, period, data) {
-    const key = getCacheKey(section, scope, period)
-    cache.value.set(key, {
-      data,
-      timestamp: Date.now(),
-    })
-    console.log(`Cached data for ${key}`)
-  }
-
-  function clearCache() {
-    cache.value.clear()
-    console.log('Cache cleared')
-  }
 
   const canAccessDeliveries = computed(() => userStore.hasPermission('read_deliveries'))
   const canAccessExpenses = computed(() => userStore.hasPermission('read_expenses'))
@@ -79,114 +61,99 @@ export function useDashboardData() {
   }
 
   function getDateRange(period = currentPeriod.value) {
-    const now = new Date()
-    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate())
+    const today = getJakartaToday()
 
     switch (period) {
-      case PERIODS.TODAY:
-        const todayStart = new Date(today)
-        todayStart.setHours(0, 0, 0, 0)
-        const todayEnd = new Date(today)
-        todayEnd.setHours(23, 59, 59, 999)
+      case PERIODS.TODAY: {
+        // For TODAY, use Jakarta's current date for both start and end
         return {
-          start: todayStart,
-          end: todayEnd,
+          start: today,
+          end: today,
         }
-      case PERIODS.THIS_WEEK:
-        const monday = new Date(today)
-        monday.setDate(today.getDate() - today.getDay() + 1)
-        const sunday = new Date(monday)
-        sunday.setDate(monday.getDate() + 6)
-        return { start: monday, end: sunday }
-      case PERIODS.THIS_MONTH:
-        const firstDay = new Date(today.getFullYear(), today.getMonth(), 1)
-        const lastDay = new Date(today.getFullYear(), today.getMonth() + 1, 0)
-        return { start: firstDay, end: lastDay }
-      case PERIODS.LAST_MONTH:
-        const lastMonthFirstDay = new Date(today.getFullYear(), today.getMonth() - 1, 1)
-        const lastMonthLastDay = new Date(today.getFullYear(), today.getMonth(), 0)
-        return { start: lastMonthFirstDay, end: lastMonthLastDay }
-      case PERIODS.L3M:
-        const threeMonthsAgo = new Date(today.getFullYear(), today.getMonth() - 3, 1)
-        return { start: threeMonthsAgo, end: today }
-      case PERIODS.YTD:
-        const yearStart = new Date(today.getFullYear(), 0, 1)
-        return { start: yearStart, end: today }
-      case PERIODS.CUSTOM_RANGE:
+      }
+      case PERIODS.THIS_WEEK: {
+        const start = new Date(today)
+        // Get Monday (1) of current week in Jakarta timezone
+        const day = start.getDay() || 7
+        if (day !== 1) {
+          start.setDate(start.getDate() - (day - 1))
+        }
+        return { start, end: today }
+      }
+      case PERIODS.THIS_MONTH: {
+        const start = new Date(today.getFullYear(), today.getMonth(), 1)
+        return { start, end: today }
+      }
+      case PERIODS.LAST_MONTH: {
+        const start = new Date(today.getFullYear(), today.getMonth() - 1, 1)
+        const end = new Date(today.getFullYear(), today.getMonth(), 0)
+        return { start, end }
+      }
+      case PERIODS.L3M: {
+        const start = new Date(today)
+        start.setMonth(start.getMonth() - 3)
+        start.setDate(1)
+        return { start, end: today }
+      }
+      case PERIODS.YTD: {
+        const start = new Date(today.getFullYear(), 0, 1)
+        return { start, end: today }
+      }
+      case PERIODS.CUSTOM_RANGE: {
         if (customDateRange.value?.length === 2) {
-          const [start, end] = customDateRange.value
-          // Set time to start of day for start date and end of day for end date
-          const startDate = new Date(start)
-          startDate.setHours(0, 0, 0, 0)
-          const endDate = new Date(end)
-          endDate.setHours(23, 59, 59, 999)
-          return { start: startDate, end: endDate }
+          // Convert custom range dates to Jakarta timezone
+          const [startDate, endDate] = customDateRange.value
+          const start = getJakartaDate(new Date(startDate))
+          const end = getJakartaDate(new Date(endDate))
+          return { start, end }
         }
         return { start: today, end: today }
-      default:
-        return { start: today, end: new Date(today.getTime() + 24 * 60 * 60 * 1000 - 1) }
+      }
+      default: {
+        return { start: today, end: today }
+      }
     }
   }
 
   async function loadSectionData(section, params = {}) {
+    if (loadingStates.value[section]) {
+      console.log(`${section} data loading already in progress, skipping`)
+      return
+    }
+
     loadingStates.value[section] = true
     error.value = null
 
     try {
-      // Get date range and ensure it's in local timezone
       const dateRange = getDateRange(currentPeriod.value)
       const fetchParams = {
         ...params,
         dateRange: {
-          start: dateRange.start.toLocaleDateString('en-CA'), // YYYY-MM-DD format
-          end: dateRange.end.toLocaleDateString('en-CA'),
+          start: dateRange.start.toISOString().split('T')[0],
+          end: dateRange.end.toISOString().split('T')[0],
         },
         period: currentPeriod.value,
         scope: currentScope.value,
       }
 
-      console.log('Fetching data with params:', {
-        section,
+      console.log(`Loading ${section} data for period:`, {
         period: currentPeriod.value,
         dateRange: fetchParams.dateRange,
+        scope: currentScope.value,
+        jakartaTime: getJakartaDate().toISOString(),
       })
 
-      // Check cache first
-      const cachedData = getCachedData(section, currentScope.value, currentPeriod.value)
-      if (cachedData) {
-        console.log(`Using cached ${section} data:`, {
-          total: cachedData.total,
-          period: currentPeriod.value,
-          dateRange: fetchParams.dateRange,
-        })
-        switch (section) {
-          case 'deliveries':
-            deliveryStats.value = cachedData
-            break
-          case 'expenses':
-            expenseStats.value = cachedData
-            break
-          case 'vehicles':
-            vehicleStats.value = cachedData
-            break
-        }
-        return
-      }
-
-      // First fetch current period data
       const currentResult = await dataProviderFactory.getData(
         section,
         currentScope.value,
         fetchParams,
       )
 
-      // Only fetch previous period if we have current data
       let previousResult = null
       if (currentResult?.data?.length > 0) {
         previousResult = await loadPreviousPeriodData(section, dateRange, currentScope.value)
       }
 
-      // Process stats with trend calculations and cache
       let stats
       switch (section) {
         case 'deliveries':
@@ -196,7 +163,6 @@ export function useDashboardData() {
             calculateDeliveryTrends(stats, prevStats)
           }
           deliveryStats.value = stats
-          setCachedData(section, currentScope.value, currentPeriod.value, stats)
           break
 
         case 'expenses':
@@ -206,7 +172,6 @@ export function useDashboardData() {
             calculateExpenseTrends(stats, prevStats)
           }
           expenseStats.value = stats
-          setCachedData(section, currentScope.value, currentPeriod.value, stats)
           break
 
         case 'vehicles':
@@ -216,7 +181,6 @@ export function useDashboardData() {
             calculateVehicleTrends(stats, prevStats)
           }
           vehicleStats.value = stats
-          setCachedData(section, currentScope.value, currentPeriod.value, stats)
           break
       }
     } catch (e) {
@@ -233,8 +197,8 @@ export function useDashboardData() {
     try {
       return await dataProviderFactory.getData(section, scope, {
         dateRange: {
-          start: previousDateRange.start.toLocaleDateString('en-CA'),
-          end: previousDateRange.end.toLocaleDateString('en-CA'),
+          start: previousDateRange.start.toISOString().split('T')[0],
+          end: previousDateRange.end.toISOString().split('T')[0],
         },
       })
     } catch (error) {
@@ -254,11 +218,6 @@ export function useDashboardData() {
     if (!previousStats) return
 
     currentStats.trend = calculateTrendPercentage(currentStats.total, previousStats.total)
-
-    const currentCompletionRate = (currentStats.receivedAll / currentStats.total) * 100
-    const previousCompletionRate = (previousStats.receivedAll / previousStats.total) * 100
-    currentStats.completionTrend = Math.round(currentCompletionRate - previousCompletionRate)
-
     currentStats.receivedTrend = calculateTrendPercentage(
       currentStats.receivedAll,
       previousStats.receivedAll,
@@ -321,7 +280,10 @@ export function useDashboardData() {
     error.value = null
 
     try {
-      console.log('Loading dashboard data for period:', currentPeriod.value)
+      console.log('Loading dashboard data for period:', {
+        period: currentPeriod.value,
+        jakartaTime: getJakartaDate().toISOString(),
+      })
       const loadPromises = []
 
       if (canAccessDeliveries.value) {
@@ -348,43 +310,17 @@ export function useDashboardData() {
     isLoading.value = Object.values(loadingStates.value).some(Boolean)
   }
 
-  let refreshInterval = null
-
-  // Clean up interval on unmount
-  onUnmounted(() => {
-    if (refreshInterval) {
-      clearInterval(refreshInterval)
-    }
-  })
-
-  // Initialize with today's data and watch for user/scope changes
   onMounted(async () => {
     try {
-      // Set initial period to today
       currentPeriod.value = PERIODS.TODAY
-
-      // Initial data load - only if scope is set
       if (currentScope.value) {
         await loadDashboardData()
       }
-
-      // Set up auto-refresh interval for cache
-      refreshInterval = setInterval(
-        () => {
-          if (document.visibilityState === 'visible') {
-            console.log('Auto-refreshing dashboard data')
-            dataProviderFactory.clearCache()
-            loadDashboardData()
-          }
-        },
-        5 * 60 * 1000,
-      ) // 5 minutes
     } catch (error) {
       console.error('Error during initialization:', error)
     }
   })
 
-  // Watch for scope changes
   watch(
     () => ({
       type: currentScope.value?.type || 'global',
@@ -392,31 +328,37 @@ export function useDashboardData() {
     }),
     (newScope, oldScope) => {
       if (newScope.type !== oldScope?.type || newScope.value !== oldScope?.value) {
-        clearCache() // Clear cache when scope changes
         loadDashboardData()
       }
     },
-    { deep: true }, // Remove immediate flag to prevent double loading
+    { deep: true },
   )
 
-  // Watch for user changes
   watch(
     () => userStore.currentUser?.id,
     () => {
       console.log('User changed, reloading dashboard data')
-      dataProviderFactory.clearCache()
       loadDashboardData()
     },
   )
 
-  // Watch for period changes
   watch(currentPeriod, (newPeriod, oldPeriod) => {
     if (newPeriod !== oldPeriod) {
+      const newRange = getDateRange(newPeriod)
+      console.log('Period changed:', {
+        from: oldPeriod,
+        to: newPeriod,
+        oldRange: oldPeriod ? getDateRange(oldPeriod) : null,
+        newRange: {
+          start: newRange.start.toISOString(),
+          end: newRange.end.toISOString(),
+        },
+        jakartaTime: getJakartaDate().toISOString(),
+      })
       loadDashboardData()
     }
   })
 
-  // Watch for custom date range changes
   watch(customDateRange, (newRange) => {
     if (currentPeriod.value === PERIODS.CUSTOM_RANGE && newRange?.length === 2) {
       loadDashboardData()

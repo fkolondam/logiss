@@ -4,6 +4,15 @@ import { AccessControlWrapper } from './AccessControlWrapper'
 import { sheetsConfig } from './config/googleSheets'
 import { DataProvider } from './interfaces/DataProvider'
 
+// Timezone offset for Asia/Jakarta (GMT+7)
+const TIMEZONE_OFFSET = 7 * 60 * 60 * 1000 // 7 hours in milliseconds
+
+function getJakartaDate(date = new Date()) {
+  // Convert to Jakarta time
+  const utc = date.getTime() + date.getTimezoneOffset() * 60000
+  return new Date(utc + TIMEZONE_OFFSET)
+}
+
 export const DataSourceType = {
   MOCK: 'mock',
   GOOGLE_SHEETS: 'google_sheets',
@@ -17,27 +26,6 @@ class DataProviderFactory extends DataProvider {
     this.currentProvider = null
     this.pendingRequests = new Map()
     this.initialized = new Set()
-    this.cacheRefreshInterval = null
-    this.CACHE_REFRESH_INTERVAL = 5 * 60 * 1000 // 5 minutes
-    this.setupCacheRefresh()
-  }
-
-  setupCacheRefresh() {
-    if (this.cacheRefreshInterval) {
-      clearInterval(this.cacheRefreshInterval)
-    }
-
-    this.cacheRefreshInterval = setInterval(() => {
-      console.log('Performing periodic cache refresh')
-      this.clearCache()
-    }, this.CACHE_REFRESH_INTERVAL)
-  }
-
-  stopCacheRefresh() {
-    if (this.cacheRefreshInterval) {
-      clearInterval(this.cacheRefreshInterval)
-      this.cacheRefreshInterval = null
-    }
   }
 
   getProvider(sourceType) {
@@ -118,14 +106,27 @@ class DataProviderFactory extends DataProvider {
       throw new Error(`Access denied: Invalid scope for resource ${resource}`)
     }
 
-    const requestKey = this.getPendingKey(resource, scope, params)
+    // Convert date range to Jakarta timezone
+    const dateRange = params.dateRange
+      ? {
+          start: getJakartaDate(new Date(params.dateRange.start)).toISOString().split('T')[0],
+          end: getJakartaDate(new Date(params.dateRange.end)).toISOString().split('T')[0],
+        }
+      : undefined
+
+    // Create a stable key for caching that includes the date range
+    const requestKey = this.getPendingKey(resource, scope, {
+      ...params,
+      dateRange,
+    })
+
     if (this.pendingRequests.has(requestKey)) {
       return this.pendingRequests.get(requestKey)
     }
 
     const requestPromise = (async () => {
       try {
-        const scopedParams = this.buildScopedParams(params, scope)
+        const scopedParams = this.buildScopedParams({ ...params, dateRange }, scope)
         const result = await provider.fetch(resource, scopedParams)
 
         if (!result || !result.data) {
@@ -135,7 +136,7 @@ class DataProviderFactory extends DataProvider {
             total: 0,
             metadata: {
               source: provider.constructor.name,
-              timestamp: new Date().toISOString(),
+              timestamp: getJakartaDate().toISOString(),
               error: 'No data returned from provider',
             },
           }
@@ -146,7 +147,7 @@ class DataProviderFactory extends DataProvider {
         // Log only summary statistics
         console.log(`${resource} data stats:`, {
           total: filteredData.length,
-          dateRange: params.dateRange,
+          dateRange: scopedParams.dateRange,
           lastRecord:
             filteredData.length > 0
               ? {
@@ -155,6 +156,7 @@ class DataProviderFactory extends DataProvider {
                   timestamp: filteredData[filteredData.length - 1].timestamp,
                 }
               : null,
+          jakartaTime: getJakartaDate().toISOString(),
         })
 
         return {
@@ -164,7 +166,8 @@ class DataProviderFactory extends DataProvider {
           metadata: {
             ...result.metadata,
             source: provider.constructor.name,
-            timestamp: new Date().toISOString(),
+            timestamp: getJakartaDate().toISOString(),
+            dateRange: scopedParams.dateRange,
           },
         }
       } catch (error) {
@@ -206,14 +209,16 @@ class DataProviderFactory extends DataProvider {
   }
 
   clearCache() {
-    console.log('Clearing cache for all providers')
-    for (const provider of this.providers.values()) {
-      if (provider.clearCache) {
-        provider.clearCache()
+    if (document.visibilityState === 'visible') {
+      console.log('Clearing cache for all providers')
+      for (const provider of this.providers.values()) {
+        if (provider.clearCache) {
+          provider.clearCache()
+        }
       }
+      this.pendingRequests.clear()
+      console.log('Cache cleared at:', getJakartaDate().toISOString())
     }
-    this.pendingRequests.clear()
-    console.log('Cache cleared at:', new Date().toISOString())
   }
 
   async refreshCache() {
@@ -232,7 +237,6 @@ class DataProviderFactory extends DataProvider {
   }
 
   dispose() {
-    this.stopCacheRefresh()
     this.clearCache()
     this.providers.clear()
     this.currentProvider = null

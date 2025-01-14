@@ -115,6 +115,15 @@ import {
 import { useTranslations } from '../../composables/useTranslations'
 import { PERIODS } from '../../constants/periods'
 
+// Timezone offset for Asia/Jakarta (GMT+7)
+const TIMEZONE_OFFSET = 7 * 60 * 60 * 1000 // 7 hours in milliseconds
+
+function getJakartaDate(date = new Date()) {
+  // Convert to Jakarta time
+  const utc = date.getTime() + date.getTimezoneOffset() * 60000
+  return new Date(utc + TIMEZONE_OFFSET)
+}
+
 const { t } = useTranslations()
 
 const props = defineProps({
@@ -211,7 +220,7 @@ const calculatePercentage = (status) => {
   return Math.round((props.stats[status] / props.stats.total) * 100)
 }
 
-// Add debug logging
+// Add debug logging with Jakarta timezone
 watch(
   () => props.stats,
   (newStats) => {
@@ -231,6 +240,7 @@ watch(
       byPaymentMethod: newStats?.byPaymentMethod,
       scope: props.scope,
       period: newStats?.period,
+      jakartaTime: getJakartaDate().toISOString(),
     })
   },
   { immediate: true },
