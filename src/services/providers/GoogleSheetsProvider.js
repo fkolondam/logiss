@@ -1,14 +1,6 @@
 import { DataProvider } from '../interfaces/DataProvider'
 import { GoogleSheetsTransformer } from './GoogleSheetsTransformer'
-
-// Timezone offset for Asia/Jakarta (GMT+7)
-const TIMEZONE_OFFSET = 7 * 60 * 60 * 1000 // 7 hours in milliseconds
-
-function getJakartaDate(date = new Date()) {
-  // Convert to Jakarta time
-  const utc = date.getTime() + date.getTimezoneOffset() * 60000
-  return new Date(utc + TIMEZONE_OFFSET)
-}
+import { getJakartaDate, isDateBetween, toAPIFormat } from '../../config/dateFormat'
 
 export class GoogleSheetsProvider extends DataProvider {
   constructor(config) {
@@ -54,7 +46,7 @@ export class GoogleSheetsProvider extends DataProvider {
         total: data.length,
         metadata: {
           totalCount: data.length,
-          timestamp: getJakartaDate().toISOString(),
+          timestamp: toAPIFormat(getJakartaDate()),
         },
       }
     } catch (error) {
@@ -80,7 +72,7 @@ export class GoogleSheetsProvider extends DataProvider {
         .map((row) => this.transformer.transformBranch(row))
         .filter((branch) => this.transformer.validateBranch(branch))
 
-      // Update branches cache in transformer
+      // Update branches data in transformer
       this.transformer.setBranchesData(rows)
 
       return branches
@@ -104,8 +96,8 @@ export class GoogleSheetsProvider extends DataProvider {
         .map((row) => (row.length >= 17 ? this.transformer.transformDelivery(row) : null))
         .filter((delivery) => delivery && this.transformer.validateDelivery(delivery))
         .sort((a, b) => {
-          const dateA = new Date(a.date + ' ' + (a.time || '00:00:00'))
-          const dateB = new Date(b.date + ' ' + (b.time || '00:00:00'))
+          const dateA = getJakartaDate(new Date(a.date + ' ' + (a.time || '00:00:00')))
+          const dateB = getJakartaDate(new Date(b.date + ' ' + (b.time || '00:00:00')))
           return dateB - dateA // Latest first
         })
 
@@ -130,19 +122,12 @@ export class GoogleSheetsProvider extends DataProvider {
       }
     }
 
-    // Apply date range filtering in Jakarta timezone
+    // Apply date range filtering
     if (params.dateRange) {
       const { start, end } = params.dateRange
-      const startDate = getJakartaDate(new Date(start))
-      startDate.setHours(0, 0, 0, 0)
-      const endDate = getJakartaDate(new Date(end))
-      endDate.setHours(23, 59, 59, 999)
-
       filtered = filtered.filter((delivery) => {
-        const deliveryDate = getJakartaDate(
-          new Date(delivery.date + ' ' + (delivery.time || '00:00:00')),
-        )
-        return deliveryDate >= startDate && deliveryDate <= endDate
+        const deliveryDate = getJakartaDate(delivery.date + ' ' + (delivery.time || '00:00:00'))
+        return isDateBetween(deliveryDate, new Date(start), new Date(end))
       })
     }
 
@@ -152,19 +137,12 @@ export class GoogleSheetsProvider extends DataProvider {
   filterExpenses(expenses, params) {
     let filtered = [...expenses]
 
-    // Apply date range filtering in Jakarta timezone
+    // Apply date range filtering
     if (params.dateRange) {
       const { start, end } = params.dateRange
-      const startDate = getJakartaDate(new Date(start))
-      startDate.setHours(0, 0, 0, 0)
-      const endDate = getJakartaDate(new Date(end))
-      endDate.setHours(23, 59, 59, 999)
-
       filtered = filtered.filter((expense) => {
-        const expenseDate = getJakartaDate(
-          new Date(expense.date + ' ' + (expense.time || '00:00:00')),
-        )
-        return expenseDate >= startDate && expenseDate <= endDate
+        const expenseDate = getJakartaDate(expense.date + ' ' + (expense.time || '00:00:00'))
+        return isDateBetween(expenseDate, new Date(start), new Date(end))
       })
     }
 

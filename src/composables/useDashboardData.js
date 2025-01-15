@@ -2,27 +2,18 @@ import { ref, computed, watch, onMounted } from 'vue'
 import { storeToRefs } from 'pinia'
 import { dataProviderFactory } from '../services/DataProviderFactory'
 import { useUserStore } from '../stores/user'
-import { PERIODS } from '../constants/periods'
+import {
+  PERIODS,
+  getDateRangeForPeriod,
+  formatDateRange,
+  getPreviousPeriodRange,
+} from '../constants/periods'
+import { getJakartaDate } from '../config/dateFormat'
 import {
   processDeliveryStats,
   processExpenseStats,
   processVehicleStats,
 } from './useStatsProcessing'
-
-function getJakartaDate(date = new Date()) {
-  // Create a new date object to avoid modifying the input
-  const d = new Date(date)
-  // Add 7 hours to get Jakarta time
-  d.setHours(d.getHours() + 7)
-  return d
-}
-
-function getJakartaToday() {
-  const jakartaDate = getJakartaDate()
-  // Reset time to midnight
-  jakartaDate.setHours(0, 0, 0, 0)
-  return jakartaDate
-}
 
 export function useDashboardData() {
   const userStore = useUserStore()
@@ -60,61 +51,6 @@ export function useDashboardData() {
     }
   }
 
-  function getDateRange(period = currentPeriod.value) {
-    const today = getJakartaToday()
-
-    switch (period) {
-      case PERIODS.TODAY: {
-        // For TODAY, use Jakarta's current date for both start and end
-        return {
-          start: today,
-          end: today,
-        }
-      }
-      case PERIODS.THIS_WEEK: {
-        const start = new Date(today)
-        // Get Monday (1) of current week in Jakarta timezone
-        const day = start.getDay() || 7
-        if (day !== 1) {
-          start.setDate(start.getDate() - (day - 1))
-        }
-        return { start, end: today }
-      }
-      case PERIODS.THIS_MONTH: {
-        const start = new Date(today.getFullYear(), today.getMonth(), 1)
-        return { start, end: today }
-      }
-      case PERIODS.LAST_MONTH: {
-        const start = new Date(today.getFullYear(), today.getMonth() - 1, 1)
-        const end = new Date(today.getFullYear(), today.getMonth(), 0)
-        return { start, end }
-      }
-      case PERIODS.L3M: {
-        const start = new Date(today)
-        start.setMonth(start.getMonth() - 3)
-        start.setDate(1)
-        return { start, end: today }
-      }
-      case PERIODS.YTD: {
-        const start = new Date(today.getFullYear(), 0, 1)
-        return { start, end: today }
-      }
-      case PERIODS.CUSTOM_RANGE: {
-        if (customDateRange.value?.length === 2) {
-          // Convert custom range dates to Jakarta timezone
-          const [startDate, endDate] = customDateRange.value
-          const start = getJakartaDate(new Date(startDate))
-          const end = getJakartaDate(new Date(endDate))
-          return { start, end }
-        }
-        return { start: today, end: today }
-      }
-      default: {
-        return { start: today, end: today }
-      }
-    }
-  }
-
   async function loadSectionData(section, params = {}) {
     if (loadingStates.value[section]) {
       console.log(`${section} data loading already in progress, skipping`)
@@ -125,22 +61,21 @@ export function useDashboardData() {
     error.value = null
 
     try {
-      const dateRange = getDateRange(currentPeriod.value)
+      const dateRange = getDateRangeForPeriod(currentPeriod.value, customDateRange.value)
+      const formattedDateRange = formatDateRange(dateRange)
+
       const fetchParams = {
         ...params,
-        dateRange: {
-          start: dateRange.start.toISOString().split('T')[0],
-          end: dateRange.end.toISOString().split('T')[0],
-        },
+        dateRange: formattedDateRange,
         period: currentPeriod.value,
         scope: currentScope.value,
       }
 
       console.log(`Loading ${section} data for period:`, {
         period: currentPeriod.value,
-        dateRange: fetchParams.dateRange,
+        dateRange: formattedDateRange,
         scope: currentScope.value,
-        jakartaTime: getJakartaDate().toISOString(),
+        jakartaDate: getJakartaDate().toISOString().split('T')[0],
       })
 
       const currentResult = await dataProviderFactory.getData(
@@ -151,7 +86,10 @@ export function useDashboardData() {
 
       let previousResult = null
       if (currentResult?.data?.length > 0) {
-        previousResult = await loadPreviousPeriodData(section, dateRange, currentScope.value)
+        const previousDateRange = getPreviousPeriodRange(dateRange)
+        previousResult = await dataProviderFactory.getData(section, currentScope.value, {
+          dateRange: formatDateRange(previousDateRange),
+        })
       }
 
       let stats
@@ -190,28 +128,6 @@ export function useDashboardData() {
       loadingStates.value[section] = false
       updateLoadingState()
     }
-  }
-
-  async function loadPreviousPeriodData(section, currentDateRange, scope) {
-    const previousDateRange = getPreviousDateRange(currentDateRange)
-    try {
-      return await dataProviderFactory.getData(section, scope, {
-        dateRange: {
-          start: previousDateRange.start.toISOString().split('T')[0],
-          end: previousDateRange.end.toISOString().split('T')[0],
-        },
-      })
-    } catch (error) {
-      console.warn(`Failed to load previous period data for ${section}:`, error)
-      return null
-    }
-  }
-
-  function getPreviousDateRange({ start, end }) {
-    const duration = end.getTime() - start.getTime()
-    const previousStart = new Date(start.getTime() - duration)
-    const previousEnd = new Date(end.getTime() - duration)
-    return { start: previousStart, end: previousEnd }
   }
 
   function calculateDeliveryTrends(currentStats, previousStats) {
@@ -270,6 +186,10 @@ export function useDashboardData() {
     return Math.round(((current - previous) / previous) * 100)
   }
 
+  function updateLoadingState() {
+    isLoading.value = Object.values(loadingStates.value).some(Boolean)
+  }
+
   async function loadDashboardData() {
     if (isLoading.value) {
       console.log('Already loading dashboard data, skipping')
@@ -282,7 +202,7 @@ export function useDashboardData() {
     try {
       console.log('Loading dashboard data for period:', {
         period: currentPeriod.value,
-        jakartaTime: getJakartaDate().toISOString(),
+        jakartaDate: getJakartaDate().toISOString().split('T')[0],
       })
       const loadPromises = []
 
@@ -304,10 +224,6 @@ export function useDashboardData() {
     } finally {
       isLoading.value = false
     }
-  }
-
-  function updateLoadingState() {
-    isLoading.value = Object.values(loadingStates.value).some(Boolean)
   }
 
   onMounted(async () => {
@@ -344,16 +260,14 @@ export function useDashboardData() {
 
   watch(currentPeriod, (newPeriod, oldPeriod) => {
     if (newPeriod !== oldPeriod) {
-      const newRange = getDateRange(newPeriod)
+      const newRange = getDateRangeForPeriod(newPeriod, customDateRange.value)
+      const formattedRange = formatDateRange(newRange)
       console.log('Period changed:', {
         from: oldPeriod,
         to: newPeriod,
-        oldRange: oldPeriod ? getDateRange(oldPeriod) : null,
-        newRange: {
-          start: newRange.start.toISOString(),
-          end: newRange.end.toISOString(),
-        },
-        jakartaTime: getJakartaDate().toISOString(),
+        oldRange: oldPeriod ? formatDateRange(getDateRangeForPeriod(oldPeriod)) : null,
+        newRange: formattedRange,
+        jakartaDate: getJakartaDate().toISOString().split('T')[0],
       })
       loadDashboardData()
     }
@@ -377,7 +291,6 @@ export function useDashboardData() {
     PERIODS,
     loadDashboardData,
     loadSectionData,
-    getDateRange,
     updateDateRange,
   }
 }

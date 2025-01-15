@@ -230,7 +230,7 @@
 <script setup>
 import { ref, computed, watch, onMounted } from 'vue'
 import { CalendarRange, Calendar, X, ChevronDown } from 'lucide-vue-next'
-import { PERIODS, PERIOD_LABELS } from '../../constants/periods'
+import { PERIODS, PERIOD_LABELS, getDateRangeForPeriod } from '../../constants/periods'
 import { useTranslations } from '../../composables/useTranslations'
 import { toDisplayFormat, getJakartaDate, getJakartaToday } from '../../config/dateFormat'
 
@@ -317,49 +317,12 @@ const dateRangeInfo = computed(() => {
     return `${t('common.timeline.from')} ${formatDate(start)} ${t('common.timeline.to')} ${formatDate(end)}`
   }
 
-  // Use the reactive jakartaToday ref
-  const today = jakartaToday.value
-  let start, end
+  // Use getDateRangeForPeriod to get consistent date ranges
+  const { start, end } = getDateRangeForPeriod(selectedPeriod.value)
 
-  switch (selectedPeriod.value) {
-    case PERIODS.TODAY: {
-      // For TODAY, just show the date without "Dari ... Sampai ..."
-      return formatDate(today)
-    }
-    case PERIODS.THIS_WEEK: {
-      start = new Date(today)
-      // Get Monday (1) of current week in Jakarta timezone
-      const day = start.getDay() || 7
-      if (day !== 1) {
-        start.setDate(start.getDate() - (day - 1))
-      }
-      end = today
-      break
-    }
-    case PERIODS.THIS_MONTH: {
-      start = new Date(today.getFullYear(), today.getMonth(), 1)
-      end = today
-      break
-    }
-    case PERIODS.LAST_MONTH: {
-      start = new Date(today.getFullYear(), today.getMonth() - 1, 1)
-      end = new Date(today.getFullYear(), today.getMonth(), 0)
-      break
-    }
-    case PERIODS.L3M: {
-      start = new Date(today)
-      start.setMonth(start.getMonth() - 3)
-      start.setDate(1)
-      end = today
-      break
-    }
-    case PERIODS.YTD: {
-      start = new Date(today.getFullYear(), 0, 1)
-      end = today
-      break
-    }
-    default:
-      return ''
+  // For TODAY, just show the date without "Dari ... Sampai ..."
+  if (selectedPeriod.value === PERIODS.TODAY) {
+    return formatDate(start)
   }
 
   return `${t('common.timeline.from')} ${formatDate(start)} ${t('common.timeline.to')} ${formatDate(end)}`

@@ -1,11 +1,9 @@
-// Timezone offset for Asia/Jakarta (GMT+7)
-const TIMEZONE_OFFSET = 7 * 60 * 60 * 1000 // 7 hours in milliseconds
-
-function getJakartaDate(date = new Date()) {
-  // Convert to Jakarta time
-  const utc = date.getTime() + date.getTimezoneOffset() * 60000
-  return new Date(utc + TIMEZONE_OFFSET)
-}
+import {
+  getJakartaDate,
+  getFirstDayOfMonth,
+  getLastDayOfMonth,
+  isDateBetween,
+} from '../config/dateFormat'
 
 export function processDeliveryStats(result) {
   if (!result?.data) {
@@ -142,7 +140,6 @@ export function processExpenseStats(result) {
     categoryCount: Object.keys(stats.byCategory).length,
     dateRange: result.metadata?.dateRange,
     period: result.period,
-    source: result.metadata?.source,
   })
 
   return stats
@@ -186,8 +183,8 @@ export function processVehicleStats(result) {
   }
 
   const now = getJakartaDate()
-  const thisMonth = new Date(now.getFullYear(), now.getMonth(), 1)
-  const nextThreeMonths = new Date(now.getFullYear(), now.getMonth() + 3, 0)
+  const thisMonth = getFirstDayOfMonth(now.getFullYear(), now.getMonth())
+  const nextThreeMonths = getLastDayOfMonth(now.getFullYear(), now.getMonth() + 3)
 
   result.data.forEach((vehicle) => {
     try {
@@ -205,8 +202,8 @@ export function processVehicleStats(result) {
 
       // Check document expiry dates
       if (vehicle.stnkExpiry) {
-        const stnkDate = new Date(vehicle.stnkExpiry)
-        if (stnkDate >= thisMonth && stnkDate <= nextThreeMonths) {
+        const stnkDate = getJakartaDate(vehicle.stnkExpiry)
+        if (isDateBetween(stnkDate, thisMonth, nextThreeMonths)) {
           stats.documentExpiry.stnk.nextThreeMonths++
           if (stnkDate.getMonth() === now.getMonth()) {
             stats.documentExpiry.stnk.thisMonth++
@@ -219,8 +216,8 @@ export function processVehicleStats(result) {
       }
 
       if (vehicle.taxExpiry) {
-        const taxDate = new Date(vehicle.taxExpiry)
-        if (taxDate >= thisMonth && taxDate <= nextThreeMonths) {
+        const taxDate = getJakartaDate(vehicle.taxExpiry)
+        if (isDateBetween(taxDate, thisMonth, nextThreeMonths)) {
           stats.documentExpiry.tax.nextThreeMonths++
           if (taxDate.getMonth() === now.getMonth()) {
             stats.documentExpiry.tax.thisMonth++

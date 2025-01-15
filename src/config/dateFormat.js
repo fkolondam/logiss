@@ -14,28 +14,30 @@ export const DATE_FORMATS = {
   API: 'yyyy-MM-dd',
   // Format for full datetime
   DATETIME: 'yyyy-MM-dd HH:mm:ss',
+  // Format for mobile display
+  MOBILE: 'MMM d, yyyy',
 }
 
-function getJakartaDate(date = new Date()) {
-  // First convert to UTC by removing the local timezone offset
-  const utc = date.getTime() + date.getTimezoneOffset() * 60000
-  // Then add Jakarta's offset
-  const jakartaTime = new Date(utc + TIMEZONE_OFFSET)
-
-  // For debugging
-  console.log('Date conversion:', {
-    input: date.toISOString(),
-    utc: new Date(utc).toISOString(),
-    jakarta: jakartaTime.toISOString(),
-    offset: date.getTimezoneOffset(),
-  })
-
-  return jakartaTime
+/**
+ * Convert any date to Jakarta timezone
+ * @param {Date|string} date - Date to convert
+ * @returns {Date} Date in Jakarta timezone
+ */
+export function getJakartaDate(date = new Date()) {
+  const inputDate = date instanceof Date ? date : new Date(date)
+  // Convert to UTC by removing the local timezone offset
+  const utc = inputDate.getTime() + inputDate.getTimezoneOffset() * 60000
+  // Add Jakarta's offset
+  return new Date(utc + TIMEZONE_OFFSET)
 }
 
-function getJakartaToday() {
+/**
+ * Get today's date in Jakarta timezone (midnight)
+ * @returns {Date} Today's date in Jakarta timezone
+ */
+export function getJakartaToday() {
   const jakartaDate = getJakartaDate()
-  // Reset time to midnight in Jakarta timezone
+  // Reset time to midnight
   return new Date(
     jakartaDate.getFullYear(),
     jakartaDate.getMonth(),
@@ -48,74 +50,147 @@ function getJakartaToday() {
 }
 
 /**
- * Converts a date string to the standard API format
- * @param {string} dateStr - Date string in any supported format
- * @param {string} [fromFormat] - Format of the input date string
- * @returns {string} Date string in API format
+ * Format a date for API use (YYYY-MM-DD)
+ * @param {Date} date - Date to format
+ * @returns {string} Formatted date string
  */
-export function toAPIFormat(dateStr, fromFormat = DATE_FORMATS.DISPLAY) {
-  if (!dateStr) return null
-
-  const parsedDate = parse(dateStr, fromFormat, new Date())
-  if (!isValid(parsedDate)) return null
-
-  const jakartaDate = getJakartaDate(parsedDate)
+export function toAPIFormat(date) {
+  if (!date) return null
+  const jakartaDate = getJakartaDate(date)
   return format(jakartaDate, DATE_FORMATS.API)
 }
 
 /**
- * Converts a date string or Date object to display format
- * @param {string|Date} date - Date string in API format or Date object
- * @returns {string} Date string in display format
+ * Format a date for display
+ * @param {Date|string} date - Date to format
+ * @returns {string} Formatted date string
  */
 export function toDisplayFormat(date) {
   if (!date) return null
-
-  let jakartaDate
-  if (date instanceof Date) {
-    jakartaDate = getJakartaDate(date)
-  } else {
-    const parsedDate = parse(date, DATE_FORMATS.API, new Date())
-    if (!isValid(parsedDate)) return null
-    jakartaDate = getJakartaDate(parsedDate)
-  }
-
+  const jakartaDate = getJakartaDate(date)
   return format(jakartaDate, DATE_FORMATS.DISPLAY)
 }
 
 /**
- * Validates if a date string is in the correct format
- * @param {string} dateStr - Date string to validate
- * @param {string} [expectedFormat] - Expected format of the date string
- * @returns {boolean} True if date is valid and in correct format
+ * Format a date for mobile display
+ * @param {Date|string} date - Date to format
+ * @returns {string} Formatted date string
  */
-export function isValidDateFormat(dateStr, expectedFormat = DATE_FORMATS.API) {
+export function toMobileFormat(date) {
+  if (!date) return null
+  const jakartaDate = getJakartaDate(date)
+  return format(jakartaDate, DATE_FORMATS.MOBILE)
+}
+
+/**
+ * Get the first day of a month
+ * @param {number} year - Year
+ * @param {number} month - Month (0-11)
+ * @returns {Date} First day of the month
+ */
+export function getFirstDayOfMonth(year, month) {
+  return new Date(year, month, 1, 0, 0, 0, 0)
+}
+
+/**
+ * Get the last day of a month
+ * @param {number} year - Year
+ * @param {number} month - Month (0-11)
+ * @returns {Date} Last day of the month
+ */
+export function getLastDayOfMonth(year, month) {
+  return new Date(year, month + 1, 0, 23, 59, 59, 999)
+}
+
+/**
+ * Get the Monday of the current week
+ * @param {Date} date - Reference date
+ * @returns {Date} Monday of the week
+ */
+export function getMondayOfWeek(date) {
+  const d = getJakartaDate(date)
+  const day = d.getDay() || 7
+  if (day !== 1) {
+    d.setDate(d.getDate() - (day - 1))
+  }
+  d.setHours(0, 0, 0, 0)
+  return d
+}
+
+/**
+ * Get the number of days in a month
+ * @param {number} year - Year
+ * @param {number} month - Month (0-11)
+ * @returns {number} Number of days
+ */
+export function getDaysInMonth(year, month) {
+  return new Date(year, month + 1, 0).getDate()
+}
+
+/**
+ * Parse a date string in any supported format
+ * @param {string} dateStr - Date string
+ * @param {string} format - Expected format
+ * @returns {Date|null} Parsed date or null if invalid
+ */
+export function parseDate(dateStr, format = DATE_FORMATS.API) {
+  if (!dateStr) return null
+  const parsedDate = parse(dateStr, format, new Date())
+  return isValid(parsedDate) ? parsedDate : null
+}
+
+/**
+ * Validate if a date string matches the expected format
+ * @param {string} dateStr - Date string to validate
+ * @param {string} format - Expected format
+ * @returns {boolean} True if valid
+ */
+export function isValidDateFormat(dateStr, format = DATE_FORMATS.API) {
   if (!dateStr) return false
-  const parsedDate = parse(dateStr, expectedFormat, new Date())
+  const parsedDate = parse(dateStr, format, new Date())
   return isValid(parsedDate)
 }
 
 /**
- * Gets current date in the specified format
- * @param {string} [outputFormat] - Desired output format
- * @returns {string} Current date in specified format
+ * Get current date in the specified format
+ * @param {string} format - Desired format
+ * @returns {string} Formatted current date
  */
-export function getCurrentDate(outputFormat = DATE_FORMATS.API) {
-  const jakartaDate = getJakartaToday()
-  return format(jakartaDate, outputFormat)
+export function getCurrentDate(format = DATE_FORMATS.API) {
+  return format(getJakartaToday(), format)
 }
 
 /**
- * Converts a Date object to a formatted string
- * @param {Date} date - Date object to format
- * @param {string} [outputFormat] - Desired output format
- * @returns {string} Formatted date string
+ * Compare two dates (ignoring time)
+ * @param {Date} date1 - First date
+ * @param {Date} date2 - Second date
+ * @returns {number} -1 if date1 < date2, 0 if equal, 1 if date1 > date2
  */
-export function formatDate(date, outputFormat = DATE_FORMATS.API) {
-  if (!(date instanceof Date) || !isValid(date)) return null
-  const jakartaDate = getJakartaDate(date)
-  return format(jakartaDate, outputFormat)
+export function compareDates(date1, date2) {
+  const d1 = getJakartaDate(date1)
+  const d2 = getJakartaDate(date2)
+
+  d1.setHours(0, 0, 0, 0)
+  d2.setHours(0, 0, 0, 0)
+
+  return d1.getTime() - d2.getTime()
 }
 
-// Export the getJakartaDate and getJakartaToday functions for use in other modules
-export { getJakartaDate, getJakartaToday }
+/**
+ * Check if a date is between two other dates (inclusive)
+ * @param {Date} date - Date to check
+ * @param {Date} start - Start date
+ * @param {Date} end - End date
+ * @returns {boolean} True if date is between start and end
+ */
+export function isDateBetween(date, start, end) {
+  const d = getJakartaDate(date)
+  const s = getJakartaDate(start)
+  const e = getJakartaDate(end)
+
+  d.setHours(0, 0, 0, 0)
+  s.setHours(0, 0, 0, 0)
+  e.setHours(23, 59, 59, 999)
+
+  return d >= s && d <= e
+}
