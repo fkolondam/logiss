@@ -1,3 +1,5 @@
+import { toAPIFormat } from '../../config/dateFormat'
+
 export class GoogleSheetsTransformer {
   constructor() {
     this.branches = []
@@ -25,7 +27,7 @@ export class GoogleSheetsTransformer {
       const [datePart, timePart] = datetimeStr.split(' ')
       if (!datePart) return { date: '', time: '' }
 
-      // Always convert to YYYY-MM-DD format
+      // Parse date parts
       let year, month, day
       if (datePart.includes('/')) {
         // Input format: MM/DD/YYYY or DD/MM/YYYY
@@ -59,11 +61,12 @@ export class GoogleSheetsTransformer {
         return { date: '', time: '' }
       }
 
-      // Format to YYYY-MM-DD
-      const formattedDate = `${year}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`
-      const formattedTime = timePart || ''
-
-      return { date: formattedDate, time: formattedTime }
+      // Create a Date object and format it using the centralized function
+      const date = new Date(year, month - 1, day)
+      return {
+        date: toAPIFormat(date),
+        time: timePart || '',
+      }
     } catch {
       return { date: '', time: '' }
     }

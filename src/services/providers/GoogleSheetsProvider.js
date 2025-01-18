@@ -96,8 +96,9 @@ export class GoogleSheetsProvider extends DataProvider {
         .map((row) => (row.length >= 17 ? this.transformer.transformDelivery(row) : null))
         .filter((delivery) => delivery && this.transformer.validateDelivery(delivery))
         .sort((a, b) => {
-          const dateA = getJakartaDate(new Date(a.date + ' ' + (a.time || '00:00:00')))
-          const dateB = getJakartaDate(new Date(b.date + ' ' + (b.time || '00:00:00')))
+          // Use dates as is - they're already in YYYY-MM-DD format
+          const dateA = new Date(a.date)
+          const dateB = new Date(b.date)
           return dateB - dateA // Latest first
         })
 
@@ -126,8 +127,9 @@ export class GoogleSheetsProvider extends DataProvider {
     if (params.dateRange) {
       const { start, end } = params.dateRange
       filtered = filtered.filter((delivery) => {
-        const deliveryDate = getJakartaDate(delivery.date + ' ' + (delivery.time || '00:00:00'))
-        return isDateBetween(deliveryDate, new Date(start), new Date(end))
+        // Use dates as is - they're already in YYYY-MM-DD format
+        const deliveryDate = new Date(delivery.date)
+        return deliveryDate >= new Date(start) && deliveryDate <= new Date(end)
       })
     }
 
@@ -141,8 +143,9 @@ export class GoogleSheetsProvider extends DataProvider {
     if (params.dateRange) {
       const { start, end } = params.dateRange
       filtered = filtered.filter((expense) => {
-        const expenseDate = getJakartaDate(expense.date + ' ' + (expense.time || '00:00:00'))
-        return isDateBetween(expenseDate, new Date(start), new Date(end))
+        // Use dates as is - they're already in YYYY-MM-DD format
+        const expenseDate = new Date(expense.date)
+        return expenseDate >= new Date(start) && expenseDate <= new Date(end)
       })
     }
 

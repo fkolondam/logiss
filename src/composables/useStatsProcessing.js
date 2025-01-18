@@ -5,7 +5,7 @@ import {
   isDateBetween,
 } from '../config/dateFormat'
 
-export function processDeliveryStats(result) {
+export function processDeliveryStats(result, isPreviousPeriod = false) {
   if (!result?.data) {
     console.warn('No delivery data available')
     return {
@@ -76,21 +76,23 @@ export function processDeliveryStats(result) {
     timestamp: getJakartaDate().toISOString(),
   }
 
-  // Log only summary statistics
-  console.log('Delivery stats summary:', {
-    total: stats.total,
-    'diterima - semua': stats['diterima - semua'],
-    'diterima - sebagian': stats['diterima - sebagian'],
-    'minta kirim ulang': stats['minta kirim ulang'],
-    batal: stats.batal,
-    dateRange: result.metadata?.dateRange,
-    period: result.period,
-  })
+  // Only log stats for current period, not for trend calculations
+  if (!isPreviousPeriod) {
+    console.log('Delivery stats summary:', {
+      total: stats.total,
+      'diterima - semua': stats['diterima - semua'],
+      'diterima - sebagian': stats['diterima - sebagian'],
+      'minta kirim ulang': stats['minta kirim ulang'],
+      batal: stats.batal,
+      dateRange: result.metadata?.dateRange,
+      period: result.period,
+    })
+  }
 
   return stats
 }
 
-export function processExpenseStats(result) {
+export function processExpenseStats(result, isPreviousPeriod = false) {
   if (!result?.data) {
     console.warn('No expense data available')
     return {
@@ -133,19 +135,21 @@ export function processExpenseStats(result) {
     }
   })
 
-  // Log only summary statistics
-  console.log('Expense stats summary:', {
-    total: stats.total,
-    totalAmount: stats.totalAmount,
-    categoryCount: Object.keys(stats.byCategory).length,
-    dateRange: result.metadata?.dateRange,
-    period: result.period,
-  })
+  // Only log stats for current period, not for trend calculations
+  if (!isPreviousPeriod) {
+    console.log('Expense stats summary:', {
+      total: stats.total,
+      totalAmount: stats.totalAmount,
+      categoryCount: Object.keys(stats.byCategory).length,
+      dateRange: result.metadata?.dateRange,
+      period: result.period,
+    })
+  }
 
   return stats
 }
 
-export function processVehicleStats(result) {
+export function processVehicleStats(result, isPreviousPeriod = false) {
   if (!result?.data) {
     console.warn('No vehicle data available')
     return {
@@ -233,15 +237,17 @@ export function processVehicleStats(result) {
     }
   })
 
-  // Log only summary statistics
-  console.log('Vehicle stats summary:', {
-    total: stats.total,
-    active: stats.active,
-    maintenance: stats.maintenance,
-    utilization: `${Math.round((stats.active / stats.total) * 100)}%`,
-    logisticTypes: Object.keys(stats.byLogisticType).length,
-    ownership: Object.keys(stats.byOwnership).length,
-  })
+  // Only log stats for current period, not for trend calculations
+  if (!isPreviousPeriod) {
+    console.log('Vehicle stats summary:', {
+      total: stats.total,
+      active: stats.active,
+      maintenance: stats.maintenance,
+      utilization: `${Math.round((stats.active / stats.total) * 100)}%`,
+      logisticTypes: Object.keys(stats.byLogisticType).length,
+      ownership: Object.keys(stats.byOwnership).length,
+    })
+  }
 
   return stats
 }

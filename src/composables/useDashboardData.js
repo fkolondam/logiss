@@ -61,8 +61,20 @@ export function useDashboardData() {
     error.value = null
 
     try {
+      console.log('Loading section data:', {
+        section,
+        period: currentPeriod.value,
+        params,
+      })
+
       const dateRange = getDateRangeForPeriod(currentPeriod.value, customDateRange.value)
       const formattedDateRange = formatDateRange(dateRange)
+
+      console.log('Calculated date range:', {
+        section,
+        period: currentPeriod.value,
+        dateRange: formattedDateRange,
+      })
 
       const fetchParams = {
         ...params,
@@ -70,13 +82,6 @@ export function useDashboardData() {
         period: currentPeriod.value,
         scope: currentScope.value,
       }
-
-      console.log(`Loading ${section} data for period:`, {
-        period: currentPeriod.value,
-        dateRange: formattedDateRange,
-        scope: currentScope.value,
-        jakartaDate: getJakartaDate().toISOString().split('T')[0],
-      })
 
       const currentResult = await dataProviderFactory.getData(
         section,
@@ -200,10 +205,11 @@ export function useDashboardData() {
     error.value = null
 
     try {
-      console.log('Loading dashboard data for period:', {
+      console.log('Loading dashboard data:', {
         period: currentPeriod.value,
         jakartaDate: getJakartaDate().toISOString().split('T')[0],
       })
+
       const loadPromises = []
 
       if (canAccessDeliveries.value) {
@@ -260,14 +266,9 @@ export function useDashboardData() {
 
   watch(currentPeriod, (newPeriod, oldPeriod) => {
     if (newPeriod !== oldPeriod) {
-      const newRange = getDateRangeForPeriod(newPeriod, customDateRange.value)
-      const formattedRange = formatDateRange(newRange)
       console.log('Period changed:', {
         from: oldPeriod,
         to: newPeriod,
-        oldRange: oldPeriod ? formatDateRange(getDateRangeForPeriod(oldPeriod)) : null,
-        newRange: formattedRange,
-        jakartaDate: getJakartaDate().toISOString().split('T')[0],
       })
       loadDashboardData()
     }

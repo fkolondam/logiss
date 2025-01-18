@@ -230,7 +230,12 @@
 <script setup>
 import { ref, computed, watch, onMounted } from 'vue'
 import { CalendarRange, Calendar, X, ChevronDown } from 'lucide-vue-next'
-import { PERIODS, PERIOD_LABELS, getDateRangeForPeriod } from '../../constants/periods'
+import {
+  PERIODS,
+  PERIOD_LABELS,
+  getDateRangeForPeriod,
+  formatDateRange,
+} from '../../constants/periods'
 import { useTranslations } from '../../composables/useTranslations'
 import { toDisplayFormat, getJakartaDate, getJakartaToday } from '../../config/dateFormat'
 
@@ -275,6 +280,10 @@ const formatDate = (date) => {
 watch(
   () => props.modelValue,
   (newValue) => {
+    console.log('Period prop changed:', {
+      from: selectedPeriod.value,
+      to: newValue,
+    })
     selectedPeriod.value = newValue || PERIODS.TODAY
     if (newValue !== PERIODS.CUSTOM_RANGE) {
       startDate.value = ''
@@ -319,6 +328,12 @@ const dateRangeInfo = computed(() => {
 
   // Use getDateRangeForPeriod to get consistent date ranges
   const { start, end } = getDateRangeForPeriod(selectedPeriod.value)
+  const formattedRange = formatDateRange({ start, end })
+
+  console.log('Date range info:', {
+    period: selectedPeriod.value,
+    range: formattedRange,
+  })
 
   // For TODAY, just show the date without "Dari ... Sampai ..."
   if (selectedPeriod.value === PERIODS.TODAY) {
@@ -333,6 +348,10 @@ const currentPeriodLabel = computed(() => {
 })
 
 const selectPeriod = (period) => {
+  console.log('Selecting period:', {
+    from: selectedPeriod.value,
+    to: period,
+  })
   selectedPeriod.value = period
   if (period !== PERIODS.CUSTOM_RANGE) {
     emit('update:modelValue', period)
@@ -343,6 +362,12 @@ const selectPeriod = (period) => {
 const applyCustomRange = () => {
   if (isValidRange.value) {
     const range = [new Date(startDate.value), new Date(endDate.value)]
+    console.log('Applying custom range:', {
+      range: formatDateRange({
+        start: range[0],
+        end: range[1],
+      }),
+    })
     emit('update:modelValue', PERIODS.CUSTOM_RANGE)
     emit('update:customRange', range)
     closeDatePicker()
@@ -429,7 +454,6 @@ onMounted(() => {
 </script>
 
 <style>
-/* Previous styles remain the same */
 .animate-slideUp {
   animation: slideUp 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }

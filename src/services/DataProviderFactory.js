@@ -3,15 +3,7 @@ import { GoogleSheetsProvider } from './providers/GoogleSheetsProvider'
 import { AccessControlWrapper } from './AccessControlWrapper'
 import { sheetsConfig } from './config/googleSheets'
 import { DataProvider } from './interfaces/DataProvider'
-
-// Timezone offset for Asia/Jakarta (GMT+7)
-const TIMEZONE_OFFSET = 7 * 60 * 60 * 1000 // 7 hours in milliseconds
-
-function getJakartaDate(date = new Date()) {
-  // Convert to Jakarta time
-  const utc = date.getTime() + date.getTimezoneOffset() * 60000
-  return new Date(utc + TIMEZONE_OFFSET)
-}
+import { getJakartaDate } from '../config/dateFormat'
 
 export const DataSourceType = {
   MOCK: 'mock',
@@ -100,13 +92,8 @@ class DataProviderFactory extends DataProvider {
       throw new Error(`Access denied: Invalid scope for resource ${resource}`)
     }
 
-    // Convert date range to Jakarta timezone
+    // Use date range as is - it's already in Jakarta timezone from periods.js
     const dateRange = params.dateRange
-      ? {
-          start: getJakartaDate(new Date(params.dateRange.start)).toISOString().split('T')[0],
-          end: getJakartaDate(new Date(params.dateRange.end)).toISOString().split('T')[0],
-        }
-      : undefined
 
     try {
       const scopedParams = this.buildScopedParams({ ...params, dateRange }, scope)

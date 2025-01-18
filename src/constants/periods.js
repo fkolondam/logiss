@@ -37,33 +37,39 @@ export function getDateRangeForPeriod(period, customRange = null) {
   const currentYear = today.getFullYear()
   const currentMonth = today.getMonth()
 
+  let dateRange = { start: today, end: today }
+
   switch (period) {
     case PERIODS.TODAY: {
-      return {
+      dateRange = {
         start: today,
         end: today,
       }
+      break
     }
 
     case PERIODS.THIS_WEEK: {
-      return {
+      dateRange = {
         start: getMondayOfWeek(today),
         end: today,
       }
+      break
     }
 
     case PERIODS.THIS_MONTH: {
-      return {
+      dateRange = {
         start: getFirstDayOfMonth(currentYear, currentMonth),
         end: today,
       }
+      break
     }
 
     case PERIODS.LAST_MONTH: {
-      return {
+      dateRange = {
         start: getFirstDayOfMonth(currentYear, currentMonth - 1),
         end: getLastDayOfMonth(currentYear, currentMonth - 1),
       }
+      break
     }
 
     case PERIODS.L3M: {
@@ -81,34 +87,44 @@ export function getDateRangeForPeriod(period, customRange = null) {
       // Adjust negative months
       const adjustedStartMonth = startMonth < 0 ? startMonth + 12 : startMonth
 
-      return {
+      dateRange = {
         start: getFirstDayOfMonth(startYear, adjustedStartMonth),
         end: getLastDayOfMonth(endYear, endMonth),
       }
+      break
     }
 
     case PERIODS.YTD: {
-      return {
+      dateRange = {
         start: getFirstDayOfMonth(currentYear, 0), // January 1st
         end: today,
       }
+      break
     }
 
     case PERIODS.CUSTOM_RANGE: {
       if (customRange?.length === 2) {
         const [startDate, endDate] = customRange
-        return {
+        dateRange = {
           start: new Date(startDate.getFullYear(), startDate.getMonth(), startDate.getDate()),
           end: new Date(endDate.getFullYear(), endDate.getMonth(), endDate.getDate()),
         }
       }
-      return { start: today, end: today }
-    }
-
-    default: {
-      return { start: today, end: today }
+      break
     }
   }
+
+  // Log the calculated date range
+  console.log('Date range calculation:', {
+    period,
+    range: {
+      start: toAPIFormat(dateRange.start),
+      end: toAPIFormat(dateRange.end),
+    },
+    today: toAPIFormat(today),
+  })
+
+  return dateRange
 }
 
 /**
