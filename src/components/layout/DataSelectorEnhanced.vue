@@ -177,7 +177,7 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
+import { ref, computed, onMounted, onUnmounted } from 'vue'
 import {
   Database,
   ChevronDown,
@@ -313,11 +313,7 @@ const selectScope = async (scope) => {
   if (userStore.canSelectScope(scope)) {
     console.log('Setting scope:', scope)
     await userStore.setScope(scope)
-
-    // Force data refresh
-    dataProviderFactory.clearCache()
     emit('scope-changed', scope)
-
     isOpen.value = false
   }
 }
@@ -326,26 +322,9 @@ const selectScope = async (scope) => {
 const clearScope = async () => {
   console.log('Clearing scope')
   await userStore.clearScope()
-
-  // Force data refresh
-  dataProviderFactory.clearCache()
   emit('scope-changed', null)
-
   isOpen.value = false
 }
-
-// Watch for scope changes
-watch(
-  () => userStore.scope,
-  (newScope, oldScope) => {
-    if (JSON.stringify(newScope) !== JSON.stringify(oldScope)) {
-      console.log('Scope changed:', newScope)
-      // Refresh data when scope changes
-      dataProviderFactory.clearCache()
-    }
-  },
-  { deep: true },
-)
 
 // Toggle quick filters
 const toggleFilter = (filterId) => {

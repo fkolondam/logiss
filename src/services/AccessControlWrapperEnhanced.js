@@ -33,36 +33,33 @@ export class AccessControlWrapperEnhanced {
         filteredData = data.filter((item) => {
           // Enhanced region matching
           const matchesRegion = item.region?.toLowerCase() === scope.value?.toLowerCase()
-          const matchesBranch = item.branch?.toLowerCase().startsWith(scope.value?.toLowerCase())
-          const matchesLocation = item.location?.toLowerCase().includes(scope.value?.toLowerCase())
+          const matchesBranchName = item.branchName
+            ?.toLowerCase()
+            ?.startsWith(scope.value?.toLowerCase())
+          const matchesLocation = item.location?.toLowerCase()?.includes(scope.value?.toLowerCase())
 
-          console.log('Item:', {
-            item,
-            matchesRegion,
-            matchesBranch,
-            matchesLocation,
-          })
+          if (!matchesRegion && !matchesBranchName) {
+            console.log('Item missing required fields for scope:', item)
+          }
 
-          return matchesRegion || matchesBranch || matchesLocation
+          return matchesRegion || matchesBranchName || matchesLocation
         })
         break
 
       case 'branch':
         console.log('Filtering by branch:', scope.value)
         filteredData = data.filter((item) => {
-          // Enhanced branch matching
-          const matchesBranch = item.branch?.toLowerCase() === scope.value?.toLowerCase()
-          const matchesLocation = item.location?.toLowerCase().includes(scope.value?.toLowerCase())
+          // Enhanced branch matching with branchName/branchId
+          const matchesBranchName = item.branchName?.toLowerCase() === scope.value?.toLowerCase()
+          const matchesBranchId = item.branchId?.toLowerCase() === scope.value?.toLowerCase()
+          const matchesLocation = item.location?.toLowerCase()?.includes(scope.value?.toLowerCase())
           const matchesAssigned = item.assignedBranch?.toLowerCase() === scope.value?.toLowerCase()
 
-          console.log('Item:', {
-            item,
-            matchesBranch,
-            matchesLocation,
-            matchesAssigned,
-          })
+          if (!matchesBranchName && !matchesBranchId) {
+            console.log('Item missing required fields for scope:', item)
+          }
 
-          return matchesBranch || matchesLocation || matchesAssigned
+          return matchesBranchName || matchesBranchId || matchesLocation || matchesAssigned
         })
         break
 

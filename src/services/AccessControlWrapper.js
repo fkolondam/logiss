@@ -1,9 +1,35 @@
+import { AccessControlInterface } from './interfaces/AccessControl'
+
 /**
  * @typedef {import('./interfaces/DataProvider').Scope} Scope
  * @typedef {import('./interfaces/DataProvider').QueryParams} QueryParams
  */
 
-export class AccessControlWrapper {
+export class AccessControlWrapper extends AccessControlInterface {
+  constructor() {
+    super()
+    this.currentUser = null
+  }
+
+  getCurrentUser() {
+    return this.currentUser
+  }
+
+  hasPermission(permission, resource) {
+    // Implement permission check logic
+    return true // Default implementation
+  }
+
+  getScope() {
+    return this.currentUser?.scope || { type: 'global' }
+  }
+
+  async switchUser(userId) {
+    // Implement user switching logic
+    this.currentUser = { id: userId }
+    return this.currentUser
+  }
+
   /**
    * Filter data based on scope
    * @param {Array} data - Raw data array
@@ -33,9 +59,14 @@ export class AccessControlWrapper {
         validate: (item) => item.region || item.branch, // Must have either region or branch
       },
       branch: {
-        fields: ['branch'],
+        fields: ['branch', 'branchName'], // Support both formats (vehicles use 'branch', deliveries use 'branchName')
         includesBranches: false,
-        validate: (item) => item.branch, // Must have branch
+        validate: (item) => {
+          // Check for either branch format
+          const hasBranch = typeof item.branch === 'string' && item.branch.length > 0
+          const hasBranchName = typeof item.branchName === 'string' && item.branchName.length > 0
+          return hasBranch || hasBranchName
+        },
       },
       personal: {
         fields: ['userId', 'assignedTo', 'driver', 'driverId', 'assignedDriverId'],
@@ -52,21 +83,30 @@ export class AccessControlWrapper {
     }
 
     const filteredData = data.filter((item) => {
+      // Debug logging
+      console.log('Processing item:', item)
+      console.log('Looking for fields:', config.fields)
+
       // Validate item has required fields
       if (!config.validate(item)) {
         console.warn('Item missing required fields for scope:', item)
+        console.log('Available fields:', Object.keys(item))
         return false
       }
 
       // Check direct field matches
-      const fieldMatch = config.fields.some((field) => item[field] === scope.value)
+      const fieldMatch = config.fields.some((field) => {
+        const itemValue = item[field]?.toLowerCase()
+        const scopeValue = scope.value?.toLowerCase()
+        console.log(`Comparing ${field}:`, itemValue, 'with scope value:', scopeValue)
+        return itemValue === scopeValue
+      })
 
       // For region scope, also check branch prefixes
       const branchMatch =
         config.includesBranches &&
         item[config.branchField] &&
-        (item[config.branchField].startsWith(scope.value) ||
-          item[config.branchField] === scope.value)
+        item[config.branchField].toLowerCase() === scope.value.toLowerCase()
 
       return fieldMatch || branchMatch
     })

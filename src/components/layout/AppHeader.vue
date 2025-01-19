@@ -18,13 +18,13 @@
           <span class="text-sm text-gray-600 whitespace-nowrap">
             {{ t('dataSelector.filterBy') }}
           </span>
-          <DataSelectorEnhanced />
+          <DataSelectorEnhanced @scope-changed="handleScopeChange" />
         </div>
       </div>
 
       <!-- Center Section (Mobile Data Selector) -->
       <div class="flex-1 md:hidden flex items-center justify-center">
-        <DataSelectorEnhanced />
+        <DataSelectorEnhanced @scope-changed="handleScopeChange" />
       </div>
 
       <!-- Right Section -->
@@ -231,7 +231,13 @@ onUnmounted(() => {
   document.removeEventListener('click', handleClickOutside)
 })
 
-defineEmits(['toggle-sidebar'])
+const emit = defineEmits(['toggle-sidebar', 'scope-changed'])
+
+// Handle scope changes
+const handleScopeChange = (scope) => {
+  console.log('Scope changed in AppHeader:', scope)
+  emit('scope-changed', scope)
+}
 
 const getGradientColor = computed(() => {
   const gradients = {
