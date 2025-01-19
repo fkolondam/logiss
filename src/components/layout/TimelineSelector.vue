@@ -408,13 +408,19 @@ const formatMobileDate = (dateStr) => {
 }
 
 const updateMobileStartDate = () => {
-  const date = new Date(mobileStartYear.value, mobileStartMonth.value, mobileStartDay.value)
-  startDate.value = date.toISOString().split('T')[0]
+  // Create date in UTC at noon to avoid any timezone issues
+  const utcDate = new Date(
+    Date.UTC(mobileStartYear.value, mobileStartMonth.value, mobileStartDay.value, 12, 0, 0, 0),
+  )
+  startDate.value = utcDate.toISOString().split('T')[0]
 }
 
 const updateMobileEndDate = () => {
-  const date = new Date(mobileEndYear.value, mobileEndMonth.value, mobileEndDay.value)
-  endDate.value = date.toISOString().split('T')[0]
+  // Create date in UTC at noon to avoid any timezone issues
+  const utcDate = new Date(
+    Date.UTC(mobileEndYear.value, mobileEndMonth.value, mobileEndDay.value, 12, 0, 0, 0),
+  )
+  endDate.value = utcDate.toISOString().split('T')[0]
 }
 
 // Initialize mobile date values when custom range changes
