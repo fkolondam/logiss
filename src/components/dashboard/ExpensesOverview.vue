@@ -9,31 +9,44 @@
     </div>
 
     <!-- Total Amount -->
-    <div class="bg-green-50 rounded-lg p-4 mb-6 grid grid-rows-5 h-40">
-      <!-- Label (2 rows) -->
-      <div class="text-sm text-green-700 row-span-2 leading-tight">
-        {{ t('expenses.total') }}
+    <div class="bg-green-50/80 rounded-lg p-4 mb-6 flex flex-col h-[160px]">
+      <!-- Header (2 rows) -->
+      <div class="mb-3 min-h-[40px]">
+        <h3 class="text-sm font-medium text-green-800/90 leading-snug">
+          {{ t('expenses.total') }}
+        </h3>
       </div>
-      <!-- Metric (1 row) -->
-      <div class="flex items-center gap-2">
-        <div class="text-3xl font-bold text-green-900">
-          {{ loading ? '...' : formatCurrency(props.stats?.totalAmount || 0) }}
+
+      <!-- Content -->
+      <div class="flex-1">
+        <div class="flex items-baseline gap-2">
+          <div class="text-3xl font-semibold text-green-900">
+            {{ loading ? '...' : formatCurrency(props.stats?.totalAmount || 0) }}
+          </div>
+          <div v-if="props.stats?.trend" class="flex items-center gap-1">
+            <TrendingUp v-if="props.stats.trend > 0" class="w-4 h-4 text-green-700" />
+            <TrendingDown v-if="props.stats.trend < 0" class="w-4 h-4 text-red-700" />
+            <span
+              class="text-sm font-medium"
+              :class="props.stats.trend > 0 ? 'text-green-700' : 'text-red-700'"
+            >
+              {{ Math.abs(props.stats.trend) }}%
+            </span>
+          </div>
         </div>
-        <div v-if="props.stats?.trend" class="flex items-center gap-1">
-          <TrendingUp v-if="props.stats.trend > 0" class="w-4 h-4 text-green-600" />
-          <TrendingDown v-if="props.stats.trend < 0" class="w-4 h-4 text-red-600" />
-          <span :class="props.stats.trend > 0 ? 'text-green-600' : 'text-red-600'">
-            {{ Math.abs(props.stats.trend) }}%
-          </span>
+        <div class="text-xs text-green-600/90 mt-1">
+          {{ props.stats?.trend > 0 ? t('expenses.increased') : t('expenses.decreased') }}
         </div>
       </div>
-      <!-- Stats Label (1 row) -->
-      <div class="text-xs mt-1.5 text-green-600">
-        {{ props.stats?.trend > 0 ? t('expenses.increased') : t('expenses.decreased') }}
-      </div>
-      <!-- Drilldown (1 row) -->
-      <div class="text-xs text-right text-green-600 mt-3 hover:underline cursor-pointer">
-        {{ t('common.viewDetails') }} →
+
+      <!-- Footer -->
+      <div class="mt-auto pt-2 border-t border-green-100">
+        <button
+          class="text-xs font-medium text-green-600 hover:text-green-700 transition-colors flex items-center gap-0.5"
+        >
+          {{ t('common.viewDetails') }}
+          <span class="text-[10px]">→</span>
+        </button>
       </div>
     </div>
 

@@ -11,51 +11,73 @@
     <!-- Stats Overview -->
     <div class="grid grid-cols-2 gap-4 mb-6">
       <!-- Today's Deliveries Card -->
-      <div class="bg-blue-50 rounded-lg p-4 grid grid-rows-5 h-40">
-        <!-- Label (2 rows) -->
-        <div class="text-sm text-blue-700 row-span-2 leading-tight">
-          {{ t('deliveries.stats.todayDeliveries') }}
+      <div class="bg-blue-50/80 rounded-lg p-4 flex flex-col h-[160px]">
+        <!-- Header (2 rows) -->
+        <div class="mb-3 min-h-[40px]">
+          <h3 class="text-sm font-medium text-blue-800/90 leading-snug">
+            {{ t('deliveries.stats.todayDeliveries') }}
+          </h3>
         </div>
-        <!-- Metric (1 row) -->
-        <div class="flex items-center gap-2">
-          <div class="text-3xl font-bold text-blue-900">
-            {{ loading ? '...' : stats?.total || 0 }}
+
+        <!-- Content -->
+        <div class="flex-1">
+          <div class="flex items-baseline gap-2">
+            <div class="text-3xl font-semibold text-blue-900">
+              {{ loading ? '...' : stats?.total || 0 }}
+            </div>
+            <div v-if="stats?.trend" class="text-sm font-medium text-blue-700">
+              {{ stats.trend > 0 ? '+' : '' }}{{ stats.trend }}%
+            </div>
           </div>
-          <div v-if="stats?.trend" class="text-sm text-blue-600">
-            {{ stats.trend > 0 ? '+' : '' }}{{ stats.trend }}%
+          <div class="text-xs text-blue-600/90 mt-1">
+            {{ t('deliveries.stats.fromLastWeek') }}
           </div>
         </div>
-        <!-- Stats Label (1 row) -->
-        <div class="text-xs mt-1 text-blue-600">{{ t('deliveries.stats.fromLastWeek') }}</div>
-        <!-- Drilldown (1 row) -->
-        <div
-          class="text-xs mt-3 text-right text-blue-600 hover:underline cursor-pointer"
-          @click="navigateToDetails('todayDeliveries')"
-        >
-          {{ t('common.viewDetails') }} →
+
+        <!-- Footer -->
+        <div class="mt-auto pt-2 border-t border-blue-100">
+          <button
+            @click="navigateToDetails('todayDeliveries')"
+            class="text-xs font-medium text-blue-600 hover:text-blue-700 transition-colors flex items-center gap-0.5"
+          >
+            {{ t('common.viewDetails') }}
+            <span class="text-[10px]">→</span>
+          </button>
         </div>
       </div>
 
       <!-- Completion Rate Card -->
-      <div class="bg-green-50 rounded-lg p-4 grid grid-rows-5 h-40">
-        <!-- Label (2 rows) -->
-        <div class="text-sm text-green-700 row-span-2 leading-tight">
-          {{ t('deliveries.stats.completionRate') }}
+      <div class="bg-green-50/80 rounded-lg p-4 flex flex-col h-[160px]">
+        <!-- Header (2 rows) -->
+        <div class="mb-3 min-h-[40px]">
+          <h3 class="text-sm font-medium text-green-800/90 leading-snug">
+            {{ t('deliveries.stats.completionRate') }}
+          </h3>
         </div>
-        <!-- Metric (1 row) -->
-        <div class="flex items-center gap-2">
-          <div class="text-3xl font-bold text-green-900">
-            {{ loading ? '...' : calculateCompletionRate() }}%
+
+        <!-- Content -->
+        <div class="flex-1">
+          <div class="flex items-baseline gap-2">
+            <div class="text-3xl font-semibold text-green-900">
+              {{ loading ? '...' : calculateCompletionRate() }}%
+            </div>
+            <div v-if="stats?.completionTrend" class="text-sm font-medium text-green-700">
+              {{ stats.completionTrend > 0 ? '+' : '' }}{{ stats.completionTrend }}%
+            </div>
           </div>
-          <div v-if="stats?.completionTrend" class="text-sm text-green-600">
-            {{ stats.completionTrend > 0 ? '+' : '' }}{{ stats.completionTrend }}%
+          <div class="text-xs text-green-600/90 mt-1">
+            {{ t('deliveries.stats.thisWeek') }}
           </div>
         </div>
-        <!-- Stats Label (1 row) -->
-        <div class="text-xs mt-1 text-green-600">{{ t('deliveries.stats.thisWeek') }}</div>
-        <!-- Drilldown (1 row) -->
-        <div class="text-xs mt-3 text-right text-green-600 hover:underline cursor-pointer">
-          {{ t('common.viewDetails') }} →
+
+        <!-- Footer -->
+        <div class="mt-auto pt-2 border-t border-green-100">
+          <button
+            class="text-xs font-medium text-green-600 hover:text-green-700 transition-colors flex items-center gap-0.5"
+          >
+            {{ t('common.viewDetails') }}
+            <span class="text-[10px]">→</span>
+          </button>
         </div>
       </div>
     </div>
