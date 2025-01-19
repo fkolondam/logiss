@@ -105,6 +105,7 @@ export function useDashboardData() {
             const prevStats = processDeliveryStats(previousResult)
             calculateDeliveryTrends(stats, prevStats)
           }
+          stats.period = currentPeriod.value
           deliveryStats.value = stats
           break
 
@@ -114,6 +115,7 @@ export function useDashboardData() {
             const prevStats = processExpenseStats(previousResult)
             calculateExpenseTrends(stats, prevStats)
           }
+          stats.period = currentPeriod.value
           expenseStats.value = stats
           break
 

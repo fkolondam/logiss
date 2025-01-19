@@ -3,8 +3,8 @@
     <!-- Header -->
     <div class="flex items-center justify-between mb-6">
       <h2 class="text-lg font-semibold text-gray-900">{{ t('expenses.title') }}</h2>
-      <div class="text-sm text-gray-500">
-        {{ t(`expenses.periods.${props.stats?.period || PERIODS.TODAY}`) }}
+      <div class="text-sm text-green-700 row-span-2 leading-tight">
+        ({{ t(`common.periods.${props.stats?.period || PERIODS.TODAY}`) }})
       </div>
     </div>
 
